@@ -1,19 +1,20 @@
-<div class="top-actions" style="margin-bottom: 16px;">
+<div class="top-actions" style="margin-bottom: 20px;">
   <h2>Meu Perfil</h2>
-  <p style="color:var(--muted); font-size: 13px;">Gerencie suas configurações e preferências.</p>
+  <p style="color:var(--muted); font-size: 13px;">Gerencie suas configurações, plano e preferências do sistema.</p>
 </div>
 <div class="grid grid-2">
   <div class="card">
-    <b>Dados Pessoais</b>
-    <div style="display:grid;gap:8px;margin-top:12px">
+    <b style="font-size:16px;">Dados Pessoais</b>
+    <div style="display:grid;gap:12px;margin-top:16px">
       <div class="row"><input id="profileFirstName" class="input" placeholder="Nome"><input id="profileLastName" class="input" placeholder="Sobrenome"></div>
-      <div class="row"><select id="profileCurrency" class="input"><option value="BRL">BRL</option><option value="USD">USD</option><option value="EUR">EUR</option></select><select id="profileTheme" class="input"><option value="light">Claro</option><option value="dark">Escuro</option></select></div>
-      <button class="btn btn-primary btn-sm" onclick="alert('Salvo com sucesso!')">Salvar perfil</button>
+      <div class="row"><select id="profileCurrency" class="input"><option value="BRL">Real (BRL)</option><option value="USD">Dólar (USD)</option></select><select id="profileTheme" class="input"><option value="light">Claro</option><option value="dark">Escuro</option></select></div>
+      <button class="btn btn-primary" onclick="alert('Configurações salvas local e nuvem!')">Salvar configurações</button>
     </div>
   </div>
   <div class="card" style="background:linear-gradient(135deg,var(--primary),var(--violet));color:white;border:none">
-    <b>Status da Conta</b>
-    <div style="font-size:22px;font-weight:800;margin-top:8px">Plano Atual: Free</div>
-    <button class="btn btn-white btn-sm" style="margin-top:12px;width:100%">Explorar Premium</button>
+    <b style="font-size:16px;">Status da Conta Vida+ AI</b>
+    <div style="font-size:24px;font-weight:800;margin-top:12px">Plano Atual: Free</div>
+    <p style="margin-top:8px; font-size:13px; opacity:0.9;">Desbloqueie relatórios de correlação avançados, 10 temas premium e remova limites com a assinatura vitalícia.</p>
+    <button class="btn btn-white" style="margin-top:16px;width:100%">Desbloquear Premium</button>
   </div>
 </div>
