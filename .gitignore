@@ -1,0 +1,11 @@
+.DS_Store
+node_modules/
+.env
+.env.local
+.firebase/
+.vercel
+dist/
+uploads/
+*.log
+.vscode/
+.idea/

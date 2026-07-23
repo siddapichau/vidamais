@@ -1,0 +1,22 @@
+{
+  "name": "Vida+ AI - Evolution OS",
+  "short_name": "Vida+ AI",
+  "description": "Sua evolução diária, inteligente. Controle financeiro, hábitos, humor e metas com IA.",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#F6F7FB",
+  "theme_color": "#123C7A",
+  "icons": [
+    {
+      "src": "assets/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
