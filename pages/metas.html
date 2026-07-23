@@ -1,1 +1,23 @@
-<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=index.html?page=metas"></head><body><script>location.replace('index.html?page=metas')</script>Redirecionando para Index...</body></html>
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Metas</title><link rel="stylesheet" href="../css/style.css"><style>body{background:var(--bg);padding:16px}</style></head><body>
+<h2>Metas</h2><p style="font-size:12px;color:var(--muted)">Editável em pages/metas.html</p>
+<div id="goalsGrid" class="grid grid-2" style="margin-top:12px"></div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+const cfg={apiKey:"AIzaSyB3PEDD9LwVeqSVYFkYvfl7GiXARJgLV6Q",authDomain:"vidamaisai.firebaseapp.com",databaseURL:"https://vidamaisai-default-rtdb.firebaseio.com",projectId:"vidamaisai",storageBucket:"vidamaisai.firebasestorage.app",messagingSenderId:"685977764265",appId:"1:685977764265:web:aab35e2d621856a3e6c4b8"};
+const app=initializeApp(cfg); const auth=getAuth(app); const db=getDatabase(app);
+function resize(){ parent.postMessage({type:'resize',height:document.documentElement.scrollHeight},'*'); }
+onAuthStateChanged(auth, async (user)=>{
+  if(!user){ document.body.innerHTML='<p style="text-align:center;padding:20px">Login no Index</p>'; resize(); return; }
+  try{
+    const snap=await get(ref(db, `vidaplus/users/${user.uid}/goals`));
+    const goals=snap.exists()?(Array.isArray(snap.val())? snap.val():Object.values(snap.val())):[];
+    document.getElementById('goalsGrid').innerHTML=goals.map(g=>`<div class="card"><b>${g.title}</b><div class="progress" style="margin:8px 0"><i style="width:${Math.min(100,(g.current/g.target)*100)}%"></i></div><small>${g.current}/${g.target}</small></div>`).join('') || '<p style="color:var(--muted);font-size:12px">Nenhuma meta</p>';
+  }catch(e){ document.getElementById('goalsGrid').textContent='Erro: '+e.message; }
+  resize();
+});
+if(window.top===window.self && !location.search.includes('embedded')) location.replace('../index.html?page=metas');
+window.addEventListener('load', resize);
+</script>
+</body></html>

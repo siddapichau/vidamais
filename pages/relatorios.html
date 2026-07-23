@@ -1,1 +1,31 @@
-<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=index.html?page=relatorios"></head><body><script>location.replace('index.html?page=relatorios')</script>Redirecionando para Index...</body></html>
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Relatórios</title><link rel="stylesheet" href="../css/style.css"><style>body{background:var(--bg);padding:16px}</style></head><body>
+<h2>Relatórios IA</h2><p style="font-size:12px;color:var(--muted)">Free 3, Premium 7 • Editável</p>
+<div id="insights" style="display:grid;gap:10px;margin-top:12px"></div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+const cfg={apiKey:"AIzaSyB3PEDD9LwVeqSVYFkYvfl7GiXARJgLV6Q",authDomain:"vidamaisai.firebaseapp.com",databaseURL:"https://vidamaisai-default-rtdb.firebaseio.com",projectId:"vidamaisai",storageBucket:"vidamaisai.firebasestorage.app",messagingSenderId:"685977764265",appId:"1:685977764265:web:aab35e2d621856a3e6c4b8"};
+const app=initializeApp(cfg); const auth=getAuth(app); const db=getDatabase(app);
+function resize(){ parent.postMessage({type:'resize',height:document.documentElement.scrollHeight},'*'); }
+onAuthStateChanged(auth, async (user)=>{
+  if(!user){ document.getElementById('insights').innerHTML='<p>Login no Index</p>'; resize(); return; }
+  try{
+    const snap=await get(ref(db, `vidaplus/users/${user.uid}`));
+    const data=snap.exists()? snap.val():{};
+    const premium=data?.profile?.premium||false;
+    const tx=data?.transactions||[];
+    const topCat=tx.length? tx.reduce((a,t)=>{a[t.category]=(a[t.category]||0)+t.amount;return a},{}) : {};
+    const top=Object.entries(topCat).sort((a,b)=>b[1]-a[1])[0];
+    document.getElementById('insights').innerHTML=`
+      <div class="insight"><div class="i-ico">💸</div><div><b>Maior gasto: ${top?top[0]:'Nenhum'}</b><p>${top? 'R$ '+top[1] : 'Sem dados'}</p></div></div>
+      <div class="insight"><div class="i-ico">🔥</div><div><b>Streak ${data?.app?.streak||0} dias</b><p>Continue!</p></div></div>
+      <div class="insight"><div class="i-ico">${premium?'💎':'🔒'}</div><div><b>${premium?'Premium liberado':'Premium bloqueado'}</b><p>${premium?'Você vê 7 insights':'Free vê 3, Premium 7'}</p></div></div>
+    `;
+  }catch(e){ document.getElementById('insights').textContent='Erro: '+e.message; }
+  resize();
+});
+if(window.top===window.self && !location.search.includes('embedded')) location.replace('../index.html?page=relatorios');
+window.addEventListener('load', resize);
+</script>
+</body></html>

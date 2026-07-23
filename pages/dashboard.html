@@ -1,1 +1,143 @@
-<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=index.html?page=dashboard"></head><body><script>location.replace('index.html?page=dashboard')</script>Redirecionando para Index...</body></html>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard - Vida+ AI</title>
+<link rel="stylesheet" href="../css/style.css">
+<style>body{background:var(--bg);padding:16px}</style>
+</head>
+<body>
+<div id="dashboardContent">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:10px;margin-bottom:16px">
+    <div><h2 style="font-size:24px">Dashboard</h2><p style="font-size:12px;color:var(--muted)">Editável em pages/dashboard.html • Puxa CSS/JS do próprio arquivo, funciona dentro do iframe do Index</p></div>
+    <span class="badge" style="background:#EEF2FF;color:#4338CA">Iframe OK</span>
+  </div>
+
+  <div class="grid grid-4">
+    <div class="card kpi"><div class="kpi-head"><span class="kpi-label">Saldo</span><span class="kpi-icon" style="background:#E0F2FE">💰</span></div><div class="kpi-value" id="balanceValue">R$ 0,00</div><div class="kpi-sub"><span class="badge badge-up" id="balanceTrend">+0%</span> <span id="balanceSub">0 transações</span></div><div style="height:44px"><canvas id="miniBalance"></canvas></div></div>
+    <div class="card kpi"><div class="kpi-head"><span class="kpi-label">XP & Nível</span><span class="kpi-icon" style="background:#FEF3C7">⚡</span></div><div class="kpi-value"><span id="levelLabel">Nv 1</span> <small id="xpLabel">0 XP</small></div><div class="lvl-bar"><i id="xpBar"></i></div><div class="kpi-sub">Falta <b id="xpNext">500 XP</b></div></div>
+    <div class="card kpi"><div class="kpi-head"><span class="kpi-label">Hábitos</span><span class="kpi-icon" style="background:#DCFCE7">✅</span></div><div class="kpi-value"><span id="habitsDone">0</span>/<span id="habitsTotal">0</span></div><div class="progress"><i id="habitsProgress"></i></div><div class="kpi-sub" id="habitsMotivation">Comece!</div></div>
+    <div class="card kpi"><div class="kpi-head"><span class="kpi-label">Humor</span><span class="kpi-icon" id="moodIcon">🙂</span></div><div class="kpi-value" id="moodLabel">--</div><div class="kpi-sub" id="moodSub">--</div><div id="moodWeekDots" style="display:flex;gap:6px;margin-top:8px"></div></div>
+  </div>
+
+  <div class="grid grid-2" style="margin-top:14px">
+    <div class="card"><b>Hábitos hoje (editável aqui)</b><div id="todayHabits" style="display:grid;gap:8px;margin-top:10px"></div><button class="btn btn-ghost btn-sm" style="margin-top:10px;width:100%" onclick="parent.postMessage({type:'navigate',page:'habitos'},'*')">Ir para Hábitos</button></div>
+    <div class="card"><b>Insights IA</b><div id="aiInsights" style="display:grid;gap:8px;margin-top:10px"></div></div>
+  </div>
+
+  <div class="grid grid-2" style="margin-top:14px">
+    <div class="card"><b>Fluxo</b><div class="chart-box"><canvas id="weeklyFlow"></canvas></div></div>
+    <div class="card"><b>Gastos</b><div class="chart-box"><canvas id="categoryDonut"></canvas></div></div>
+  </div>
+</div>
+
+<script type="module">
+import { state, loadState, saveState, calcStreak, fmtMoney, todayStr, getLevel, getNextLevel, getLevelProgress, generateInsights } from '../js/core.js';
+import { getUid, loadFullUser } from '../js/firebase.js';
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB3PEDD9LwVeqSVYFkYvfl7GiXARJgLV6Q",
+  authDomain: "vidamaisai.firebaseapp.com",
+  databaseURL: "https://vidamaisai-default-rtdb.firebaseio.com",
+  projectId: "vidamaisai",
+  storageBucket: "vidamaisai.firebasestorage.app",
+  messagingSenderId: "685977764265",
+  appId: "1:685977764265:web:aab35e2d621856a3e6c4b8"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+
+function resize(){
+  const h=document.documentElement.scrollHeight;
+  parent.postMessage({type:'resize',height:h},'*');
+}
+
+onAuthStateChanged(auth, async (user)=>{
+  if(!user){
+    document.getElementById('dashboardContent').innerHTML='<div style="text-align:center;padding:30px"><h3>Faça login no Index</h3><p style="color:#64748B;font-size:12px">Este iframe precisa que você esteja logado no Index. Se abriu direto, <a href="../index.html?page=dashboard">clique aqui</a></p></div>';
+    resize();
+    return;
+  }
+  loadState();
+  // tenta puxar do Firebase
+  try{
+    const snap=await get(ref(db, `vidaplus/users/${user.uid}`));
+    if(snap.exists()){
+      const data=snap.val();
+      if(data.transactions) state.tx=data.transactions;
+      if(data.habits) state.habits=data.habits;
+      if(data.moods) state.moods=data.moods;
+      if(data.goals) state.goals=data.goals;
+      if(data.user) state.user=data.user;
+      if(data.profile) state.profile=data.profile;
+    }
+  }catch(e){ console.warn('RTDB', e.message); }
+
+  // render
+  const total=state.tx.reduce((s,t)=> s + (t.type==='income'? t.amount : -t.amount),0);
+  const bv=document.getElementById('balanceValue'); if(bv) bv.textContent=new Intl.NumberFormat('pt-BR',{style:'currency',currency:state.settings?.currency||'BRL'}).format(total);
+  const done=state.habits.filter(h=>h.history && h.history[new Date().toISOString().slice(0,10)]).length;
+  document.getElementById('habitsDone').textContent=done;
+  document.getElementById('habitsTotal').textContent=state.habits.length;
+  document.getElementById('habitsProgress').style.width=(state.habits.length? done/state.habits.length*100:0)+'%';
+  const xp=state.user.xp||0;
+  const lvl=(()=>{ let l={level:1,xp:0,name:'Explorador'}; const table=[{level:1,xp:0},{level:2,xp:500},{level:3,xp:1500},{level:4,xp:3000},{level:5,xp:5000},{level:6,xp:7500},{level:7,xp:10500},{level:8,xp:14000},{level:9,xp:18000},{level:10,xp:22500}]; for(let r of table){ if(xp>=r.xp) l=r; } return l; })();
+  document.getElementById('levelLabel').textContent='Nv '+lvl.level;
+  document.getElementById('xpLabel').textContent=xp+' XP';
+  document.getElementById('xpNext').textContent=(500 - (xp%500))+' XP';
+  document.getElementById('xpBar').style.width=Math.min(100, (xp%500)/500*100)+'%';
+  // habits list
+  const list=document.getElementById('todayHabits');
+  if(list){
+    list.innerHTML='';
+    state.habits.slice(0,4).forEach(h=>{
+      const today=new Date().toISOString().slice(0,10);
+      const done=!!(h.history && h.history[today]);
+      const el=document.createElement('div'); el.className='habit';
+      el.innerHTML=`<div class="habit-check ${done?'done':''}">${done?'✓':h.icon||'⭐'}</div><div class="habit-meta"><b>${h.name}</b></div>`;
+      list.appendChild(el);
+    });
+  }
+  // insights
+  const ai=document.getElementById('aiInsights');
+  if(ai){
+    ai.innerHTML='';
+    const totalTx=state.tx.length;
+    const ins=[{ico:'💸',color:'#123C7A',title:`${totalTx} transações`,text:'Dados do Firebase RTDB'},{ico:'🔥',color:'#F97316',title:'Streak',text:`${state.app?.streak||0} dias`}];
+    ins.forEach(i=>{ const d=document.createElement('div'); d.className='insight'; d.innerHTML=`<div class="i-ico" style="background:${i.color}">${i.ico}</div><div><b>${i.title}</b><p>${i.text}</p></div>`; ai.appendChild(d); });
+  }
+  // charts simple
+  try{
+    const c1=document.getElementById('miniBalance');
+    if(c1){
+      const ctx=c1.getContext('2d'); const r=c1.getBoundingClientRect(); c1.width=r.width*2; c1.height=r.height*2; ctx.scale(2,2);
+      ctx.beginPath(); ctx.strokeStyle='#6366F1'; ctx.lineWidth=2;
+      ctx.moveTo(0,20); ctx.lineTo(r.width,10); ctx.stroke();
+    }
+  }catch{}
+  setTimeout(resize, 100);
+  setTimeout(resize, 500);
+});
+
+window.addEventListener('load', resize);
+window.addEventListener('resize', resize);
+new MutationObserver(resize).observe(document.body, {childList:true, subtree:true});
+
+// Redireciona se aberto fora do iframe sem login
+if(window.top===window.self){
+  const urlParams=new URLSearchParams(location.search);
+  if(!urlParams.has('embedded')){
+    // Se abriu direto, vai pro Index
+    // mantém ?page= para Index saber qual página abrir
+    const page=location.pathname.split('/').pop().replace('.html','');
+    location.replace(`../index.html?page=${page}`);
+  }
+}
+</script>
+</body>
+</html>

@@ -1,1 +1,45 @@
-<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=index.html?page=humor"></head><body><script>location.replace('index.html?page=humor')</script>Redirecionando para Index...</body></html>
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Humor</title><link rel="stylesheet" href="../css/style.css"><style>body{background:var(--bg);padding:16px}</style></head><body>
+<h2>Humor</h2><p style="font-size:12px;color:var(--muted)">Editável em pages/humor.html</p>
+<div class="mood-grid" style="margin:12px 0">
+<button class="mood-opt" onclick="saveMood(1)"><span class="em">😞</span><b>Muito Ruim</b></button>
+<button class="mood-opt" onclick="saveMood(2)"><span class="em">😐</span><b>Ruim</b></button>
+<button class="mood-opt" onclick="saveMood(3)"><span class="em">🙂</span><b>Normal</b></button>
+<button class="mood-opt" onclick="saveMood(4)"><span class="em">😁</span><b>Bom</b></button>
+<button class="mood-opt" onclick="saveMood(5)"><span class="em">🤩</span><b>Excelente</b></button>
+</div>
+<div id="moodList"></div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+const cfg={apiKey:"AIzaSyB3PEDD9LwVeqSVYFkYvfl7GiXARJgLV6Q",authDomain:"vidamaisai.firebaseapp.com",databaseURL:"https://vidamaisai-default-rtdb.firebaseio.com",projectId:"vidamaisai",storageBucket:"vidamaisai.firebasestorage.app",messagingSenderId:"685977764265",appId:"1:685977764265:web:aab35e2d621856a3e6c4b8"};
+const app=initializeApp(cfg); const auth=getAuth(app); const db=getDatabase(app);
+let currentUser=null;
+function resize(){ parent.postMessage({type:'resize',height:document.documentElement.scrollHeight},'*'); }
+onAuthStateChanged(auth, async (user)=>{
+  currentUser=user;
+  if(!user){ document.getElementById('moodList').innerHTML='<p>Faça login no Index</p>'; resize(); return; }
+  try{
+    const snap=await get(ref(db, `vidaplus/users/${user.uid}/moods`));
+    const moods=snap.exists()? (Array.isArray(snap.val())? snap.val():Object.values(snap.val())):[];
+    document.getElementById('moodList').innerHTML=moods.slice(0,10).map(m=>`<div class="insight"><div class="i-ico">${['','😞','😐','🙂','😁','🤩'][m.level]||'🙂'}</div><div><b>${m.date}</b><p>${m.note||''}</p></div></div>`).join('') || '<p style="color:var(--muted);font-size:12px">Nenhum humor</p>';
+  }catch(e){ document.getElementById('moodList').textContent='Erro: '+e.message; }
+  resize();
+});
+window.saveMood=async(lvl)=>{
+  if(!currentUser) return;
+  const today=new Date().toISOString().slice(0,10);
+  try{
+    const r=ref(db, `vidaplus/users/${currentUser.uid}/moods`);
+    const snap=await get(r);
+    let moods=snap.exists()?(Array.isArray(snap.val())? snap.val():Object.values(snap.val())):[];
+    moods=moods.filter(m=>m.date!==today);
+    moods.unshift({date:today,level:lvl,note:''});
+    await set(r, moods);
+    location.reload();
+  }catch(e){ alert('Erro: '+e.message); }
+};
+if(window.top===window.self && !location.search.includes('embedded')) location.replace('../index.html?page=humor');
+window.addEventListener('load', resize);
+</script>
+</body></html>

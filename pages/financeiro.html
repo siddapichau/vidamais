@@ -1,1 +1,36 @@
-<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=index.html?page=financeiro"></head><body><script>location.replace('index.html?page=financeiro')</script>Redirecionando para Index...</body></html>
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Financeiro</title><link rel="stylesheet" href="../css/style.css"><style>body{background:var(--bg);padding:16px}</style></head><body>
+<h2>Financeiro</h2><p style="font-size:12px;color:var(--muted)">Editável em pages/financeiro.html • Iframe do Index • Puxa CSS/JS próprio</p>
+<div class="grid grid-3" style="margin-top:12px">
+<div class="card"><span class="kpi-label">Receitas</span><div class="kpi-value" id="incomeMonth">R$ 0</div></div>
+<div class="card"><span class="kpi-label">Despesas</span><div class="kpi-value" id="expenseMonth">R$ 0</div></div>
+<div class="card"><span class="kpi-label">Saldo</span><div class="kpi-value" id="savingMonth">R$ 0</div></div>
+</div>
+<div id="txList" style="margin-top:12px"></div>
+<button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="addTx()">+ Transação (teste)</button>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+const cfg={apiKey:"AIzaSyB3PEDD9LwVeqSVYFkYvfl7GiXARJgLV6Q",authDomain:"vidamaisai.firebaseapp.com",databaseURL:"https://vidamaisai-default-rtdb.firebaseio.com",projectId:"vidamaisai",storageBucket:"vidamaisai.firebasestorage.app",messagingSenderId:"685977764265",appId:"1:685977764265:web:aab35e2d621856a3e6c4b8"};
+const app=initializeApp(cfg); const auth=getAuth(app); const db=getDatabase(app);
+function resize(){ parent.postMessage({type:'resize',height:document.documentElement.scrollHeight},'*'); }
+onAuthStateChanged(auth, async (user)=>{
+  if(!user){ document.body.innerHTML='<p style="text-align:center;padding:20px">Faça login no Index<br><a href="../index.html?page=financeiro">Ir para Index</a></p>'; resize(); return; }
+  try{
+    const snap=await get(ref(db, `vidaplus/users/${user.uid}/transactions`));
+    const tx=snap.exists()? (Array.isArray(snap.val())? snap.val() : Object.values(snap.val())) : [];
+    const inc=tx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+    const exp=tx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+    document.getElementById('incomeMonth').textContent='R$ '+inc;
+    document.getElementById('expenseMonth').textContent='R$ '+exp;
+    document.getElementById('savingMonth').textContent='R$ '+(inc-exp);
+    const list=document.getElementById('txList');
+    list.innerHTML=tx.slice(0,10).map(t=>`<div class="tx"><div><b>${t.desc||t.category}</b><br><small>${t.category} • ${t.date}</small></div><div class="tx-amt">${t.type==='income'?'+':''}R$ ${t.amount}</div></div>`).join('') || '<p style="color:var(--muted);font-size:12px">Nenhuma transação ainda</p>';
+  }catch(e){ document.getElementById('txList').textContent='Erro RTDB: '+e.message; }
+  resize();
+});
+window.addTx=()=>{ parent.postMessage({type:'openTxModal'},'*'); };
+window.addEventListener('load', resize);
+if(window.top===window.self && !location.search.includes('embedded')){ location.replace('../index.html?page=financeiro'); }
+</script>
+</body></html>

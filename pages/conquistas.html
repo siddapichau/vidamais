@@ -1,1 +1,23 @@
-<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=index.html?page=conquistas"></head><body><script>location.replace('index.html?page=conquistas')</script>Redirecionando para Index...</body></html>
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Conquistas</title><link rel="stylesheet" href="../css/style.css"><style>body{background:var(--bg);padding:16px}</style></head><body>
+<h2>Conquistas • 50 Níveis</h2><p style="font-size:12px;color:var(--muted)">78k XP = 1 ano • Editável</p>
+<div id="levelInfo" class="card" style="margin-top:12px"></div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+const cfg={apiKey:"AIzaSyB3PEDD9LwVeqSVYFkYvfl7GiXARJgLV6Q",authDomain:"vidamaisai.firebaseapp.com",databaseURL:"https://vidamaisai-default-rtdb.firebaseio.com",projectId:"vidamaisai",storageBucket:"vidamaisai.firebasestorage.app",messagingSenderId:"685977764265",appId:"1:685977764265:web:aab35e2d621856a3e6c4b8"};
+const app=initializeApp(cfg); const auth=getAuth(app); const db=getDatabase(app);
+function resize(){ parent.postMessage({type:'resize',height:document.documentElement.scrollHeight},'*'); }
+onAuthStateChanged(auth, async (user)=>{
+  if(!user){ document.getElementById('levelInfo').innerHTML='<p>Login no Index</p>'; resize(); return; }
+  try{
+    const snap=await get(ref(db, `vidaplus/users/${user.uid}/user`));
+    const u=snap.exists()? snap.val():{xp:0,level:1};
+    document.getElementById('levelInfo').innerHTML=`<b>Nv ${u.level||1} • ${u.xp||0} XP</b><div class="lvl-bar" style="margin-top:8px"><i style="width:${Math.min(100,(u.xp||0)%500/5)}%"></i></div><p style="font-size:11px;color:var(--muted);margin-top:6px">50 níveis = 78.000 XP = ~390 dias @200 XP/dia = 1 ano</p>`;
+  }catch(e){ document.getElementById('levelInfo').textContent='Erro: '+e.message; }
+  resize();
+});
+if(window.top===window.self && !location.search.includes('embedded')) location.replace('../index.html?page=conquistas');
+window.addEventListener('load', resize);
+</script>
+</body></html>
