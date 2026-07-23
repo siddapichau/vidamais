@@ -1,5 +1,5 @@
-// Vida+ AI - CORE (Cérebro) - VidaPlus Core Engine
-// Responsável por estado, persistência, gamificação, insights e sync
+// Vida+ AI - CORE v2.1 - vidamaisai edition
+// Cérebro com suporte total Firebase Auth + RTDB
 
 export const STORE = {
   user: 'vidaplus_user_v2',
@@ -52,10 +52,10 @@ export let state = {
   moods: [],
   goals: [],
   settings: {theme:'light', currency:'BRL', notifications:true, aiLevel:'balanced'},
-  app:{streak:0,maxStreak:0,lastActive:null,premium:false,theme:'light',txType:'expense',selectedMood:null,txFilter:'all',uid:'default_user'}
+  app:{streak:0,maxStreak:0,lastActive:null,premium:false,theme:'light',txType:'expense',selectedMood:null,txFilter:'all',uid:'default_user'},
+  profile: {name:'Wesley', email:'', photo:'', premium:false}
 };
 
-// Helpers
 export function fmtBRL(v){ return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v||0) }
 export function fmtDate(d){ try{return new Date(d).toLocaleDateString('pt-BR')}catch{return d} }
 export const todayStr = ()=> new Date().toISOString().slice(0,10);
@@ -72,7 +72,7 @@ export function loadState(){
     state.goals = parse(STORE.goals, []);
     state.app = {...state.app, ...parse(STORE.app, {})};
     state.settings = {...state.settings, ...parse(STORE.settings, {})};
-    // garante tema
+    state.profile = parse('vidaplus_profile_v2', {name: state.user.name, email:'', photo:'', premium:false});
     state.app.theme = state.settings.theme || state.app.theme || 'light';
     return true;
   }catch(e){ console.error("[core] load error", e); return false; }
@@ -87,10 +87,36 @@ export function saveState(){
     localStorage.setItem(STORE.goals, JSON.stringify(state.goals));
     localStorage.setItem(STORE.app, JSON.stringify(state.app));
     localStorage.setItem(STORE.settings, JSON.stringify(state.settings));
-    // dispara evento para sync
+    localStorage.setItem('vidaplus_profile_v2', JSON.stringify(state.profile));
     window.dispatchEvent(new CustomEvent('vidaplus:save', {detail:{state}}));
     return true;
   }catch(e){ console.error("[core] save error", e); return false; }
+}
+
+// Quando recebe dados completos do Firebase RTDB
+export function applyRemoteData(remote){
+  if(!remote) return false;
+  let changed = false;
+  try{
+    if(remote.user){ state.user = {...state.user, ...remote.user}; changed=true; }
+    if(remote.profile){ state.profile = {...state.profile, ...remote.profile}; state.user.name = remote.profile.name || state.user.name; changed=true; }
+    if(remote.transactions && Array.isArray(remote.transactions) && remote.transactions.length){
+      // Só aplica se remoto for mais recente ou maior
+      if(remote.transactions.length >= state.tx.length){ state.tx = remote.transactions; changed=true; }
+    }
+    if(remote.habits && Array.isArray(remote.habits) && remote.habits.length){ if(remote.habits.length >= state.habits.length){ state.habits = remote.habits; changed=true; } }
+    if(remote.moods && Array.isArray(remote.moods) && remote.moods.length){ if(remote.moods.length >= state.moods.length){ state.moods = remote.moods; changed=true; } }
+    if(remote.goals && Array.isArray(remote.goals) && remote.goals.length){ if(remote.goals.length >= state.goals.length){ state.goals = remote.goals; changed=true; } }
+    if(remote.app){ state.app = {...state.app, ...remote.app}; changed=true; }
+    if(remote.settings){ state.settings = {...state.settings, ...remote.settings}; changed=true; }
+    if(changed) saveState();
+    return changed;
+  }catch(e){ console.error("[applyRemoteData]", e); return false; }
+}
+
+export function setUid(uid){
+  state.app.uid = uid;
+  saveState();
 }
 
 export function addXP(amount, reason=''){
@@ -145,24 +171,23 @@ export function generateInsights(){
     insights.push({ico:'💸',color:'#123C7A',title:`Seu maior gasto é ${topCat[0]}`,text:`${fmtBRL(topCat[1])} no período. Se reduzir 15% você economiza ${fmtBRL(topCat[1]*0.15)}/mês.`,priority:1});
   }
   if(avgMood<3){
-    insights.push({ico:'🧠',color:'#F43F5E',title:'Humor em alerta, gastos sobem?',text:`Média de humor ${(avgMood).toFixed(1)}/5. Nos dias ruins você gasta em média 28% mais com Delivery. Experimente acionar um hábito quando se sentir assim.`,priority:2});
+    insights.push({ico:'🧠',color:'#F43F5E',title:'Humor em alerta, gastos sobem?',text:`Média de humor ${(avgMood).toFixed(1)}/5. Nos dias ruins você gasta em média 28% mais com Delivery.`,priority:2});
   } else {
-    insights.push({ico:'😁',color:'#10B981',title:'Humor estável potencializa foco',text:`Média ${avgMood.toFixed(1)}/5 nos últimos dias. Taxa de hábitos ${(habitRate*100).toFixed(0)}%. Mantenha o ritual da manhã.`,priority:2});
+    insights.push({ico:'😁',color:'#10B981',title:'Humor estável potencializa foco',text:`Média ${avgMood.toFixed(1)}/5. Taxa de hábitos ${(habitRate*100).toFixed(0)}%.`,priority:2});
   }
   if(total<0){
-    insights.push({ico:'⚠️',color:'#F59E0B',title:'Saldo negativo detectado',text:`Você está ${fmtBRL(Math.abs(total))} no vermelho. Que tal uma meta de corte de ${fmtBRL(Math.abs(total)*0.2)} essa semana?`,priority:0});
+    insights.push({ico:'⚠️',color:'#F59E0B',title:'Saldo negativo detectado',text:`Você está ${fmtBRL(Math.abs(total))} no vermelho. Corte ${fmtBRL(Math.abs(total)*0.2)} essa semana.`,priority:0});
   } else {
-    insights.push({ico:'📈',color:'#6366F1',title:`Economia saudável de ${fmtBRL(total*0.2)}`,text:`Você pode investir 20% do saldo atual sem afetar seu padrão.`,priority:1});
+    insights.push({ico:'📈',color:'#6366F1',title:`Economia saudável`,text:`Você pode investir 20% do saldo (${fmtBRL(total*0.2)}) sem afetar padrão.`,priority:1});
   }
   if(habitRate<0.5){
-    insights.push({ico:'◍',color:'#8B5CF6',title:'Consistência abaixo de 50%',text:`Sua taxa de hábitos é ${(habitRate*100).toFixed(0)}%. Tente regra dos 2 minutos: comece só marcando água e caminhada hoje.`,priority:0});
+    insights.push({ico:'◍',color:'#8B5CF6',title:'Consistência abaixo de 50%',text:`Taxa ${(habitRate*100).toFixed(0)}%. Regra 2min: água + caminhada hoje.`,priority:0});
   } else {
-    insights.push({ico:'🔥',color:'#F97316',title:`Streak de ${state.app.streak} dias!`,text:`Você está entre os 12% mais consistentes. Continue para desbloquear Guardião no Nv 5.`,priority:3});
+    insights.push({ico:'🔥',color:'#F97316',title:`Streak de ${state.app.streak} dias!`,text:`Top 12% mais consistentes. Continue para Guardião Nv5.`,priority:3});
   }
   return insights.sort((a,b)=> b.priority - a.priority);
 }
 
-// Seed defaults
 export function seedHabits(){
   const defaults=[
     {name:'Beber água',icon:'💧',color:'#06B6D4',goal:8},
@@ -206,10 +231,10 @@ export function ensureSeed(){
   if(!state.goals.length) seedGoals();
 }
 
-// Export para admin
 export function exportAll(){
   return {
     user: state.user,
+    profile: state.profile,
     transactions: state.tx,
     habits: state.habits,
     moods: state.moods,
@@ -222,6 +247,7 @@ export function exportAll(){
 export function importAll(data){
   try{
     if(data.user) state.user = data.user;
+    if(data.profile) state.profile = data.profile;
     if(data.transactions) state.tx = data.transactions;
     if(data.habits) state.habits = data.habits;
     if(data.moods) state.moods = data.moods;
