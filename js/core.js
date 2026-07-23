@@ -2,14 +2,14 @@
 // 100% PT-BR, 50 níveis, 8 moedas, 10 temas
 
 export const STORE = {
-  user: 'vidaplus_user_v4',
-  tx: 'vidaplus_tx_v4',
-  habits: 'vidaplus_habits_v4',
-  moods: 'vidaplus_moods_v4',
-  goals: 'vidaplus_goals_v4',
-  app: 'vidaplus_app_v4',
-  settings: 'vidaplus_settings_v4',
-  profile: 'vidaplus_profile_v4'
+  user: 'vidaplus_user_v5',
+  tx: 'vidaplus_tx_v5',
+  habits: 'vidaplus_habits_v5',
+  moods: 'vidaplus_moods_v5',
+  goals: 'vidaplus_goals_v5',
+  app: 'vidaplus_app_v5',
+  settings: 'vidaplus_settings_v5',
+  profile: 'vidaplus_profile_v5'
 };
 
 export const currencies = {
@@ -97,11 +97,9 @@ export function getLevelProgress(xp){
 }
 
 export function clearAllLocal(){
-  Object.values(STORE).forEach(k=>localStorage.removeItem(k));
-  localStorage.removeItem('vidaplus_profile_v4');
-  // compat antigos
-  ['vidaplus_user_v2','vidaplus_tx_v2','vidaplus_habits_v2','vidaplus_moods_v2','vidaplus_goals_v2','vidaplus_app_v2','vidaplus_settings_v2','vidaplus_profile_v2',
-   'vidaplus_user_v3','vidaplus_tx_v3','vidaplus_habits_v3','vidaplus_moods_v3','vidaplus_goals_v3','vidaplus_app_v3','vidaplus_settings_v3','vidaplus_profile_v3'].forEach(k=>localStorage.removeItem(k));
+  Object.keys(localStorage).forEach(k=>{
+    if(k.startsWith('vidaplus_')) localStorage.removeItem(k);
+  });
   state = {
     user: {name:'', xp:0, level:1, joined:new Date().toISOString(), premium:false},
     tx: [], habits: [], moods: [], goals: [],
