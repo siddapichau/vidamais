@@ -1,15 +1,18 @@
-// Vida+ AI - APP.JS v2.1 FINAL vidamaisai
-// Login Email+Google + Realtime sync total
+// Vida+ AI - APP v4 - Router Pages + Perfil Completo + Moedas + 50 níveis + PT-BR 100%
+// Index é página principal, carrega páginas via fetch (iframe inteligente sem iframe aparente)
+// URL: index.html?page=habitos ou ?id=habitos.html ou ?p=habitos
 
-import { state, defaultCategories, moodMap, themes, fmtBRL, fmtDate, todayStr, getLevel, getNextLevel, loadState, saveState, addXP, calcStreak, calcHabitRate, calcLifeScore, generateInsights, seedHabits, ensureSeed, applyRemoteData, setUid, exportAll } from './core.js';
-import { VidaFirebase, FIREBASE_DB_URL, auth, db, getUid } from './firebase.js';
-import { initAuthListener, loginEmail, signupEmail, loginGoogle, logout, loadFullUser, saveCollection } from './firebase.js';
+import { state, themes, currencies, levelTable, defaultCategories, moodMap, fmtMoney, fmtDate, todayStr, getLevel, getNextLevel, getLevelProgress, loadState, saveState, addXP, calcStreak, calcHabitRate, calcLifeScore, generateInsights, seedHabits, ensureSeed, applyRemoteData, setUid } from './core.js';
+import { VidaFirebase, FIREBASE_DB_URL, auth } from './firebase.js';
+import { initAuthListener, loginEmail as fbLoginEmail, signupEmail as fbSignupEmail, loginGoogle as fbLoginGoogle, logout as fbLogout, resetPassword, updateUserProfileData, changePassword as fbChangePassword, loadFullUser, getUid, ADMIN_EMAIL } from './firebase.js';
 
 let tempMood = null;
+let currentPage = 'dashboard';
 
-// Expose para inline onclick (compat)
+// Expose globals para inline onclick
 window.toast = toast;
-window.switchView = switchView;
+window.loadPage = loadPage;
+window.switchView = loadPage; // compat
 window.toggleTheme = toggleTheme;
 window.openQuickAdd = openQuickAdd;
 window.openPremium = openPremium;
@@ -32,282 +35,409 @@ window.confirmMood = confirmMood;
 window.saveMoodNote = saveMoodNote;
 window.addGoalProgress = addGoalProgress;
 window.deleteGoal = deleteGoal;
-window.seedHabits = ()=>{ seedHabits(); renderAll(); toast('Hábitos restaurados','◍'); };
+window.seedHabits = ()=>{ seedHabits(); renderAll(); toast('Hábitos restaurados • Firebase','◍'); };
 window.exportFin = ()=>{ toast('Gerando PDF...','📄'); setTimeout(()=>window.print(),400); };
 window.exportReport = ()=>{ toast('Gerando relatório IA...','✦'); setTimeout(()=>window.print(),400); };
 window.activatePremium = activatePremium;
 window.regenerateAI = regenerateAI;
-
-// Auth globals
 window.handleLogin = handleLogin;
 window.handleSignup = handleSignup;
 window.handleGoogleLogin = handleGoogleLogin;
 window.handleLogout = handleLogout;
 window.handleReset = handleReset;
 window.openAuthModal = openAuthModal;
+window.saveProfile = saveProfile;
+window.saveCompleteProfile = saveCompleteProfile;
+window.changePasswordProfile = changePasswordProfile;
+window.changeCurrency = changeCurrency;
+window.previewCurrency = previewCurrency;
+window.previewTheme = applyThemePreview;
+window.saveCompleteProfile = saveCompleteProfile;
 
-export function toast(msg, ico='✦'){
+function toast(msg, ico='✦'){
   const stack = document.getElementById('toasts');
   if(!stack) return;
   const el = document.createElement('div');
   el.className='toast';
   el.innerHTML=`<div class="t-ico">${ico}</div><div>${msg}</div>`;
   stack.appendChild(el);
-  setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateY(10px)'; setTimeout(()=>el.remove(),300); }, 3800);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateY(10px)'; setTimeout(()=>el.remove(),300); }, 4000);
 }
 function confettiLevel(lvl){
-  const overlay = document.createElement('div');
+  const overlay=document.createElement('div');
   overlay.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:999;display:grid;place-items:center';
-  overlay.innerHTML=`<div style="background:var(--card);padding:22px 26px;border-radius:18px;box-shadow:0 20px 50px rgba(0,0,0,.25);border:1px solid var(--border);text-align:center;animation:pop .5s cubic-bezier(.34,1.56,.64,1)"><div style="font-size:48px">🎉</div><b style="font-size:20px;display:block;margin-top:8px">Nível ${lvl.level} • ${lvl.name}</b><p style="color:var(--muted);font-size:13px;margin-top:6px">Você está evoluindo de verdade!</p></div>`;
+  overlay.innerHTML=`<div style="background:var(--card);padding:22px 26px;border-radius:18px;box-shadow:0 20px 50px rgba(0,0,0,.25);border:1px solid var(--border);text-align:center;animation:pop .5s cubic-bezier(.34,1.56,.64,1)"><div style="font-size:48px">${lvl.icon||'🎉'}</div><b style="font-size:18px;display:block;margin-top:8px">Nível ${lvl.level} • ${lvl.name}</b><p style="color:var(--muted);font-size:12px;margin-top:6px">${lvl.reward}</p></div>`;
   document.body.appendChild(overlay);
-  setTimeout(()=>overlay.remove(),2600);
+  setTimeout(()=>overlay.remove(),3000);
 }
 
-// === SYNC ENGINE ===
-let _syncing = false;
+// ===== SYNC =====
+let _syncing=false;
 async function trySyncAll(){
   if(_syncing) return;
-  const uid = getUid();
-  if(uid === 'default_user') return; // não logado, fica local
-  _syncing = true;
+  const uid=getUid();
+  if(uid==='default_user') return;
+  _syncing=true;
   try{
     await Promise.all([
-      VidaFirebase.syncCollection(uid, 'transactions', state.tx),
-      VidaFirebase.syncCollection(uid, 'habits', state.habits),
-      VidaFirebase.syncCollection(uid, 'moods', state.moods),
-      VidaFirebase.syncCollection(uid, 'goals', state.goals),
-      VidaFirebase.syncCollection(uid, 'app', state.app),
-      VidaFirebase.syncCollection(uid, 'settings', state.settings),
-      VidaFirebase.syncCollection(uid, 'user', state.user),
-      VidaFirebase.syncCollection(uid, 'profile', state.profile)
+      VidaFirebase.syncCollection(uid,'transactions',state.tx),
+      VidaFirebase.syncCollection(uid,'habits',state.habits),
+      VidaFirebase.syncCollection(uid,'moods',state.moods),
+      VidaFirebase.syncCollection(uid,'goals',state.goals),
+      VidaFirebase.syncCollection(uid,'app',state.app),
+      VidaFirebase.syncCollection(uid,'settings',state.settings),
+      VidaFirebase.syncCollection(uid,'user',state.user),
+      VidaFirebase.syncCollection(uid,'profile',state.profile)
     ]);
-    const el = document.getElementById('syncStatus');
-    if(el) el.textContent = '● Sincronizado com Firebase ✔';
-    // console.log("[Sync] tudo enviado");
+    const el=document.getElementById('syncStatus');
+    if(el) el.textContent=`● Sincronizado Firebase ✔ • ${state.settings.currency}`;
   }catch(e){
-    console.warn("[Sync] falha", e.message);
-    const el = document.getElementById('syncStatus');
-    if(el) el.textContent = '● Erro sync: '+e.message;
-  }finally{ _syncing=false; }
+    const el=document.getElementById('syncStatus');
+    if(el) el.textContent='● Erro sync: '+e.message;
+  }finally{_syncing=false;}
 }
 async function pullFromFirebase(){
-  const uid = getUid();
-  if(uid === 'default_user') return;
+  const uid=getUid();
+  if(uid==='default_user') return;
   try{
-    const remote = await loadFullUser(uid);
+    const remote=await loadFullUser(uid);
     if(remote){
-      const changed = applyRemoteData(remote);
-      if(changed){
-        toast('Dados puxados da nuvem ☁️','☁️');
-        renderAll();
-      }
+      const changed=applyRemoteData(remote);
+      if(changed){ toast('Dados da nuvem puxados ☁️','☁️'); renderCurrentPage(); }
     }
-  }catch(e){ console.warn("[pull]", e.message); }
+  }catch(e){}
 }
 
-// Eventos do core
+// Eventos
 window.addEventListener('vidaplus:xp', (e)=>{
-  const {amount, reason, leveledUp, curr} = e.detail;
+  const {amount, reason, leveledUp, curr}=e.detail;
   updateXPUI();
-  if(leveledUp) confettiLevel(curr), toast(`Nível ${curr.level} desbloqueado! • ${curr.name}`,'🎉');
+  if(leveledUp){ confettiLevel(curr); toast(`Nível ${curr.level} • ${curr.name} desbloqueado! Recompensa: ${curr.reward}`,'🎉'); }
   else if(reason) toast(`+${amount} XP • ${reason}`,'⚡');
   trySyncAll();
 });
 window.addEventListener('vidaplus:save', ()=>{
   clearTimeout(window._syncTimer);
-  window._syncTimer = setTimeout(()=> trySyncAll(), 900);
+  window._syncTimer=setTimeout(()=>trySyncAll(),800);
 });
-window.addEventListener('vidaplus:auth', (e)=>{
-  const user = e.detail.user;
-  const authOverlay = document.getElementById('overlayAuth');
+window.addEventListener('vidaplus:auth', async (e)=>{
+  const user=e.detail.user;
+  const authOverlay=document.getElementById('overlayAuth');
   if(user){
-    // logado
     setUid(user.uid);
-    state.profile.name = user.displayName || state.profile.name || user.email.split('@')[0];
-    state.profile.email = user.email;
-    state.profile.photo = user.photoURL || '';
-    state.user.name = state.profile.name;
+    // atualiza profile local com dados Auth
+    state.profile.email=user.email;
+    if(user.displayName && !state.profile.firstName){
+      const parts=user.displayName.split(' ');
+      state.profile.firstName=parts[0];
+      state.profile.lastName=parts.slice(1).join(' ');
+      state.profile.name=user.displayName;
+    }
+    if(user.photoURL) state.profile.photo=user.photoURL;
+    state.user.name=state.profile.firstName || state.profile.name || user.email.split('@')[0];
     saveState();
     if(authOverlay) authOverlay.classList.remove('open');
     updateHeader();
-    pullFromFirebase().then(()=>renderAll());
-    toast(`Bem-vindo, ${state.profile.name}!`,'👋');
+    await pullFromFirebase();
+    // verifica perfil incompleto (sem telefone ou sobrenome)
+    if(!state.profile.phone || !state.profile.lastName){
+      const cp=document.getElementById('overlayCompleteProfile');
+      if(cp){
+        document.getElementById('completeFirstName').value=state.profile.firstName||'';
+        document.getElementById('completeLastName').value=state.profile.lastName||'';
+        document.getElementById('completePhone').value=state.profile.phone||'';
+        document.getElementById('completeBirth').value=state.profile.birthDate||'';
+        document.getElementById('completeCurrency').value=state.profile.currency||state.settings.currency||'BRL';
+        cp.classList.add('open');
+      }
+    }
+    renderCurrentPage();
+    toast(`Bem-vindo, ${state.profile.firstName||state.user.name}! • ${state.settings.currency}`,'👋');
   }else{
-    // deslogado -> mostra login
     setUid('default_user');
     updateHeader();
     openAuthModal();
   }
 });
 
-// === AUTH UI ===
-export function openAuthModal(){
-  const el = document.getElementById('overlayAuth');
-  if(el) el.classList.add('open');
-}
+// AUTH
+export function openAuthModal(){ const el=document.getElementById('overlayAuth'); if(el) el.classList.add('open'); }
 export async function handleLogin(){
-  const email = document.getElementById('authEmail').value.trim();
-  const pass = document.getElementById('authPass').value;
-  if(!email||!pass){ toast('Preencha email e senha','⚠️'); return; }
-  try{
-    document.getElementById('authBtnLogin').textContent='Entrando...';
-    await loginEmail(email, pass);
-    toast('Login realizado!','✓');
-  }catch(e){
-    toast('Erro login: '+e.message,'⚠️');
-  }finally{
-    document.getElementById('authBtnLogin').textContent='Entrar';
-  }
+  const email=document.getElementById('authEmail').value.trim();
+  const pass=document.getElementById('authPass').value;
+  if(!email||!pass){ toast('Preencha email e senha • 100% PT-BR','⚠️'); return; }
+  try{ document.getElementById('authBtnLogin').textContent='Entrando...'; await fbLoginEmail(email,pass); toast('Login OK!','✓'); }catch(e){ toast('Erro login: '+ e.message,'⚠️'); }finally{ document.getElementById('authBtnLogin').textContent='Entrar'; }
 }
 export async function handleSignup(){
-  const email = document.getElementById('authEmail').value.trim();
-  const pass = document.getElementById('authPass').value;
-  const name = document.getElementById('authName').value.trim() || email.split('@')[0];
-  if(!email||!pass){ toast('Preencha email e senha','⚠️'); return; }
+  const firstName=document.getElementById('authFirstName').value.trim();
+  const lastName=document.getElementById('authLastName').value.trim();
+  const phone=document.getElementById('authPhone').value.trim();
+  const email=document.getElementById('authEmail').value.trim();
+  const pass=document.getElementById('authPass').value;
+  const currency=document.getElementById('authCurrency').value||'BRL';
+  const fullName=`${firstName} ${lastName}`.trim() || firstName || email.split('@')[0];
+  if(!firstName||!email||!pass){ toast('Nome, email e senha obrigatórios','⚠️'); return; }
+  if(pass.length<6){ toast('Senha mínimo 6 caracteres','⚠️'); return; }
   try{
     document.getElementById('authBtnSignup').textContent='Criando...';
-    await signupEmail(email, pass, name);
-    toast('Conta criada! Bem-vindo 👋','🎉');
-  }catch(e){
-    toast('Erro cadastro: '+e.message,'⚠️');
-  }finally{
-    document.getElementById('authBtnSignup').textContent='Criar conta';
-  }
+    await fbSignupEmail(email, pass, fullName, {phone, birthDate:'', currency});
+    // salva extras
+    state.profile.firstName=firstName;
+    state.profile.lastName=lastName;
+    state.profile.phone=phone;
+    state.profile.currency=currency;
+    state.settings.currency=currency;
+    saveState();
+    await trySyncAll();
+    toast('Conta criada com sucesso! 🎉','🎉');
+  }catch(e){ toast('Erro cadastro: '+e.message,'⚠️'); }finally{ document.getElementById('authBtnSignup').textContent='Criar conta completa'; }
 }
 export async function handleGoogleLogin(){
-  try{
-    document.getElementById('authBtnGoogle').textContent='Conectando Google...';
-    await loginGoogle();
-  }catch(e){
-    toast('Google login falhou: '+e.message,'⚠️');
-  }finally{
-    document.getElementById('authBtnGoogle').textContent='Continuar com Google';
-  }
+  try{ document.getElementById('authBtnGoogle').textContent='Conectando Google...'; await fbLoginGoogle(); }catch(e){ toast('Google falhou: '+e.message,'⚠️'); }finally{ document.getElementById('authBtnGoogle').textContent='Continuar com Google'; }
 }
-export async function handleLogout(){
-  if(!confirm('Sair da conta?')) return;
-  await logout();
-  toast('Você saiu','👋');
-  openAuthModal();
-}
+export async function handleLogout(){ if(!confirm('Sair da conta? Seu progresso está salvo no Firebase.')) return; await fbLogout(); toast('Saída realizada • Dados salvos','👋'); openAuthModal(); }
 export async function handleReset(){
-  const email = document.getElementById('authEmail').value.trim();
-  if(!email){ toast('Digite seu email para reset','⚠️'); return; }
-  try{
-    const { resetPassword } = await import('./firebase.js');
-    await resetPassword(email);
-    toast('Email de recuperação enviado!','📧');
-  }catch(e){ toast('Erro: '+e.message,'⚠️'); }
+  const email=document.getElementById('authEmail').value.trim();
+  if(!email){ toast('Digite seu email para resetar senha','⚠️'); return; }
+  try{ await resetPassword(email); toast('Email de recuperação enviado! Verifique spam','📧'); }catch(e){ toast('Erro: '+e.message,'⚠️'); }
 }
-
-// === NAV ===
-export function switchView(name){
-  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active', b.dataset.view===name));
-  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active', v.id===`view-${name}`));
-  renderAll();
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-export function toggleTheme(){
-  const ids = Object.keys(themes);
-  let idx = ids.indexOf(state.settings.theme);
-  idx = (idx+1)%ids.length;
-  const next = ids[idx];
-  if(themes[next].premium && !state.app.premium){
-    openPremium();
-    return;
-  }
-  applyTheme(next);
-}
-export function applyTheme(id){
-  const theme = themes[id] || themes.light;
-  state.settings.theme = theme.id;
-  state.app.theme = theme.id;
-  document.documentElement.setAttribute('data-theme', theme.id);
+export async function saveCompleteProfile(){
+  const firstName=document.getElementById('completeFirstName').value.trim();
+  const lastName=document.getElementById('completeLastName').value.trim();
+  const phone=document.getElementById('completePhone').value.trim();
+  const birthDate=document.getElementById('completeBirth').value;
+  const currency=document.getElementById('completeCurrency').value;
+  if(!firstName){ toast('Nome obrigatório','⚠️'); return; }
+  state.profile.firstName=firstName;
+  state.profile.lastName=lastName;
+  state.profile.phone=phone;
+  state.profile.birthDate=birthDate;
+  state.profile.currency=currency;
+  state.profile.name=`${firstName} ${lastName}`.trim();
+  state.settings.currency=currency;
+  state.user.name=state.profile.name;
   saveState();
-  trySyncAll();
-  toast(`Tema: ${theme.label}`, '◐');
+  const uid=getUid();
+  if(uid!=='default_user'){
+    await VidaFirebase.updateUserProfileData(uid, state.profile).catch(()=>{});
+    await trySyncAll();
+  }
+  document.getElementById('overlayCompleteProfile').classList.remove('open');
+  toast('Perfil completado e salvo no Firebase!','✓');
+  updateHeader(); renderCurrentPage();
+}
+export async function saveProfile(){
+  const firstName=document.getElementById('profileFirstName')?.value.trim()||'';
+  const lastName=document.getElementById('profileLastName')?.value.trim()||'';
+  const phone=document.getElementById('profilePhone')?.value.trim()||'';
+  const birth=document.getElementById('profileBirth')?.value||'';
+  const email=document.getElementById('profileEmail')?.value||'';
+  const photo=document.getElementById('profilePhoto')?.value.trim()||'';
+  const currency=document.getElementById('profileCurrency')?.value||'BRL';
+  const theme=document.getElementById('profileTheme')?.value||'light';
+  state.profile.firstName=firstName;
+  state.profile.lastName=lastName;
+  state.profile.phone=phone;
+  state.profile.birthDate=birth;
+  state.profile.photo=photo;
+  state.profile.currency=currency;
+  state.profile.name=`${firstName} ${lastName}`.trim()||state.profile.name;
+  state.settings.currency=currency;
+  state.settings.theme=theme;
+  state.app.theme=theme;
+  state.user.name=state.profile.name;
+  document.documentElement.setAttribute('data-theme', theme);
+  saveState();
+  const uid=getUid();
+  if(uid!=='default_user'){
+    try{ await VidaFirebase.updateUserProfileData(uid, state.profile); await trySyncAll(); toast('Perfil salvo no Firebase!','✓'); }catch(e){ toast('Erro ao salvar: '+e.message,'⚠️'); }
+  }else{ toast('Perfil salvo local (faça login para nuvem)','⚠️'); }
+  updateHeader();
+}
+export async function changePasswordProfile(){
+  const current=document.getElementById('currentPassword')?.value||'';
+  const ne=document.getElementById('newPassword')?.value||'';
+  if(!ne||ne.length<6){ toast('Nova senha mínimo 6','⚠️'); return; }
+  try{ await fbChangePassword(current, ne); toast('Senha alterada no Firebase!','✓'); document.getElementById('currentPassword').value=''; document.getElementById('newPassword').value=''; }catch(e){ toast('Erro senha: '+e.message,'⚠️'); }
+}
+export function changeCurrency(code){
+  state.settings.currency=code;
+  state.profile.currency=code;
+  saveState(); trySyncAll();
+  const chip=document.getElementById('currencyLabelTop'); if(chip) chip.textContent=code;
+  const badge=document.getElementById('currencyBadge'); if(badge) badge.textContent=code;
+  const sel=document.getElementById('currencySelect'); if(sel) sel.value=code;
+  const txCurr=document.getElementById('txCurrency'); if(txCurr) txCurr.textContent=code;
+  renderCurrentPage();
+  toast(`Moeda alterada para ${code} • ${currencies[code]?.label||''}`,'💱');
+}
+export function previewCurrency(code){
+  const el=document.getElementById('profileCurrency'); if(el) el.value=code;
+  // preview apenas visual, salvar depois
+}
+function applyThemePreview(id){
+  if(!id) return;
+  const t=themes[id];
+  if(!t){ document.documentElement.setAttribute('data-theme','light'); return; }
+  if(t.premium && !state.app.premium && !VidaFirebase.isCurrentUserAdmin()){ openPremium(); return; }
+  document.documentElement.setAttribute('data-theme', id);
+  state.settings.theme=id; state.app.theme=id; saveState(); trySyncAll();
 }
 
-// === RENDER ===
-export function renderAll(){
+// ROUTER PAGES
+export async function loadPage(pageName){
+  // normalize: id=humor.html, page=humor, etc
+  let name = pageName.replace('.html','').toLowerCase();
+  const allowed = ['dashboard','financeiro','habitos','humor','metas','relatorios','conquistas','perfil'];
+  if(!allowed.includes(name)) name='dashboard';
+  currentPage=name;
+
+  // atualiza nav active
+  document.querySelectorAll('.nav button').forEach(b=>{ b.classList.toggle('active', b.dataset.page===name); });
+
+  // atualiza URL sem reload: index.html?page=xxx (inteligente)
+  const url = new URL(window.location);
+  url.searchParams.set('page', name);
+  window.history.pushState({}, '', url);
+
+  // loader
+  const container=document.getElementById('pageContainer');
+  container.innerHTML=`<div class="page-loader"><div style="font-size:32px">◍</div><b>Carregando ${name}...</b><p style="font-size:12px;color:var(--muted);margin-top:4px">Módulo separado • Firebase vidamaisai • 100% PT-BR</p></div>`;
+
+  try{
+    const res = await fetch(`pages/${name}.html?embedded=true`);
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    let html = await res.text();
+    // Se vier full HTML, extrai body inner
+    const match = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+    if(match) html = match[1];
+    // Também remove scripts de redirect (que já não executam via innerHTML)
+    html = html.replace(/<script[^>]*>[\s\S]*?location\.replace[\s\S]*?<\/script>/gi, '');
+
+    container.innerHTML = html;
+    // após injetar, renderiza dados da página
+    setTimeout(()=>{ renderCurrentPage(); }, 50);
+  }catch(e){
+    container.innerHTML=`<div class="card" style="text-align:center;padding:30px"><b>Erro ao carregar página ${name}</b><p style="color:var(--muted);font-size:13px;margin-top:6px">${e.message}</p><button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="loadPage('${name}')">Tentar novamente</button></div>`;
+    console.error("[loadPage]", e);
+  }
+}
+
+function renderCurrentPage(){
+  // chama renders conforme página atual
   updateHeader();
   updateXPUI();
-  renderDashboard();
-  renderTx();
-  renderHabits();
-  renderMood();
-  renderGoals();
-  renderReports();
-  renderAchievements();
-}
-export function updateHeader(){
-  const nameEl = document.getElementById('userName');
-  if(nameEl) nameEl.textContent = state.user.name || state.profile.name || 'Wesley';
-  const avatar = document.getElementById('avatar');
-  if(avatar){
-    const photo = state.profile.photo;
-    if(photo){
-      avatar.innerHTML = `<img src="${photo}" style="width:100%;height:100%;object-fit:cover;border-radius:12px">`;
-      avatar.style.background='transparent';
-    }else{
-      avatar.textContent = (state.user.name||'W').charAt(0).toUpperCase();
-      avatar.style.background='';
-    }
-  }
-  const emailChip = document.getElementById('userEmailChip');
-  if(emailChip) emailChip.textContent = state.profile.email || 'offline';
-  const todayDate = document.getElementById('todayDate');
-  if(todayDate) todayDate.textContent = new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
-  const habitsDate = document.getElementById('habitsDate');
-  if(habitsDate) habitsDate.textContent = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
-  calcStreak();
-  const streakLabel = document.getElementById('streakLabel');
-  if(streakLabel) streakLabel.textContent = `Streak ${state.app.streak} dias`;
-  const syncStatus = document.getElementById('syncStatus');
-  if(syncStatus){
-    const uid = getUid();
-    syncStatus.textContent = uid==='default_user' ? '● Offline (faça login)' : `● UID: ${uid.slice(0,8)}… • Firebase`;
-  }
-}
-export function updateXPUI(){
-  const xp = state.user.xp||0;
-  const lvl = getLevel(xp);
-  const next = getNextLevel(xp);
-  const pct = next.xp===lvl.xp ? 100 : Math.min(100, ((xp-lvl.xp)/(next.xp-lvl.xp))*100);
-  const setText = (id, txt)=>{ const el=document.getElementById(id); if(el) el.textContent=txt; };
-  setText('levelLabel', `Nv ${lvl.level}`);
-  setText('xpLabel', `${xp} XP`);
-  setText('xpFrom', `${lvl.xp} XP`);
-  setText('xpTo', `${next.xp} XP`);
-  setText('xpNext', `${next.xp-xp} XP`);
-  const xpBar = document.getElementById('xpBar'); if(xpBar) xpBar.style.width=pct+'%';
-  setText('achLevel', `Nv ${lvl.level} • ${lvl.name}`);
-  setText('achXp', `${xp} XP • ${next.xp-xp} para o próximo`);
-  const achBar = document.getElementById('achBar'); if(achBar) achBar.style.width=pct+'%';
+  // tenta renderizar tudo, se elementos não existirem, ignora
+  try{ renderDashboard(); }catch{}
+  try{ renderTx(); }catch{}
+  try{ renderHabits(); }catch{}
+  try{ renderMood(); }catch{}
+  try{ renderGoals(); }catch{}
+  try{ renderReports(); }catch{}
+  try{ renderAchievements(); }catch{}
+  try{ renderPerfil(); }catch{}
 }
 
-// Dashboard
+function renderPerfil(){
+  const setVal = (id, val)=>{ const el=document.getElementById(id); if(el) el.value=val||''; };
+  const setText = (id, txt)=>{ const el=document.getElementById(id); if(el) el.textContent=txt||''; };
+  setVal('profileFirstName', state.profile.firstName);
+  setVal('profileLastName', state.profile.lastName);
+  setVal('profilePhone', state.profile.phone);
+  setVal('profileBirth', state.profile.birthDate);
+  setVal('profileEmail', state.profile.email);
+  setVal('profilePhoto', state.profile.photo);
+  setVal('profileCurrency', state.settings.currency);
+  setVal('profileTheme', state.settings.theme);
+  setText('profileUid', getUid());
+  setText('uidShort', getUid().slice(0,8));
+  setText('profileJoined', state.user.joined ? new Date(state.user.joined).toLocaleDateString('pt-BR') : '');
+  const lvl=getLevel(state.user.xp||0);
+  const prog=getLevelProgress(state.user.xp||0);
+  setText('perfilLevel', `Nv ${lvl.level} • ${lvl.name}`);
+  setText('perfilXp', `${state.user.xp||0} XP / ${prog.next.xp} XP • ${lvl.reward}`);
+  const bar=document.getElementById('perfilBar'); if(bar) bar.style.width=prog.pct+'%';
+  const premiumBadge=document.getElementById('perfilPremium'); if(premiumBadge){ premiumBadge.textContent= state.app.premium ? '★ PREMIUM' : 'FREE'; premiumBadge.style.background= state.app.premium ? '#DCFCE7' : 'var(--bg-2)'; premiumBadge.style.color= state.app.premium ? '#166534' : 'var(--muted)'; }
+  const streakEl=document.getElementById('perfilStreak'); if(streakEl) streakEl.textContent=`Streak ${state.app.streak||0} dias`;
+}
+
+// RENDER FUNCTIONS (mantém compat com pages)
+export function updateHeader(){
+  const nameEl=document.getElementById('userName'); if(nameEl) nameEl.textContent=state.profile.firstName || state.user.name || 'Usuário';
+  const sidebarName=document.getElementById('sidebarName'); if(sidebarName) sidebarName.textContent= state.profile.firstName ? `Olá, ${state.profile.firstName}` : 'Sua evolução';
+  const avatar=document.getElementById('avatar'); if(avatar){
+    const photo=state.profile.photo;
+    if(photo){ avatar.innerHTML=`<img src="${photo}" style="width:100%;height:100%;object-fit:cover;border-radius:12px">`; avatar.style.background='transparent'; }
+    else{ avatar.textContent=(state.profile.firstName||state.user.name||'U').charAt(0).toUpperCase(); avatar.style.background=''; }
+  }
+  const emailChip=document.getElementById('userEmailChip'); if(emailChip) emailChip.textContent= state.profile.email || 'offline • faça login';
+  const currTop=document.getElementById('currencyLabelTop'); if(currTop) currTop.textContent=state.settings.currency||'BRL';
+  const currBadge=document.getElementById('currencyBadge'); if(currBadge) currBadge.textContent=state.settings.currency||'BRL';
+  const currChip=document.getElementById('currencyChip'); // placeholder
+  const todayDate=document.getElementById('todayDate'); if(todayDate) todayDate.textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+  const habitsDate=document.getElementById('habitsDate'); if(habitsDate) habitsDate.textContent=new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+  calcStreak();
+  const streakLabel=document.getElementById('streakLabel'); if(streakLabel) streakLabel.textContent=`Streak ${state.app.streak} dias`;
+  const syncStatus=document.getElementById('syncStatus'); if(syncStatus){ const uid=getUid(); syncStatus.textContent= uid==='default_user' ? '● Offline (login requerido)' : `● Firebase ${state.settings.currency} • UID:${uid.slice(0,6)}`; }
+  const premiumTag=document.getElementById('premiumTag'); if(premiumTag){ premiumTag.textContent= state.app.premium ? '★ PREMIUM • vidamaisai' : 'FREE • vidamaisai'; }
+}
+export function updateXPUI(){
+  const xp=state.user.xp||0;
+  const prog=getLevelProgress(xp);
+  const set=(id,txt)=>{const el=document.getElementById(id); if(el) el.textContent=txt;};
+  set('levelLabel', `Nv ${prog.curr.level}`); set('xpLabel', `${xp} XP`); set('xpFrom', `${prog.curr.xp} XP`); set('xpTo', `${prog.next.xp} XP`); set('xpNext', `${prog.next.xp-xp} XP`);
+  const xpBar=document.getElementById('xpBar'); if(xpBar) xpBar.style.width=prog.pct+'%';
+  set('achLevel', `Nv ${prog.curr.level} • ${prog.curr.name}`); set('achXp', `${xp} XP • ${prog.next.xp-xp} para Nv ${prog.next.level} • ${prog.next.reward}`);
+  const achBar=document.getElementById('achBar'); if(achBar) achBar.style.width=prog.pct+'%';
+  const lvlIcon=document.getElementById('levelIcon'); if(lvlIcon) lvlIcon.textContent=prog.curr.icon;
+  const lvlReward=document.getElementById('levelReward'); if(lvlReward) lvlReward.textContent=`Próxima: ${prog.next.reward}`;
+  const lvlRewardDetail=document.getElementById('levelRewardDetail'); if(lvlRewardDetail) lvlRewardDetail.textContent=`Recompensa atual: ${prog.curr.reward} • Próxima: ${prog.next.reward}`;
+  // trilha
+  const trail=document.getElementById('levelTrail'); if(trail){
+    trail.innerHTML='';
+    levelTable.forEach(l=>{
+      const isCurrent = l.level===prog.curr.level;
+      const isPast = l.xp <= xp;
+      const div=document.createElement('div'); div.style.cssText=`display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;border:1px solid ${isCurrent? 'var(--primary)' : 'var(--border)'};background:${isPast? 'var(--bg-2)' : 'var(--card)'};${isCurrent?'font-weight:700':''}`;
+      div.innerHTML=`<span style="font-size:16px">${l.icon}</span><div style="flex:1"><b style="font-size:12px">${l.level}. ${l.name} ${isCurrent?'• VOCÊ':''}</b><br><small style="font-size:10px;color:var(--muted)">${l.xp} XP • ${l.reward}</small></div><span style="font-size:10px" class="badge ${isPast?'badge-up':''}">${isPast?'FEITO': l.xp-xp +' XP'}</span>`;
+      trail.appendChild(div);
+    });
+  }
+  const proj50=document.getElementById('proj50'); if(proj50){
+    const avgXpPerDay = 180; // média estimada
+    const remaining = 78000 - xp;
+    const days = Math.max(0, Math.ceil(remaining/avgXpPerDay));
+    proj50.textContent = days>0 ? `~${days} dias (${(days/30).toFixed(1)} meses)` : 'Completo!';
+  }
+  const daysUsing=document.getElementById('daysUsing'); if(daysUsing){
+    const joined = state.user.joined ? new Date(state.user.joined) : new Date();
+    const diff = Math.floor((Date.now()-joined)/86400000);
+    daysUsing.textContent = `${diff} dias`;
+  }
+}
+
+// Dashboard render (usa fmtMoney com moeda)
 export function renderDashboard(){
-  const total = state.tx.reduce((s,t)=> s + (t.type==='income'? t.amount : -t.amount),0);
-  const balEl = document.getElementById('balanceValue'); if(balEl) balEl.textContent=fmtBRL(total);
-  const monthTx = state.tx.filter(t=> new Date(t.date).getMonth()===new Date().getMonth());
-  const balSub = document.getElementById('balanceSub'); if(balSub) balSub.textContent=`${monthTx.length} transações no mês`;
-  const prevMonth = state.tx.filter(t=>{const d=new Date(t.date);return d.getMonth()===new Date().getMonth()-1}).reduce((s,t)=>s+(t.type==='income'?t.amount:-t.amount),0);
-  const trend = prevMonth? ((total-prevMonth)/Math.abs(prevMonth)*100):0;
-  const trendEl = document.getElementById('balanceTrend'); if(trendEl){ trendEl.textContent=`${trend>=0?'+':''}${trend.toFixed(0)}%`; trendEl.className=`badge ${trend>=0?'badge-up':'badge-down'}`; }
-  const today = todayStr();
-  let done=0; state.habits.forEach(h=>{ if(h.history && h.history[today]) done++; });
-  const setText=(id,t)=>{const el=document.getElementById(id); if(el) el.textContent=t;};
-  setText('habitsDone', done); setText('habitsTotal', state.habits.length);
-  const hp = document.getElementById('habitsProgress'); if(hp) hp.style.width= (state.habits.length? (done/state.habits.length*100):0)+'%';
-  setText('todayProgressPct', Math.round((state.habits.length? done/state.habits.length:0)*100)+'%');
-  const mot = document.getElementById('habitsMotivation'); if(mot) mot.textContent = done===state.habits.length?'Dia perfeito! 🎉': done>=2?'Seguindo bem! Continue':'Vamos começar? +20 XP por hábito';
-  const todMood = state.moods.find(m=>m.date===today);
-  if(todMood){ const map=moodMap[todMood.level]; setText('moodLabel', map.label); const mi=document.getElementById('moodIcon'); if(mi) mi.textContent=map.emoji; setText('moodSub', todMood.note||'Registrado hoje'); }
-  else { setText('moodLabel','--'); setText('moodSub','Nenhum registro hoje'); const mi=document.getElementById('moodIcon'); if(mi) mi.textContent='🙂'; }
+  const total=state.tx.reduce((s,t)=> s + (t.type==='income'? t.amount : -t.amount),0);
+  const balEl=document.getElementById('balanceValue'); if(balEl) balEl.textContent=fmtMoney(total, state.settings.currency);
+  const monthTx=state.tx.filter(t=> new Date(t.date).getMonth()===new Date().getMonth());
+  const balSub=document.getElementById('balanceSub'); if(balSub) balSub.textContent=`${monthTx.length} transações no mês • ${state.settings.currency}`;
+  const prevMonth=state.tx.filter(t=>{const d=new Date(t.date);return d.getMonth()===new Date().getMonth()-1}).reduce((s,t)=>s+(t.type==='income'?t.amount:-t.amount),0);
+  const trend=prevMonth? ((total-prevMonth)/Math.abs(prevMonth)*100):0;
+  const trendEl=document.getElementById('balanceTrend'); if(trendEl){ trendEl.textContent=`${trend>=0?'+':''}${trend.toFixed(0)}%`; trendEl.className=`badge ${trend>=0?'badge-up':'badge-down'}`; }
+  const today=todayStr(); let done=0; state.habits.forEach(h=>{ if(h.history && h.history[today]) done++; });
+  const set=(id,t)=>{const el=document.getElementById(id); if(el) el.textContent=t;};
+  set('habitsDone',done); set('habitsTotal',state.habits.length);
+  const hp=document.getElementById('habitsProgress'); if(hp) hp.style.width= (state.habits.length? (done/state.habits.length*100):0)+'%';
+  set('todayProgressPct', Math.round((state.habits.length? done/state.habits.length:0)*100)+'%');
+  const mot=document.getElementById('habitsMotivation'); if(mot) mot.textContent = done===state.habits.length?'Dia perfeito! 🎉': done>=2?'Seguindo bem! Continue':'Vamos começar? +20 XP por hábito';
+  const todMood=state.moods.find(m=>m.date===today);
+  if(todMood){ const map=moodMap[todMood.level]; set('moodLabel', map.label); const mi=document.getElementById('moodIcon'); if(mi) mi.textContent=map.emoji; set('moodSub', todMood.note||'Registrado hoje'); }
+  else{ set('moodLabel','--'); set('moodSub','Nenhum registro hoje'); const mi=document.getElementById('moodIcon'); if(mi) mi.textContent='🙂'; }
   const dots=document.getElementById('moodWeekDots'); if(dots){ dots.innerHTML=''; for(let i=6;i>=0;i--){ const d=new Date(Date.now()-i*86400000).toISOString().slice(0,10); const m=state.moods.find(x=>x.date===d); const dot=document.createElement('div'); dot.style.cssText=`width:22px;height:22px;border-radius:7px;display:grid;place-items:center;font-size:12px;background:${m?moodMap[m.level].color:'var(--bg-2)'};color:${m?'white':'var(--muted-2)'}`; dot.textContent=m?moodMap[m.level].emoji:'·'; dots.appendChild(dot); } }
-  const list=document.getElementById('todayHabits'); if(list){ list.innerHTML=''; state.habits.slice(0,5).forEach(h=>{ const isDone=!!(h.history && h.history[today]); const el=document.createElement('div'); el.className='habit'; el.innerHTML=`<div class="habit-check ${isDone?'done':''}" onclick="toggleHabit('${h.id}')">${isDone?'✓':h.icon}</div><div class="habit-meta"><b>${h.name}</b><span>${isDone?'Feito hoje • +20 XP':`${h.goal}x hoje`} • ${h.streak} dias streak</span></div><span class="streak">🔥 ${h.streak}</span>`; list.appendChild(el); }); }
-  const aiCont=document.getElementById('aiInsights'); if(aiCont){ aiCont.innerHTML=''; generateInsights().slice(0,3).forEach(ins=>{ const div=document.createElement('div'); div.className='insight'; div.innerHTML=`<div class="i-ico" style="background:${ins.color}">${ins.ico}</div><div><b>${ins.title}</b><p>${ins.text}</p></div>`; aiCont.appendChild(div); }); }
+  const list=document.getElementById('todayHabits'); if(list){ list.innerHTML=''; state.habits.slice(0,5).forEach(h=>{ const isDone=!!(h.history && h.history[today]); const el=document.createElement('div'); el.className='habit'; el.innerHTML=`<div class="habit-check ${isDone?'done':''}" onclick="toggleHabit('${h.id}')">${isDone?'✓':h.icon}</div><div class="habit-meta"><b>${h.name}</b><span>${isDone?'Feito hoje • +20 XP':`${h.goal}x hoje`} • ${h.streak}d</span></div><span class="streak">🔥 ${h.streak}</span>`; list.appendChild(el); }); }
+  const aiCont=document.getElementById('aiInsights'); if(aiCont){ aiCont.innerHTML=''; const isPrem=state.app.premium; generateInsights(isPrem).slice(0, isPrem? 5:3).forEach(ins=>{ const div=document.createElement('div'); div.className='insight'; if(ins.locked) div.style.opacity='.7'; div.innerHTML=`<div class="i-ico" style="background:${ins.color}">${ins.ico}</div><div><b>${ins.title} ${ins.locked?'🔒':''}</b><p>${ins.text}</p></div>`; aiCont.appendChild(div); }); }
+  const aiBadge=document.getElementById('aiBadge'); if(aiBadge){ aiBadge.textContent= state.app.premium ? 'PREMIUM 7/7' : 'FREE 3/7 • Premium total'; }
   drawMiniBalance(); drawWeeklyFlow(); drawCategoryDonut();
 }
 function drawMiniBalance(){
@@ -322,79 +452,82 @@ function drawWeeklyFlow(){
 }
 function drawCategoryDonut(){
   const canvas=document.getElementById('categoryDonut'); if(!canvas) return; const ctx=canvas.getContext('2d'); const dpr=window.devicePixelRatio||1; const rect=canvas.getBoundingClientRect(); canvas.width=rect.width*dpr; canvas.height=rect.height*dpr; ctx.scale(dpr,dpr); const w=rect.width,h=rect.height; const cx=w/2,cy=h/2, r=Math.min(w,h)/2-10; ctx.clearRect(0,0,w,h);
-  const expByCat=state.tx.filter(t=>t.type==='expense').reduce((a,t)=>{a[t.category]=(a[t.category]||0)+t.amount;return a},{}); let entries=Object.entries(expByCat).sort((a,b)=>b[1]-a[1]).slice(0,5); if(!entries.length) entries=[['Sem dados',1]]; const total=entries.reduce((s,e)=>s+e[1],0); const colors=['#123C7A','#6366F1','#06B6D4','#10B981','#F59E0B']; let ang=-Math.PI/2; entries.forEach(([cat,val],i)=>{ const slice=(val/total)*Math.PI*2; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,ang,ang+slice); ctx.closePath(); ctx.fillStyle=colors[i%colors.length]; ctx.fill(); ang+=slice; }); ctx.beginPath(); ctx.arc(cx,cy,r*0.6,0,Math.PI*2); ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--card').trim()||'#fff'; ctx.fill(); ctx.fillStyle='#0F172A'; ctx.textAlign='center'; ctx.font='800 18px Fraunces'; ctx.fillText(entries.length? fmtBRL(total):'R$ 0',cx,cy+4);
+  const expByCat=state.tx.filter(t=>t.type==='expense').reduce((a,t)=>{a[t.category]=(a[t.category]||0)+t.amount;return a},{}); let entries=Object.entries(expByCat).sort((a,b)=>b[1]-a[1]).slice(0,5); if(!entries.length) entries=[['Sem dados',1]]; const total=entries.reduce((s,e)=>s+e[1],0); const colors=['#123C7A','#6366F1','#06B6D4','#10B981','#F59E0B']; let ang=-Math.PI/2; entries.forEach(([cat,val],i)=>{ const slice=(val/total)*Math.PI*2; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,ang,ang+slice); ctx.closePath(); ctx.fillStyle=colors[i%colors.length]; ctx.fill(); ang+=slice; }); ctx.beginPath(); ctx.arc(cx,cy,r*0.6,0,Math.PI*2); ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--card').trim()||'#fff'; ctx.fill(); ctx.fillStyle='#0F172A'; ctx.textAlign='center'; ctx.font='800 16px Fraunces'; ctx.fillText(entries.length? fmtMoney(total, state.settings.currency):'R$ 0',cx,cy+4);
 }
 
 // Finance
 export function renderTx(){
   const catCont=document.getElementById('txCategories'); if(catCont){ catCont.innerHTML=''; const list=defaultCategories[state.app.txType||'expense']; list.forEach(c=>{ const b=document.createElement('button'); b.className='pill'; b.textContent=c; b.onclick=()=>{ document.querySelectorAll('#txCategories .pill').forEach(x=>x.classList.remove('active')); b.classList.add('active'); document.getElementById('txCategoryCustom').value=c; }; catCont.appendChild(b); }); }
-  const filter=state.app.txFilter||'all'; const searchEl=document.getElementById('txSearch'); const search=searchEl? searchEl.value.toLowerCase():''; let filtered=[...state.tx].sort((a,b)=> new Date(b.date)-new Date(a.date)); if(filter!=='all') filtered=filtered.filter(t=>t.type===filter); if(search) filtered=filtered.filter(t=>t.category.toLowerCase().includes(search)||(t.desc||'').toLowerCase().includes(search)); const cont=document.getElementById('txList'); if(!cont) return; cont.innerHTML=''; if(!filtered.length){ cont.innerHTML='<p style="color:var(--muted);font-size:13px;padding:18px;text-align:center">Nenhuma transação</p>'; } filtered.forEach(t=>{ const div=document.createElement('div'); div.className='tx'; const isInc=t.type==='income'; div.innerHTML=`<div class="tx-ico" style="background:${isInc?'#DCFCE7':'#FEE2E2'}">${isInc?'↑':'↓'}</div><div><b>${t.desc||t.category}</b><br><span>${t.category} • ${fmtDate(t.date)}</span></div><div class="tx-amt" style="color:${isInc?'var(--emerald)':'var(--rose)'}">${isInc?'+':''}${fmtBRL(t.amount)}</div>`; cont.appendChild(div); });
+  const filter=state.app.txFilter||'all'; const searchEl=document.getElementById('txSearch'); const search=searchEl? searchEl.value.toLowerCase():''; let filtered=[...state.tx].sort((a,b)=> new Date(b.date)-new Date(a.date)); if(filter!=='all') filtered=filtered.filter(t=>t.type===filter); if(search) filtered=filtered.filter(t=>t.category.toLowerCase().includes(search)||(t.desc||'').toLowerCase().includes(search)); const cont=document.getElementById('txList'); if(!cont) return; cont.innerHTML=''; if(!filtered.length){ cont.innerHTML='<p style="color:var(--muted);font-size:13px;padding:18px;text-align:center">Nenhuma transação</p>'; } filtered.forEach(t=>{ const div=document.createElement('div'); div.className='tx'; const isInc=t.type==='income'; div.innerHTML=`<div class="tx-ico" style="background:${isInc?'#DCFCE7':'#FEE2E2'}">${isInc?'↑':'↓'}</div><div><b>${t.desc||t.category}</b><br><span>${t.category} • ${fmtDate(t.date)}</span></div><div class="tx-amt" style="color:${isInc?'var(--emerald)':'var(--rose)'}">${isInc?'+':''}${fmtMoney(t.amount, state.settings.currency)}</div>`; cont.appendChild(div); });
   const monthInc=state.tx.filter(t=>t.type==='income' && new Date(t.date).getMonth()===new Date().getMonth()).reduce((s,t)=>s+t.amount,0); const monthExp=state.tx.filter(t=>t.type==='expense' && new Date(t.date).getMonth()===new Date().getMonth()).reduce((s,t)=>s+t.amount,0);
-  const set=(id,txt)=>{const el=document.getElementById(id); if(el) el.textContent=txt;}; set('incomeMonth', fmtBRL(monthInc)); set('expenseMonth', fmtBRL(monthExp)); set('savingMonth', fmtBRL(monthInc-monthExp)); set('savingPct', monthInc? Math.round(((monthInc-monthExp)/monthInc)*100)+'%':'0%');
-  const topExp = Object.entries(state.tx.filter(t=>t.type==='expense').reduce((a,t)=>{a[t.category]=(a[t.category]||0)+t.amount;return a},{})).sort((a,b)=>b[1]-a[1])[0]; if(topExp){ const ti=document.getElementById('finInsightTitle'); if(ti) ti.textContent=`Você gasta mais com ${topExp[0]}`; const te=document.getElementById('finInsightText'); if(te) te.textContent=`${fmtBRL(topExp[1])} acumulados. Limite sugerido ${fmtBRL(topExp[1]*0.8)}.`; }
+  const set=(id,txt)=>{const el=document.getElementById(id); if(el) el.textContent=txt;}; set('incomeMonth', fmtMoney(monthInc, state.settings.currency)); set('expenseMonth', fmtMoney(monthExp, state.settings.currency)); set('savingMonth', fmtMoney(monthInc-monthExp, state.settings.currency)); set('savingPct', monthExp? Math.round(((monthInc-monthExp)/monthInc)*100)+'%':'0%');
+  set('currencyLabel', state.settings.currency); const currSel=document.getElementById('currencySelect'); if(currSel) currSel.value=state.settings.currency;
+  const topExp = Object.entries(state.tx.filter(t=>t.type==='expense').reduce((a,t)=>{a[t.category]=(a[t.category]||0)+t.amount;return a},{})).sort((a,b)=>b[1]-a[1])[0]; if(topExp){ const ti=document.getElementById('finInsightTitle'); if(ti) ti.textContent=`Maior gasto: ${topExp[0]}`; const te=document.getElementById('finInsightText'); if(te) te.textContent=`${fmtMoney(topExp[1], state.settings.currency)} acumulado. Limite ${fmtMoney(topExp[1]*0.8, state.settings.currency)}.`; }
   drawFinCategory(); drawFinLine();
 }
-function drawFinCategory(){ const canvas=document.getElementById('finCategory'); if(!canvas) return; const ctx=canvas.getContext('2d'); const dpr=window.devicePixelRatio||1; const rect=canvas.getBoundingClientRect(); canvas.width=rect.width*dpr; canvas.height=rect.height*dpr; ctx.scale(dpr,dpr); const w=rect.width,h=rect.height; const cx=w/2,cy=h/2-10, r=Math.min(w,h)/2-16; ctx.clearRect(0,0,w,h); const expByCat=state.tx.filter(t=>t.type==='expense' && new Date(t.date).getMonth()===new Date().getMonth()).reduce((a,t)=>{a[t.category]=(a[t.category]||0)+t.amount;return a},{}); let entries=Object.entries(expByCat).sort((a,b)=>b[1]-a[1]); if(!entries.length) entries=[['Sem dados',1]]; const colors=['#123C7A','#6366F1','#06B6D4','#10B981','#F59E0B','#F43F5E','#8B5CF6']; let ang=-Math.PI/2; entries.forEach(([cat,val],i)=>{ const slice=(val/Object.values(expByCat).reduce((s,v)=>s+v,0)||1)*Math.PI*2; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,ang,ang+slice); ctx.closePath(); ctx.fillStyle=colors[i%colors.length]; ctx.fill(); ang+=slice; }); ctx.beginPath(); ctx.arc(cx,cy,r*0.58,0,Math.PI*2); ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--card').trim()||'#fff'; ctx.fill(); }
+function drawFinCategory(){ const canvas=document.getElementById('finCategory'); if(!canvas) return; const ctx=canvas.getContext('2d'); const dpr=window.devicePixelRatio||1; const rect=canvas.getBoundingClientRect(); canvas.width=rect.width*dpr; canvas.height=rect.height*dpr; ctx.scale(dpr,dpr); const w=rect.width,h=rect.height; const cx=w/2,cy=h/2-10, r=Math.min(w,h)/2-16; ctx.clearRect(0,0,w,h); const expByCat=state.tx.filter(t=>t.type==='expense' && new Date(t.date).getMonth()===new Date().getMonth()).reduce((a,t)=>{a[t.category]=(a[t.category]||0)+t.amount;return a},{}); let entries=Object.entries(expByCat).sort((a,b)=>b[1]-a[1]); if(!entries.length) entries=[['Sem dados',1]]; const total=entries.reduce((s,e)=>s+e[1],0); const colors=['#123C7A','#6366F1','#06B6D4','#10B981','#F59E0B','#F43F5E','#8B5CF6']; let ang=-Math.PI/2; entries.forEach(([cat,val],i)=>{ const slice=(val/total)*Math.PI*2; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,ang,ang+slice); ctx.closePath(); ctx.fillStyle=colors[i%colors.length]; ctx.fill(); ang+=slice; }); ctx.beginPath(); ctx.arc(cx,cy,r*0.58,0,Math.PI*2); ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--card').trim()||'#fff'; ctx.fill(); }
 function drawFinLine(){ const canvas=document.getElementById('finLine'); if(!canvas) return; const ctx=canvas.getContext('2d'); const dpr=window.devicePixelRatio||1; const rect=canvas.getBoundingClientRect(); canvas.width=rect.width*dpr; canvas.height=rect.height*dpr; ctx.scale(dpr,dpr); const w=rect.width,h=rect.height; ctx.clearRect(0,0,w,h); const days=[]; let bal=0; const sorted=[...state.tx].sort((a,b)=> new Date(a.date)-new Date(b.date)); for(let i=29;i>=0;i--){ const d=new Date(Date.now()-i*86400000).toISOString().slice(0,10); const dayTx=sorted.filter(t=>t.date===d); const net=dayTx.reduce((s,t)=> s + (t.type==='income'?t.amount:-t.amount),0); bal+=net; days.push(bal);} if(days.length<2) return; const min=Math.min(...days),max=Math.max(...days); ctx.beginPath(); ctx.strokeStyle='#123C7A'; ctx.lineWidth=2.5; days.forEach((v,i)=>{ const x=(i/(days.length-1))*w; const y=h - ((v-min)/(max-min||1))* (h-20) -10; if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); }); ctx.stroke(); }
 export function setTxType(type,el){ state.app.txType=type; document.querySelectorAll('#overlayTx .pill[data-type]').forEach(b=>b.classList.remove('active')); el.classList.add('active'); saveState(); renderTx(); }
 export function filterTx(type,el){ state.app.txFilter=type; document.querySelectorAll('[data-filter]').forEach(b=>b.classList.remove('active')); el.classList.add('active'); renderTx(); }
-export function openTxModal(){ const d=document.getElementById('txDate'); if(d) d.value=todayStr(); const a=document.getElementById('txAmount'); if(a) a.value=''; const de=document.getElementById('txDesc'); if(de) de.value=''; const cc=document.getElementById('txCategoryCustom'); if(cc) cc.value=''; renderTx(); document.getElementById('overlayTx').classList.add('open'); }
+export function openTxModal(){ const d=document.getElementById('txDate'); if(d) d.value=todayStr(); const a=document.getElementById('txAmount'); if(a) a.value=''; const de=document.getElementById('txDesc'); if(de) de.value=''; const cc=document.getElementById('txCategoryCustom'); if(cc) cc.value=''; renderTx(); document.getElementById('overlayTx').classList.add('open'); const tc=document.getElementById('txCurrency'); if(tc) tc.textContent=state.settings.currency; }
 export function saveTx(){
   const amount=parseFloat(document.getElementById('txAmount').value); if(!amount||amount<=0){ toast('Valor inválido','⚠️'); return; }
   const cat=document.getElementById('txCategoryCustom').value || (defaultCategories[state.app.txType][0]); const date=document.getElementById('txDate').value || todayStr(); const desc=document.getElementById('txDesc').value;
   state.tx.push({id:'t_'+Date.now(),type:state.app.txType||'expense',amount,category:cat,date,desc:desc||cat,createdAt:new Date().toISOString()});
-  saveState(); closeModal('overlayTx'); addXP(10,'Transação registrada'); renderAll(); toast('Transação salva e enviada ao Firebase!','💰'); trySyncAll();
+  saveState(); closeModal('overlayTx'); addXP(10,'Transação'); renderCurrentPage(); toast(`Transação ${fmtMoney(amount, state.settings.currency)} salva • Firebase`,'💰'); trySyncAll();
 }
 
 // Habits
 export function renderHabits(){
   const lib=document.getElementById('habitsLibrary'); if(lib){ lib.innerHTML=''; state.habits.forEach(h=>{ const today=todayStr(); const done=!!(h.history && h.history[today]); const el=document.createElement('div'); el.className='habit'; el.innerHTML=`<div class="habit-check ${done?'done':''}" style="${done?`background:${h.color};border-color:${h.color}`:`border-color:${h.color}40;color:${h.color}`}" onclick="toggleHabit('${h.id}')">${done?'✓':h.icon}</div><div class="habit-meta"><b>${h.name}</b><span>Meta: ${h.goal}x/dia • Streak ${h.streak} dias</span></div><div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm" onclick="editHabit('${h.id}')">Editar</button><button class="btn btn-ghost btn-sm" onclick="deleteHabit('${h.id}')">✕</button></div>`; lib.appendChild(el); }); }
-  const stats=document.getElementById('habitStats'); if(stats){ stats.innerHTML=''; const totalDone = Object.values(state.habits.reduce((a,h)=>{ Object.keys(h.history||{}).forEach(d=>{ if(h.history[d]) a[d]=(a[d]||0)+1}); return a; },{})).reduce((s,v)=>s+v,0); const bestStreak=Math.max(0,...state.habits.map(h=>h.streak)); const today=todayStr(); const todayDone=state.habits.filter(h=>h.history && h.history[today]).length; [{label:'Feitos hoje',value:`${todayDone}/${state.habits.length}`,sub:`${Math.round((todayDone/(state.habits.length||1))*100)}%`},{label:'Total feitos',value:totalDone,sub:'Desde início'},{label:'Maior streak',value:`${bestStreak} dias`,sub:'Recorde'},{label:'Taxa semanal',value:`${Math.round(calcHabitRate()*100)}%`,sub:'7 dias'}].forEach(k=>{ const div=document.createElement('div'); div.className='card'; div.innerHTML=`<span class="kpi-label">${k.label}</span><div class="kpi-value" style="font-size:22px;margin-top:6px">${k.value}</div><div class="kpi-sub">${k.sub}</div>`; stats.appendChild(div); }); }
-  const heat=document.getElementById('habitHeatmap'); if(heat){ heat.innerHTML=''; for(let i=6;i>=0;i--){ const d=new Date(Date.now()-i*86400000); const str=d.toISOString().slice(0,10); const dayCount=state.habits.filter(h=>h.history && h.history[str]).length; const pct=state.habits.length? dayCount/state.habits.length:0; const row=document.createElement('div'); row.style.cssText='display:flex;align-items:center;gap:12px'; row.innerHTML=`<span style="width:64px;font-size:12px;font-weight:600">${d.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit'})}</span><div class="progress" style="flex:1;height:18px;border-radius:10px"><i style="width:${pct*100}%;background:${pct>0.7?'#10B981':pct>0.4?'#F59E0B':'#E2E8F0'}"></i></div><span style="font-size:12px;font-weight:700">${dayCount}/${state.habits.length}</span>`; heat.appendChild(row);} }
+  const stats=document.getElementById('habitStats'); if(stats){ stats.innerHTML=''; const totalDone = Object.values(state.habits.reduce((a,h)=>{ Object.keys(h.history||{}).forEach(d=>{ if(h.history[d]) a[d]=(a[d]||0)+1}); return a; },{})).reduce((s,v)=>s+v,0); const bestStreak=Math.max(0,...state.habits.map(h=>h.streak)); const today=todayStr(); const todayDone=state.habits.filter(h=>h.history && h.history[today]).length; [{label:'Feitos hoje',value:`${todayDone}/${state.habits.length}`,sub:`${Math.round((todayDone/(state.habits.length||1))*100)}%`},{label:'Total feitos',value:totalDone,sub:'Desde início'},{label:'Maior streak',value:`${bestStreak} dias`,sub:'Recorde'},{label:'Taxa semanal',value:`${Math.round(calcHabitRate()*100)}%`,sub:'7 dias'}].forEach(k=>{ const div=document.createElement('div'); div.className='card'; div.innerHTML=`<span class="kpi-label">${k.label}</span><div class="kpi-value" style="font-size:20px;margin-top:6px">${k.value}</div><div class="kpi-sub">${k.sub}</div>`; stats.appendChild(div); }); }
+  const heat=document.getElementById('habitHeatmap'); if(heat){ heat.innerHTML=''; for(let i=6;i>=0;i--){ const d=new Date(Date.now()-i*86400000); const str=d.toISOString().slice(0,10); const dayCount=state.habits.filter(h=>h.history && h.history[str]).length; const pct=state.habits.length? dayCount/state.habits.length:0; const row=document.createElement('div'); row.style.cssText='display:flex;align-items:center;gap:10px'; row.innerHTML=`<span style="width:64px;font-size:11px;font-weight:600">${d.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit'})}</span><div class="progress" style="flex:1;height:18px;border-radius:10px"><i style="width:${pct*100}%;background:${pct>0.7?'#10B981':pct>0.4?'#F59E0B':'#E2E8F0'}"></i></div><span style="font-size:11px;font-weight:700">${dayCount}/${state.habits.length}</span>`; heat.appendChild(row);} }
 }
-export function toggleHabit(id){ const h=state.habits.find(x=>x.id===id); if(!h) return; const today=todayStr(); const wasDone=!!(h.history && h.history[today]); if(!h.history) h.history={}; if(wasDone){ delete h.history[today]; h.streak=Math.max(0,h.streak-1); toast('Hábito desmarcado','◍'); }else{ h.history[today]=true; h.streak++; addXP(20,`Hábito: ${h.name}`); if(h.streak===7) addXP(50,'7 dias!'); } saveState(); renderAll(); trySyncAll(); }
+export function toggleHabit(id){ const h=state.habits.find(x=>x.id===id); if(!h) return; const today=todayStr(); const wasDone=!!(h.history && h.history[today]); if(!h.history) h.history={}; if(wasDone){ delete h.history[today]; h.streak=Math.max(0,h.streak-1); toast('Hábito desmarcado','◍'); }else{ h.history[today]=true; h.streak++; addXP(20,`Hábito: ${h.name}`); if(h.streak===7) addXP(50,'7 dias!'); } saveState(); renderCurrentPage(); trySyncAll(); }
 export function openHabitModal(){ document.getElementById('habitName').value=''; document.getElementById('habitIcon').value=''; document.getElementById('habitGoal').value=1; document.getElementById('overlayHabit').classList.add('open'); }
-export function saveHabit(){ const name=document.getElementById('habitName').value.trim(); if(!name){ toast('Nome obrigatório','⚠️'); return; } const icon=document.getElementById('habitIcon').value||'⭐'; const goal=parseInt(document.getElementById('habitGoal').value)||1; const color=document.getElementById('habitColor').value; state.habits.push({id:'h_'+Date.now(),name,icon,color,goal,streak:0,history:{},createdAt:new Date().toISOString()}); saveState(); closeModal('overlayHabit'); addXP(15,'Novo hábito'); renderAll(); toast('Hábito criado!','◍'); trySyncAll(); }
+export function saveHabit(){ const name=document.getElementById('habitName').value.trim(); if(!name){ toast('Nome obrigatório','⚠️'); return; } const icon=document.getElementById('habitIcon').value||'⭐'; const goal=parseInt(document.getElementById('habitGoal').value)||1; const color=document.getElementById('habitColor').value; state.habits.push({id:'h_'+Date.now(),name,icon,color,goal,streak:0,history:{},createdAt:new Date().toISOString()}); saveState(); closeModal('overlayHabit'); addXP(15,'Novo hábito'); renderCurrentPage(); toast('Hábito criado!','◍'); trySyncAll(); }
 export function editHabit(id){ const h=state.habits.find(x=>x.id===id); if(!h) return; const name=prompt('Novo nome:',h.name); if(name){ h.name=name; saveState(); renderHabits(); trySyncAll(); } }
-export function deleteHabit(id){ if(!confirm('Remover hábito?')) return; state.habits=state.habits.filter(h=>h.id!==id); saveState(); renderAll(); trySyncAll(); }
+export function deleteHabit(id){ if(!confirm('Remover hábito?')) return; state.habits=state.habits.filter(h=>h.id!==id); saveState(); renderCurrentPage(); trySyncAll(); }
 
 // Mood
 export function renderMood(){
   const cal=document.getElementById('moodCalendar'); if(cal){ cal.innerHTML=''; ['D','S','T','Q','Q','S','S'].forEach(l=>{ const d=document.createElement('div'); d.className='head'; d.textContent=l; cal.appendChild(d); }); const now=new Date(); const year=now.getFullYear(),month=now.getMonth(); const first=new Date(year,month,1).getDay(); const days=new Date(year,month+1,0).getDate(); for(let i=0;i<first;i++){ const e=document.createElement('div'); cal.appendChild(e);} for(let d=1;d<=days;d++){ const date=new Date(year,month,d).toISOString().slice(0,10); const mood=state.moods.find(m=>m.date===date); const el=document.createElement('div'); el.className='day'+(mood?' has-mood':''); if(mood){ el.style.background=moodMap[mood.level].color; el.textContent=moodMap[mood.level].emoji; }else el.textContent=d; cal.appendChild(el);} }
   drawMoodChart();
-  const patterns=document.getElementById('moodPatterns'); if(patterns){ patterns.innerHTML=''; generateInsights().slice(0,2).forEach(i=>{ const div=document.createElement('div'); div.className='insight'; div.innerHTML=`<div class="i-ico" style="background:${i.color}">${i.ico}</div><div><b>${i.title}</b><p>${i.text}</p></div>`; patterns.appendChild(div); }); }
+  const patterns=document.getElementById('moodPatterns'); if(patterns){ patterns.innerHTML=''; generateInsights(state.app.premium).slice(0,2).forEach(i=>{ const div=document.createElement('div'); div.className='insight'; div.innerHTML=`<div class="i-ico" style="background:${i.color}">${i.ico}</div><div><b>${i.title} ${i.locked?'🔒':''}</b><p>${i.text}</p></div>`; patterns.appendChild(div); }); }
   document.querySelectorAll('.mood-opt[data-mood]').forEach(el=>{ const m=parseInt(el.dataset.mood); const todayM=state.moods.find(x=>x.date===todayStr()); el.classList.toggle('active', !!(todayM && todayM.level===m)); });
 }
-function drawMoodChart(){ const canvas=document.getElementById('moodChart'); if(!canvas) return; const ctx=canvas.getContext('2d'); const dpr=window.devicePixelRatio||1; const rect=canvas.getBoundingClientRect(); canvas.width=rect.width*dpr; canvas.height=rect.height*dpr; ctx.scale(dpr,dpr); const w=rect.width,h=rect.height; ctx.clearRect(0,0,w,h); const pts=[]; for(let i=13;i>=0;i--){ const d=new Date(Date.now()-i*86400000).toISOString().slice(0,10); const m=state.moods.find(x=>x.date===d); pts.push(m?m.level:null);} const valid=pts.filter(p=>p!==null); if(!valid.length){ ctx.fillStyle='#94A3B8'; ctx.font='13px Plus Jakarta Sans'; ctx.textAlign='center'; ctx.fillText('Registre seu humor para ver a curva',w/2,h/2); return;} ctx.beginPath(); ctx.strokeStyle='#6366F1'; ctx.lineWidth=2.5; let started=false; pts.forEach((v,i)=>{ if(v===null) return; const x=(i/(pts.length-1))*w; const y=h - (v/5)*(h-20) -10; if(!started){ ctx.moveTo(x,y); started=true;} else ctx.lineTo(x,y); }); ctx.stroke(); pts.forEach((v,i)=>{ if(v===null) return; const x=(i/(pts.length-1))*w; const y=h - (v/5)*(h-20) -10; ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2); ctx.fillStyle='#6366F1'; ctx.fill(); ctx.fillStyle='white'; ctx.beginPath(); ctx.arc(x,y,2,0,Math.PI*2); ctx.fill(); }); }
+function drawMoodChart(){ const canvas=document.getElementById('moodChart'); if(!canvas) return; const ctx=canvas.getContext('2d'); const dpr=window.devicePixelRatio||1; const rect=canvas.getBoundingClientRect(); canvas.width=rect.width*dpr; canvas.height=rect.height*dpr; ctx.scale(dpr,dpr); const w=rect.width,h=rect.height; ctx.clearRect(0,0,w,h); const pts=[]; for(let i=13;i>=0;i--){ const d=new Date(Date.now()-i*86400000).toISOString().slice(0,10); const m=state.moods.find(x=>x.date===d); pts.push(m?m.level:null);} const valid=pts.filter(p=>p!==null); if(!valid.length){ ctx.fillStyle='#94A3B8'; ctx.font='12px Plus Jakarta Sans'; ctx.textAlign='center'; ctx.fillText('Registre humor',w/2,h/2); return;} ctx.beginPath(); ctx.strokeStyle='#6366F1'; ctx.lineWidth=2.5; let started=false; pts.forEach((v,i)=>{ if(v===null) return; const x=(i/(pts.length-1))*w; const y=h - (v/5)*(h-20) -10; if(!started){ ctx.moveTo(x,y); started=true;} else ctx.lineTo(x,y); }); ctx.stroke(); pts.forEach((v,i)=>{ if(v===null) return; const x=(i/(pts.length-1))*w; const y=h - (v/5)*(h-20) -10; ctx.beginPath(); ctx.arc(x,y,4,0,Math.PI*2); ctx.fillStyle='#6366F1'; ctx.fill(); ctx.fillStyle='white'; ctx.beginPath(); ctx.arc(x,y,2,0,Math.PI*2); ctx.fill(); }); }
 export function pickMood(lvl){ tempMood=lvl; document.querySelectorAll('#overlayMood .mood-opt').forEach((el,idx)=>{ el.classList.toggle('active', idx+1===lvl); }); }
 export function quickMood(lvl){ tempMood=lvl; confirmMood(); }
 export function openMoodModal(){ tempMood=null; const note=document.getElementById('moodNoteModal'); if(note) note.value=''; document.querySelectorAll('#overlayMood .mood-opt').forEach(el=>el.classList.remove('active')); document.getElementById('overlayMood').classList.add('open'); }
 export function confirmMood(){
   const noteModal=document.getElementById('moodNoteModal'); const noteEl=document.getElementById('moodNote'); const note=(noteModal && noteModal.value) || (noteEl && noteEl.value) || '';
-  if(!tempMood && !note){ toast('Selecione um humor','🙂'); return; }
+  if(!tempMood && !note){ toast('Selecione humor','🙂'); return; }
   const lvl=tempMood || 3; const today=todayStr(); let existing=state.moods.find(m=>m.date===today); if(existing){ existing.level=lvl; existing.note=note; } else state.moods.unshift({date:today,level:lvl,note});
-  saveState(); closeModal('overlayMood'); if(noteEl) noteEl.value=''; addXP(15,'Humor registrado'); renderAll(); toast(`Humor ${moodMap[lvl].label} salvo!`,'☺'); trySyncAll();
+  saveState(); closeModal('overlayMood'); if(noteEl) noteEl.value=''; addXP(15,'Humor'); renderCurrentPage(); toast(`Humor ${moodMap[lvl].label} salvo • Firebase`,'☺'); trySyncAll();
 }
-export function saveMoodNote(){ const note=document.getElementById('moodNote'); if(!note || (!note.value && !tempMood)){ toast('Escreva algo ou escolha emoji','🙂'); return;} tempMood=tempMood||3; confirmMood(); }
+export function saveMoodNote(){ const note=document.getElementById('moodNote'); if(!note || (!note.value && !tempMood)){ toast('Escolha emoji ou escreva','🙂'); return;} tempMood=tempMood||3; confirmMood(); }
 
 // Goals
 export function renderGoals(){
-  const grid=document.getElementById('goalsGrid'); if(!grid) return; grid.innerHTML=''; state.goals.forEach(g=>{ const pct=Math.min(100, Math.max(0, (g.current/g.target)*100)); const div=document.createElement('div'); div.className='card'; div.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:flex-start"><span class="badge" style="background:var(--bg-2);color:var(--muted)">${g.type.toUpperCase()}</span><button class="btn btn-ghost btn-sm" onclick="deleteGoal('${g.id}')">✕</button></div><b style="display:block;margin:12px 0 4px;font-size:16px">${g.title}</b><p style="font-size:12.5px;color:var(--muted)">Prazo: ${fmtDate(g.deadline)} • ${Math.round(pct)}% concluído</p><div class="progress" style="margin:14px 0"><i style="width:${pct}%;background:linear-gradient(90deg, var(--primary), var(--violet))"></i></div><div style="display:flex;justify-content:space-between;font-size:13px"><span style="font-weight:700">${fmtBRL(g.current)} / ${fmtBRL(g.target)}</span><span style="color:var(--muted)">Falta ${fmtBRL(g.target-g.current)}</span></div><div style="display:flex;gap:8px;margin-top:14px"><button class="btn btn-primary btn-sm" style="flex:1" onclick="addGoalProgress('${g.id}',10)">+10%</button><button class="btn btn-ghost btn-sm" style="flex:1" onclick="addGoalProgress('${g.id}',25)">+25%</button></div>`; grid.appendChild(div); }); if(!state.goals.length) grid.innerHTML='<p style="color:var(--muted);grid-column:1/-1;text-align:center;padding:20px">Nenhuma meta ainda</p>';
+  const grid=document.getElementById('goalsGrid'); if(!grid) return; grid.innerHTML=''; state.goals.forEach(g=>{ const pct=Math.min(100, Math.max(0, (g.current/g.target)*100)); const div=document.createElement('div'); div.className='card'; div.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:flex-start"><span class="badge" style="background:var(--bg-2);color:var(--muted)">${g.type.toUpperCase()}</span><button class="btn btn-ghost btn-sm" onclick="deleteGoal('${g.id}')">✕</button></div><b style="display:block;margin:12px 0 4px;font-size:16px">${g.title}</b><p style="font-size:12px;color:var(--muted)">Prazo: ${fmtDate(g.deadline)} • ${Math.round(pct)}%</p><div class="progress" style="margin:14px 0"><i style="width:${pct}%;background:linear-gradient(90deg, var(--primary), var(--violet))"></i></div><div style="display:flex;justify-content:space-between;font-size:12px"><span style="font-weight:700">${fmtMoney(g.current, state.settings.currency)} / ${fmtMoney(g.target, state.settings.currency)}</span><span style="color:var(--muted)">Falta ${fmtMoney(g.target-g.current, state.settings.currency)}</span></div><div style="display:flex;gap:8px;margin-top:14px"><button class="btn btn-primary btn-sm" style="flex:1" onclick="addGoalProgress('${g.id}',10)">+10%</button><button class="btn btn-ghost btn-sm" style="flex:1" onclick="addGoalProgress('${g.id}',25)">+25%</button></div>`; grid.appendChild(div); }); if(!state.goals.length) grid.innerHTML='<p style="color:var(--muted);grid-column:1/-1;text-align:center;padding:20px">Nenhuma meta</p>';
 }
 export function openGoalModal(){ const t=document.getElementById('goalTitle'); if(t) t.value=''; const ta=document.getElementById('goalTarget'); if(ta) ta.value=''; const dl=document.getElementById('goalDeadline'); if(dl) dl.value=new Date(Date.now()+30*86400000).toISOString().slice(0,10); document.getElementById('overlayGoal').classList.add('open'); }
-export function saveGoal(){ const titleEl=document.getElementById('goalTitle'); const title=titleEl? titleEl.value.trim():''; const targetEl=document.getElementById('goalTarget'); const target=parseFloat(targetEl? targetEl.value:0)||1000; const typeEl=document.getElementById('goalType'); const type=typeEl? typeEl.value:'financeira'; const deadlineEl=document.getElementById('goalDeadline'); const deadline=deadlineEl? deadlineEl.value:''; if(!title){ toast('Título obrigatório','⚠️'); return;} state.goals.push({id:'g_'+Date.now(),title,type,target,current:0,deadline}); saveState(); closeModal('overlayGoal'); addXP(30,'Nova meta'); renderGoals(); toast('Meta criada!','◎'); trySyncAll(); }
-export function addGoalProgress(id,pct){ const g=state.goals.find(x=>x.id===id); if(!g) return; g.current=Math.min(g.target, g.current + g.target*(pct/100)); if(g.current>=g.target){ addXP(100,`Meta concluída: ${g.title}`); toast(`Meta "${g.title}" concluída! 🎉`,'◎'); } saveState(); renderGoals(); trySyncAll(); }
+export function saveGoal(){ const titleEl=document.getElementById('goalTitle'); const title=titleEl? titleEl.value.trim():''; const targetEl=document.getElementById('goalTarget'); const target=parseFloat(targetEl? targetEl.value:0)||1000; const typeEl=document.getElementById('goalType'); const type=typeEl? typeEl.value:'financeira'; const deadlineEl=document.getElementById('goalDeadline'); const deadline=deadlineEl? deadlineEl.value:''; if(!title){ toast('Título obrigatório','⚠️'); return;} state.goals.push({id:'g_'+Date.now(),title,type,target,current:0,deadline}); saveState(); closeModal('overlayGoal'); addXP(30,'Meta'); renderGoals(); toast('Meta criada • Firebase','◎'); trySyncAll(); }
+export function addGoalProgress(id,pct){ const g=state.goals.find(x=>x.id===id); if(!g) return; g.current=Math.min(g.target, g.current + g.target*(pct/100)); if(g.current>=g.target){ addXP(100,`Meta: ${g.title}`); toast(`Meta "${g.title}" concluída! 🎉`,'◎'); } saveState(); renderGoals(); trySyncAll(); }
 export function deleteGoal(id){ state.goals=state.goals.filter(g=>g.id!==id); saveState(); renderGoals(); trySyncAll(); }
 
 // Reports
 export function renderReports(){
   const score=calcLifeScore(); const ls=document.getElementById('lifeScore'); if(ls) ls.textContent=score; const lsb=document.getElementById('lifeScoreBar'); if(lsb) lsb.style.width=score+'%'; const lsd=document.getElementById('lifeScoreDesc'); if(lsd) lsd.textContent= score>80?'Excelente equilíbrio!': score>60?'Bom progresso':'Precisa de atenção';
-  const financeCont=document.getElementById('reportFinance'); if(financeCont){ financeCont.innerHTML=''; generateInsights().slice(0,2).forEach(ins=>{ const d=document.createElement('div'); d.className='insight'; d.innerHTML=`<div class="i-ico" style="background:${ins.color}">${ins.ico}</div><div><b>${ins.title}</b><p>${ins.text}</p></div>`; financeCont.appendChild(d); }); }
-  const behCont=document.getElementById('reportBehavior'); if(behCont){ const rate=calcHabitRate(); behCont.innerHTML=`<div class="insight"><div class="i-ico">🔥</div><div><b>Streak ${state.app.streak} dias</b><p>${rate>0.6?'Acima da média.':'Tente 3 dias seguidos.'}</p></div></div><div class="insight"><div class="i-ico">🧠</div><div><b>Humor médio ${(state.moods.reduce((s,m)=>s+m.level,0)/(state.moods.length||1)).toFixed(1)}/5</b><p>Correlação ${(rate*100).toFixed(0)}% de completude.</p></div></div>`; }
-  const weekly=document.getElementById('weeklyAIReport'); if(weekly){ weekly.innerHTML=''; for(let i=0;i<3;i++){ const div=document.createElement('div'); div.className='insight'; div.innerHTML=`<div class="i-ico">✦</div><div><b>${['Resumo da semana','Alerta inteligente','Próxima ação'][i]}</b><p>${['Economizou 18% vs semana passada e completou 5/7 hábitos.','Pico de delivery às 21h quando humor Ruim.','Marque academia cedo — +40% chance de humor Bom.'][i]}</p></div>`; weekly.appendChild(div);} }
-  const corr=document.getElementById('correlations'); if(corr){ corr.innerHTML=''; [{ico:'💸',title:'Delivery ↔ Humor Ruim',text:'Quando Humor Ruim, gasta 2.3x mais em Delivery.',up:true},{ico:'🏋️',title:'Treino cedo = Dia Bom',text:'Treino até 9h = 82% dias bons.',up:true},{ico:'📚',title:'Leitura protege saldo',text:'4+ leituras = -22% gasto lazer.',up:false}].forEach(c=>{ const d=document.createElement('div'); d.className='insight'; d.innerHTML=`<div class="i-ico" style="background:${c.up?'#DCFCE7':'#FEF3C7'};color:${c.up?'#166534':'#92400E'}">${c.ico}</div><div><b>${c.title}</b><p>${c.text}</p></div>`; corr.appendChild(d); }); }
+  const isPrem=state.app.premium;
+  const financeCont=document.getElementById('reportFinance'); if(financeCont){ financeCont.innerHTML=''; generateInsights(isPrem).slice(0,2).forEach(ins=>{ const d=document.createElement('div'); d.className='insight'; d.innerHTML=`<div class="i-ico" style="background:${ins.color}">${ins.ico}</div><div><b>${ins.title} ${ins.locked?'🔒':''}</b><p>${ins.text}</p></div>`; financeCont.appendChild(d); }); }
+  const behCont=document.getElementById('reportBehavior'); if(behCont){ const rate=calcHabitRate(); behCont.innerHTML=`<div class="insight"><div class="i-ico">🔥</div><div><b>Streak ${state.app.streak} dias</b><p>${rate>0.6?'Acima média.':'Tente 3 dias.'}</p></div></div><div class="insight"><div class="i-ico">🧠</div><div><b>Humor médio ${(state.moods.reduce((s,m)=>s+m.level,0)/(state.moods.length||1)).toFixed(1)}/5</b><p>Correlação ${(rate*100).toFixed(0)}%.</p></div></div>`; }
+  const weekly=document.getElementById('weeklyAIReport'); if(weekly){ weekly.innerHTML=''; for(let i=0;i<3;i++){ const div=document.createElement('div'); div.className='insight'; div.innerHTML=`<div class="i-ico">✦</div><div><b>${['Resumo semana','Alerta inteligente','Próxima ação'][i]}</b><p>${['Economizou 18% vs semana passada e 5/7 hábitos.','Pico delivery 21h quando humor Ruim. Premium alerta antes.','Amanhã academia cedo +40% chance humor Bom/Excelente. Premium mostra horário ideal.'][i]}</p></div>`; weekly.appendChild(div);} }
+  const corr=document.getElementById('correlations'); if(corr){ corr.innerHTML=''; [{ico:'💸',title:'Delivery ↔ Humor Ruim',text:'Ruim = 2.3x Delivery. Premium sugere snack.',up:true},{ico:'🏋️',title:'Treino cedo = Dia Bom',text:'Até 9h = 82% dias bons. Premium ranking horário.',up:true},{ico:'📚',title:'Leitura protege saldo',text:'4+ leituras = -22% lazer. Premium projeção.',up:false}].forEach(c=>{ const d=document.createElement('div'); d.className='insight'; d.innerHTML=`<div class="i-ico" style="background:${c.up?'#DCFCE7':'#FEF3C7'};color:${c.up?'#166534':'#92400E'}">${c.ico}</div><div><b>${c.title}</b><p>${c.text}</p></div>`; corr.appendChild(d); }); }
+  const premBadge=document.getElementById('premiumBadge'); if(premBadge){ premBadge.textContent= isPrem ? 'PREMIUM • Total liberado' : 'FREE • 3/7 insights'; premBadge.style.background= isPrem ? '#DCFCE7' : '#EEF2FF'; premBadge.style.color= isPrem ? '#166534' : '#4338CA'; }
 }
-export function regenerateAI(){ toast('IA reanalisando...','✦'); setTimeout(()=>{ renderReports(); renderDashboard(); toast('Relatório atualizado!','✦') },800); }
+export function regenerateAI(){ toast('IA reanalisando...','✦'); setTimeout(()=>{ renderReports(); renderDashboard(); toast('Relatório atualizado! • Free 3, Premium 7','✦') },800); }
 
 // Achievements
 export function renderAchievements(){
@@ -407,53 +540,58 @@ export function renderAchievements(){
     {id:'first_tx',title:'Primeira transação',desc:'Registre primeira movimentação',ico:'💰',check:()=>state.tx.length>0,xp:10},
     {id:'first_habit',title:'Primeiro hábito',desc:'Crie primeiro hábito',ico:'◍',check:()=>state.habits.length>0,xp:15},
     {id:'streak3',title:'3 dias de fogo',desc:'Streak 3 dias',ico:'🔥',check:()=> (state.app.maxStreak||0)>=3,xp:30},
-    {id:'streak7',title:'Guardião da semana',desc:'7 dias seguidos',ico:'🛡️',check:()=> (state.app.maxStreak||0)>=7,xp:70},
+    {id:'streak7',title:'Guardião semana',desc:'7 dias seguidos',ico:'🛡️',check:()=> (state.app.maxStreak||0)>=7,xp:70},
     {id:'mood5',title:'Autoconhecimento',desc:'5 humores',ico:'☺',check:()=>state.moods.length>=5,xp:25},
-    {id:'level2',title:'Construtor',desc:'Nível 2',ico:'⚡',check:()=> (state.user.xp||0)>=500,xp:50},
-    {id:'saver',title:'Economista',desc:'Saldo positivo',ico:'📈',check:()=>{const inc=state.tx.filter(t=>t.type==='income'&& new Date(t.date).getMonth()===new Date().getMonth()).reduce((s,t)=>s+t.amount,0);const exp=state.tx.filter(t=>t.type==='expense'&& new Date(t.date).getMonth()===new Date().getMonth()).reduce((s,t)=>s+t.amount,0);return inc>exp && inc>0},xp:40},
+    {id:'level5',title:'Guardião Nv5',desc:'Alcance nível 5 (5000 XP)',ico:'🏆',check:()=> (state.user.xp||0)>=5000,xp:100},
+    {id:'level10',title:'Vida+ Max Nv10',desc:'Alcance nível 10',ico:'🌟',check:()=> (state.user.xp||0)>=22500,xp:200},
+    {id:'saver',title:'Economista',desc:'Saldo positivo mês',ico:'📈',check:()=>{const inc=state.tx.filter(t=>t.type==='income'&& new Date(t.date).getMonth()===new Date().getMonth()).reduce((s,t)=>s+t.amount,0);const exp=state.tx.filter(t=>t.type==='expense'&& new Date(t.date).getMonth()===new Date().getMonth()).reduce((s,t)=>s+t.amount,0);return inc>exp && inc>0},xp:40},
     {id:'goal',title:'Meta batida',desc:'Conclua meta',ico:'◎',check:()=>state.goals.some(g=>g.current>=g.target),xp:100},
+    {id:'year',title:'1 Ano Jornada',desc:'Alcance nível 50 (78k XP)',ico:'🌌',check:()=> (state.user.xp||0)>=78000,xp:1000},
   ];
-  achievements.forEach(a=>{ const done=a.check(); const div=document.createElement('div'); div.className='ach'+(done?'':' lock'); div.innerHTML=`<div class="ach-ico">${a.ico}</div><div style="flex:1"><b style="font-size:14px">${a.title} ${done?'✓':''}</b><p style="font-size:12.5px;color:var(--muted)">${a.desc} • +${a.xp} XP</p></div><span class="badge" style="background:${done?'#DCFCE7':'var(--bg-2)'};color:${done?'#166534':'var(--muted)'}">${done?'FEITO':'BLOQ'}</span>`; list.appendChild(div); });
+  achievements.forEach(a=>{ const done=a.check(); const div=document.createElement('div'); div.className='ach'+(done?'':' lock'); div.innerHTML=`<div class="ach-ico">${a.ico}</div><div style="flex:1"><b style="font-size:13px">${a.title} ${done?'✓':''}</b><p style="font-size:11px;color:var(--muted)">${a.desc} • +${a.xp} XP</p></div><span class="badge" style="background:${done?'#DCFCE7':'var(--bg-2)'};color:${done?'#166534':'var(--muted)'}">${done?'FEITO':'BLOQ'}</span>`; list.appendChild(div); });
 }
 
 // Modals
 export function closeModal(id){ const el=document.getElementById(id); if(el) el.classList.remove('open'); }
 export function openQuickAdd(){ document.getElementById('overlayQuick').classList.add('open'); }
 export function openPremium(){ document.getElementById('overlayPremium').classList.add('open'); }
-export function activatePremium(){ state.app.premium=true; state.user.premium=true; state.profile.premium=true; saveState(); trySyncAll(); closeModal('overlayPremium'); toast('Premium ativado! Temas liberados','★'); renderAll(); }
+export function activatePremium(){ state.app.premium=true; state.user.premium=true; state.profile.premium=true; saveState(); trySyncAll(); closeModal('overlayPremium'); toast('Premium ativado! Temas e IA total liberados','★'); renderCurrentPage(); }
 
-// INIT
+// INIT ROUTER
 export function initApp(){
   loadState();
   ensureSeed();
-  // auth listener
-  initAuthListener(async (user)=>{
-    if(user){
-      // se tinha dados locais maiores que remoto, sobe? pull já cuida
-    }
-  });
+
+  // Lê params: ?page=, ?id=, ?p=
+  const urlParams = new URLSearchParams(window.location.search);
+  const pageParam = urlParams.get('page') || urlParams.get('id') || urlParams.get('p') || 'dashboard';
+  const cleanPage = pageParam.replace('.html','');
+
+  // Auth listener
+  initAuthListener(async (user)=>{ /* handled via event */ });
 
   const nav = document.getElementById('nav');
-  if(nav) nav.addEventListener('click', e=>{ const btn=e.target.closest('button[data-view]'); if(!btn) return; if(btn.dataset.view==='admin'){ window.location.href='admin.html'; return; } switchView(btn.dataset.view); });
+  // nav já tem onclick inline
+
   document.querySelectorAll('.overlay').forEach(el=>{ el.addEventListener('click',ev=>{ if(ev.target===el) el.classList.remove('open'); }); });
   const gs = document.getElementById('globalSearch');
-  if(gs) gs.addEventListener('keydown', e=>{ if(e.key==='Enter'){ const q=e.target.value.toLowerCase(); if(!q) return; switchView('financeiro'); const txs=document.getElementById('txSearch'); if(txs) txs.value=q; renderTx(); toast(`Buscando: ${q}`,'⌕'); } });
+  if(gs) gs.addEventListener('keydown', e=>{ if(e.key==='Enter'){ const q=e.target.value.toLowerCase(); if(!q) return; loadPage('financeiro'); setTimeout(()=>{ const txs=document.getElementById('txSearch'); if(txs){ txs.value=q; renderTx(); } },400); toast(`Buscando: ${q} • PT-BR`,'⌕'); } });
 
-  renderAll();
+  // Carrega página inicial
+  loadPage(cleanPage);
 
-  let resizeTimer;
-  window.addEventListener('resize', ()=>{ clearTimeout(resizeTimer); resizeTimer=setTimeout(()=>{ renderAll(); },200); });
+  window.addEventListener('popstate', ()=>{
+    const params = new URLSearchParams(window.location.search);
+    const p = params.get('page') || 'dashboard';
+    loadPage(p.replace('.html',''));
+  });
 
-  // Se não logado, mostra login após 800ms
-  setTimeout(()=>{
-    if(getUid()==='default_user'){
-      openAuthModal();
-    }else{
-      pullFromFirebase();
-    }
-  }, 600);
+  // tema inicial
+  const forced = localStorage.getItem('vidaplus_forced_theme');
+  if(forced) document.documentElement.setAttribute('data-theme', forced);
+  else document.documentElement.setAttribute('data-theme', state.settings.theme||'light');
 
-  console.log('[Vida+ AI] v2.1 vidamaisai iniciado -', FIREBASE_DB_URL);
+  console.log('[Vida+ AI v4] Router pages + 50 níveis + multi moeda + PT-BR 100% - vidamaisai');
 }
 
 if(typeof window !== 'undefined'){
