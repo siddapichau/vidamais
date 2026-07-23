@@ -127,10 +127,7 @@ window.addEventListener('vidaplus:auth', async (e)=>{
     if(user.photoURL) state.profile.photo=user.photoURL;
     state.user.name=state.profile.firstName||state.profile.name||user.email.split('@')[0];
     saveState();
-    if(authOverlay){ 
-      authOverlay.classList.remove('open'); 
-      authOverlay.style.display = 'none'; 
-    }
+    if(authOverlay) authOverlay.classList.remove('open');
     updateHeader();
     await pullFromFirebase();
     // Só abre completar perfil se faltar nome mesmo
@@ -156,11 +153,7 @@ window.addEventListener('vidaplus:auth', async (e)=>{
 let _authBusy=false;
 export function openAuthModal(){
   const el=document.getElementById('overlayAuth');
-  if(el){ 
-    el.classList.add('open'); 
-    el.style.display='grid'; 
-    el.style.zIndex = '150';
-  }
+  if(el){ el.classList.add('open'); el.style.display='grid'; }
   const err=document.getElementById('authError');
   if(err) err.style.display='none';
 }
@@ -565,33 +558,16 @@ export function regenerateAI(){ toast('IA reanalisando...','✦'); setTimeout(()
 
 export function initApp(){
   loadState(); ensureSeed();
-
-  // Garantir que overlay de login começa FECHADO (o HTML pode ter vindo com 'open' em versões antigas)
-  const authOverlay = document.getElementById('overlayAuth');
-  if (authOverlay) authOverlay.classList.remove('open');
-
   const params=new URLSearchParams(location.search);
   const page=params.get('page')||params.get('id')||'dashboard';
-
-  // Inicializa listeners de clique nos overlays
-  document.querySelectorAll('.overlay').forEach(el=>{ el.addEventListener('click',e=>{ if(e.target===el) el.classList.remove('open'); }); });
-
-  // IMPORTANTE: initAuthListener dispara o evento 'vidaplus:auth'
-  // O listener embaixo decide mostrar ou esconder o login.
   initAuthListener(()=>{});
-
-  // Carrega a página inicial (o conteúdo é renderizado via renderCurrentPage dentro do listener de auth também)
+  document.querySelectorAll('.overlay').forEach(el=>{ el.addEventListener('click',e=>{ if(e.target===el) el.classList.remove('open'); }); });
   loadPage(page);
-
   const forced=localStorage.getItem('vidaplus_forced_theme');
   document.documentElement.setAttribute('data-theme', forced||state.settings.theme||'light');
-
-  console.log('[Vida+ AI] initApp OK. Login controlado por Firebase Auth listener. Domínio precisa estar em Firebase Auth > Authorized domains se der unauthorized-domain.');
+  console.log('[Vida+ AI v6 FINAL] Mobile bulletproof - domínio precisa estar em Firebase Auth Authorized domains');
 }
-// NOTA: initApp() é chamado explicitamente pelo index.html (evita dupla inicialização que causava travamento no login)
-// Se quiser auto-init em outros contextos, descomente abaixo (mas não recomendado aqui).
-// if(typeof window!=='undefined' && !window.__vidaplus_inited){
-//   window.__vidaplus_inited = true;
-//   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', initApp);
-//   else initApp();
-// }
+if(typeof window!=='undefined'){
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', initApp);
+  else initApp();
+}

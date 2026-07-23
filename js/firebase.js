@@ -164,7 +164,18 @@ export async function loginGoogle(){
     throw e;
   }
 }
-export async function logout(){ await fbSignOut(auth); _currentUser=null; }
+export async function logout(){
+  try{ await fbSignOut(auth); }catch{}
+  _currentUser=null;
+  try{
+    // Limpa tudo local para não mostrar dados do usuário anterior quando deslogado (correção do bug "mesmo sem logar tudo com meu nome")
+    Object.keys(localStorage).forEach(k=>{
+      if(k.startsWith('vidaplus_')) localStorage.removeItem(k);
+    });
+    // Recarrega estado limpo
+    location.reload();
+  }catch(e){ location.reload(); }
+}
 export async function resetPassword(email){ await sendPasswordResetEmail(auth, email); }
 
 export async function updateUserProfileData(uid, profileUpdates){
