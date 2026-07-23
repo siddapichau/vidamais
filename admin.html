@@ -31,13 +31,13 @@
   <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px">
     <div style="display:flex;align-items:center;gap:12px">
       <img src="assets/logo.png" style="width:48px;height:48px;border-radius:12px;object-fit:cover">
-      <div><h1 style="font-size:26px;line-height:.9">Admin • PROTEGIDO</h1><p style="color:var(--muted);font-size:12px;margin-top:4px;line-height:1.3">Acesso exclusivo: <b>wesleystudio@gmail.com</b> • Firebase vidamaisai-default-rtdb • 100% PT-BR</p><p id="adminEmailStatus" style="font-size:11px;color:var(--muted)"></p></div>
+      <div><h1 style="font-size:26px;line-height:.9">Admin • PROTEGIDO</h1><p style="color:var(--muted);font-size:12px;margin-top:4px;line-height:1.3">Acesso exclusivo: <b><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="017664726d647872757465686e41666c60686d2f626e6c">[email&#160;protected]</a></b> • Firebase vidamaisai-default-rtdb • 100% PT-BR</p><p id="adminEmailStatus" style="font-size:11px;color:var(--muted)"></p></div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost btn-sm" onclick="location.href='index.html'">← App</button><button class="btn btn-ghost btn-sm" onclick="refreshAll()">↻ Atualizar</button><button class="btn btn-primary btn-sm" onclick="handleLogoutAdmin()">Sair</button></div>
   </div>
 
   <div id="adminBlocked" style="display:none" class="card" style="border-color:#F43F5E;background:#FEF2F2;text-align:center;padding:30px">
-    <div style="font-size:48px">🔒</div><h2 style="color:#991B1B;margin-top:12px">Acesso negado</h2><p style="color:#991B1B;font-size:13px;margin-top:8px">Este painel é exclusivo para <b>wesleystudio@gmail.com</b> logado no Firebase Auth. Faça login com esse email no app e volte aqui.</p><button class="btn btn-primary" style="margin-top:14px" onclick="location.href='index.html'">Ir para login</button>
+    <div style="font-size:48px">🔒</div><h2 style="color:#991B1B;margin-top:12px">Acesso negado</h2><p style="color:#991B1B;font-size:13px;margin-top:8px">Este painel é exclusivo para <b><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="a1d6c4d2cdc4d8d2d5d4c5c8cee1c6ccc0c8cd8fc2cecc">[email&#160;protected]</a></b> logado no Firebase Auth. Faça login com esse email no app e volte aqui.</p><button class="btn btn-primary" style="margin-top:14px" onclick="location.href='index.html'">Ir para login</button>
   </div>
 
   <div id="adminContent" style="display:none">
@@ -51,14 +51,14 @@
     "vidaplus": {
       "users": {
         "$uid": {
-          ".read": "$uid === auth.uid || auth.token.email == 'wesleystudio@gmail.com'",
-          ".write": "$uid === auth.uid || auth.token.email == 'wesleystudio@gmail.com'"
+          ".read": "$uid === auth.uid || auth.token.email == '<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="522537213e372b212627363b3d12353f333b3e7c313d3f">[email&#160;protected]</a>'",
+          ".write": "$uid === auth.uid || auth.token.email == '<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="f08795839c958983848594999fb0979d91999cde939f9d">[email&#160;protected]</a>'"
         }
       }
     },
     "admin": {
-      ".read": "auth.token.email == 'wesleystudio@gmail.com'",
-      ".write": "auth.token.email == 'wesleystudio@gmail.com'"
+      ".read": "auth.token.email == '<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="3542504659504c464140515c5a755258545c591b565a58">[email&#160;protected]</a>'",
+      ".write": "auth.token.email == '<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="aed9cbddc2cbd7dddadbcac7c1eec9c3cfc7c280cdc1c3">[email&#160;protected]</a>'"
     }
   }
 }
@@ -138,7 +138,7 @@ Admin vê tudo, usuários só próprios dados.
 
 <div class="toast-stack" id="toasts"></div>
 
-<script type="module">
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="module">
 import { auth, db, FIREBASE_DB_URL, firebaseConfig, ADMIN_EMAIL } from './js/firebase.js';
 import { VidaFirebase } from './js/firebase.js';
 import { state, loadState, saveState, themes, currencies, levelTable, exportAll, importAll, calcHabitRate } from './js/core.js';

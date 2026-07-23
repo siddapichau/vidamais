@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Vida+ AI — Sua evolução diária, inteligente</title>
+<title>Vida+ AI — Sua evolução diária</title>
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="apple-touch-icon" href="assets/logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,14 +13,18 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#123C7A">
 <style>
-.auth-modal .modal{max-width:420px}
-.google-btn{background:white;border:1px solid var(--border);color:var(--text);height:46px;border-radius:12px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;transition:.2s}
+.auth-modal .modal{max-width:400px}
+.google-btn{background:white;border:1px solid var(--border);color:var(--text);height:46px;border-radius:12px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;transition:.2s;width:100%}
 .google-btn:hover{background:var(--bg-2)}
-.divider{display:flex;align-items:center;gap:12px;color:var(--muted-2);font-size:11px;font-weight:700;letter-spacing:.12em}
+.google-btn:disabled{opacity:.6;cursor:not-allowed}
+.divider{display:flex;align-items:center;gap:12px;color:var(--muted-2);font-size:11px;font-weight:700;letter-spacing:.12em;margin:6px 0}
 .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--border)}
 #pageContainer{min-height:60vh}
 .page-loader{padding:60px 20px;text-align:center;color:var(--muted)}
 .page-loader b{display:block;font-size:16px;margin-top:12px;color:var(--text)}
+.auth-tabs{display:flex;gap:6px;background:var(--bg-2);padding:4px;border-radius:12px;margin-top:14px}
+.auth-tabs button{flex:1;height:36px;border-radius:9px;border:none;background:transparent;font-weight:700;font-size:13px;cursor:pointer;transition:.2s;color:var(--muted)}
+.auth-tabs button.active{background:var(--card);color:var(--text);box-shadow:0 2px 8px rgba(15,23,42,.08);border:1px solid var(--border)}
 </style>
 </head>
 <body>
@@ -31,23 +35,22 @@
       <div class="brand-text"><b>Vida+ AI</b><i>Evolution OS</i></div>
     </div>
     <nav class="nav" id="nav">
-      <button class="active" data-page="dashboard" onclick="loadPage('dashboard')"><span class="ico">◧</span> Dashboard</button>
-      <button data-page="financeiro" onclick="loadPage('financeiro')"><span class="ico">₿</span> Financeiro</button>
-      <button data-page="habitos" onclick="loadPage('habitos')"><span class="ico">◍</span> Hábitos</button>
-      <button data-page="humor" onclick="loadPage('humor')"><span class="ico">☺</span> Humor</button>
-      <button data-page="metas" onclick="loadPage('metas')"><span class="ico">◎</span> Metas</button>
-      <button data-page="relatorios" onclick="loadPage('relatorios')"><span class="ico">✦</span> Relatórios IA</button>
-      <button data-page="conquistas" onclick="loadPage('conquistas')"><span class="ico">★</span> Conquistas</button>
-      <button data-page="perfil" onclick="loadPage('perfil')"><span class="ico">👤</span> Perfil</button>
-      <button data-page="admin" onclick="window.location.href='admin.html'" style="margin-top:8px;border-top:1px solid var(--border);padding-top:14px"><span class="ico">⚙</span> Admin</button>
+      <button class="active" data-page="dashboard" onclick="appLoadPage('dashboard')"><span class="ico">◧</span> Dashboard</button>
+      <button data-page="financeiro" onclick="appLoadPage('financeiro')"><span class="ico">₿</span> Financeiro</button>
+      <button data-page="habitos" onclick="appLoadPage('habitos')"><span class="ico">◍</span> Hábitos</button>
+      <button data-page="humor" onclick="appLoadPage('humor')"><span class="ico">☺</span> Humor</button>
+      <button data-page="metas" onclick="appLoadPage('metas')"><span class="ico">◎</span> Metas</button>
+      <button data-page="relatorios" onclick="appLoadPage('relatorios')"><span class="ico">✦</span> IA</button>
+      <button data-page="conquistas" onclick="appLoadPage('conquistas')"><span class="ico">★</span> Conquistas</button>
+      <button data-page="perfil" onclick="appLoadPage('perfil')"><span class="ico">👤</span> Perfil</button>
     </nav>
     <div class="sidebar-foot">
-      <span class="premium-tag" id="premiumTag">FREE • vidamaisai</span>
+      <span class="premium-tag" id="premiumTag">Vida+ AI • Premium</span>
       <h4 id="sidebarName">Sua evolução</h4>
-      <p id="userEmailChip" style="word-break:break-all">carregando...</p>
-      <button class="btn btn-white btn-sm" onclick="openPremium()">Ver planos →</button>
-      <div id="syncStatus" style="margin-top:10px;font-size:10px;opacity:.9">● Conectando...</div>
-      <button class="btn btn-ghost btn-sm" style="margin-top:8px;background:rgba(255,255,255,.12);border:none;color:white;width:100%" onclick="handleLogout()">Sair</button>
+      <p id="userEmailChip" style="word-break:break-all;font-size:11px;opacity:.9">carregando...</p>
+      <div id="syncStatus" style="margin-top:8px;font-size:10px;opacity:.85">● Conectando...</div>
+      <button class="btn btn-white btn-sm" style="margin-top:10px;width:100%" onclick="appOpenPremium()">Ver planos Premium</button>
+      <button class="btn btn-ghost btn-sm" style="margin-top:8px;background:rgba(255,255,255,.12);border:none;color:white;width:100%" onclick="appHandleLogout()">Sair</button>
     </div>
   </aside>
 
@@ -55,123 +58,168 @@
     <div class="topbar">
       <div class="search-wrap">
         <span class="sico">⌕</span>
-        <input id="globalSearch" placeholder="Buscar transação, hábito, insight... (⌘K) - 100% PT-BR" />
+        <input id="globalSearch" placeholder="Buscar..." />
       </div>
       <div class="top-actions">
         <span class="chip" id="currencyChip"><span class="dot"></span> <span id="currencyLabelTop">BRL</span></span>
         <span class="chip"><span class="dot"></span> <span id="streakLabel">Streak 0d</span></span>
-        <button class="btn btn-ghost btn-sm" onclick="toggleTheme()">◐ Tema</button>
-        <div class="avatar" id="avatar" onclick="loadPage('perfil')">W</div>
-        <button class="btn btn-primary btn-sm" onclick="openQuickAdd()">＋ Novo</button>
+        <button class="btn btn-ghost btn-sm" onclick="appToggleTheme()">◐ Tema</button>
+        <div class="avatar" id="avatar" onclick="appLoadPage('perfil')">W</div>
+        <button class="btn btn-primary btn-sm" onclick="appOpenQuickAdd()">＋ Novo</button>
       </div>
     </div>
 
     <div id="pageContainer">
       <div class="page-loader">
-        <div style="font-size:42px">◧</div>
+        <div style="font-size:36px">◧</div>
         <b>Carregando Vida+ AI...</b>
-        <p style="font-size:13px;margin-top:6px;color:var(--muted)">Páginas modulares • Firebase vidamaisai • 100% PT-BR</p>
+        <p style="font-size:12px;margin-top:6px;color:var(--muted)">100% PT-BR • Firebase • Páginas modulares</p>
+        <p style="font-size:11px;margin-top:10px;color:var(--muted-2)" id="loaderStatus">Iniciando...</p>
       </div>
     </div>
   </main>
 </div>
 
-<!-- AUTH MODAL - Completo com nome/sobrenome/celular -->
+<!-- AUTH MODAL PROFISSIONAL SEM INFO ADMIN -->
 <div class="overlay open" id="overlayAuth" style="z-index:150">
-  <div class="modal auth-modal" style="max-width:440px">
-    <div style="padding:24px 24px 0;text-align:center">
-      <img src="assets/logo.png" style="width:64px;height:64px;border-radius:16px;margin:0 auto 12px;display:block;object-fit:cover">
-      <h2 style="font-size:26px;line-height:1">Bem-vindo ao Vida+ AI</h2>
-      <p style="color:var(--muted);font-size:12px;margin-top:8px;line-height:1.4">Login Email ou Google • Dados salvos em <b>vidamaisai-default-rtdb</b> • Cadastro completo: nome, sobrenome, celular</p>
+  <div class="modal auth-modal" style="max-width:400px">
+    <div style="padding:22px 22px 0;text-align:center">
+      <img src="assets/logo.png" style="width:60px;height:60px;border-radius:14px;margin:0 auto 10px;display:block;object-fit:cover" onerror="this.style.display='none'">
+      <h2 id="authTitle" style="font-size:24px;line-height:1">Entrar no Vida+ AI</h2>
+      <p id="authSubtitle" style="color:var(--muted);font-size:12px;margin-top:6px">Acesse sua evolução diária</p>
+      <div class="auth-tabs">
+        <button class="active" id="tabLogin" onclick="appSwitchAuthMode('login')">Entrar</button>
+        <button id="tabSignup" onclick="appSwitchAuthMode('signup')">Criar conta</button>
+      </div>
     </div>
     <div class="modal-body">
-      <button class="google-btn" id="authBtnGoogle" onclick="handleGoogleLogin()"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px"> Continuar com Google</button>
-      <div class="divider">OU EMAIL COMPLETO</div>
-      <div class="row"><input id="authFirstName" class="input" placeholder="Nome"><input id="authLastName" class="input" placeholder="Sobrenome"></div>
-      <input id="authPhone" class="input" placeholder="Celular (48) 9 9999-9999">
-      <input id="authName" class="input" placeholder="Nome completo (antigo, opcional)" style="display:none">
-      <input id="authEmail" class="input" type="email" placeholder="seu@email.com">
-      <input id="authPass" class="input" type="password" placeholder="Senha (mín 6)">
-      <select id="authCurrency" class="input"><option value="BRL">Moeda: R$ Real (BRL)</option><option value="USD">US$ Dólar</option><option value="EUR">€ Euro</option><option value="GBP">£ Libra</option><option value="JPY">¥ Iene</option><option value="ARS">$AR Peso Argentino</option><option value="MXN">$MX Peso Mexicano</option><option value="BTC">₿ Bitcoin</option></select>
-      <div class="row"><button class="btn btn-primary" id="authBtnLogin" onclick="handleLogin()" style="height:46px">Entrar</button><button class="btn btn-ghost" id="authBtnSignup" onclick="handleSignup()" style="height:46px">Criar conta completa</button></div>
-      <span class="link" style="text-align:center;display:block" onclick="handleReset()">Esqueci senha → email</span>
-      <div class="code" style="font-size:10px;text-align:center">100% Português • Auth vidamaisai • RTDB grava tudo • Admin protegido wesleystudio@gmail.com</div>
+      <!-- LOGIN -->
+      <div id="authLoginView" style="display:grid;gap:10px">
+        <button class="google-btn" id="authBtnGoogle" type="button" onclick="appHandleGoogleLogin()"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px"> Continuar com Google</button>
+        <div class="divider">OU E-MAIL</div>
+        <input id="authEmail" class="input" type="email" placeholder="seu@email.com" autocomplete="email">
+        <input id="authPass" class="input" type="password" placeholder="Sua senha" autocomplete="current-password">
+        <button class="btn btn-primary" id="authBtnLogin" type="button" onclick="appHandleLogin()" style="height:46px">Entrar</button>
+        <span class="link" style="text-align:center;display:block" onclick="appHandleReset()">Esqueci minha senha</span>
+      </div>
+
+      <!-- CADASTRO -->
+      <div id="authSignupView" style="display:none;gap:10px">
+        <button class="google-btn" type="button" onclick="appHandleGoogleLogin()"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px"> Cadastrar com Google</button>
+        <div class="divider">OU CADASTRO MANUAL</div>
+        <div class="row"><input id="authFirstName" class="input" placeholder="Nome"><input id="authLastName" class="input" placeholder="Sobrenome"></div>
+        <input id="authEmailSignup" class="input" type="email" placeholder="seu@email.com" autocomplete="email">
+        <input id="authPassSignup" class="input" type="password" placeholder="Crie senha (mín 6)" autocomplete="new-password">
+        <select id="authCurrency" class="input"><option value="BRL">R$ Real (BRL)</option><option value="USD">US$ Dólar</option><option value="EUR">€ Euro</option><option value="GBP">£ Libra</option><option value="JPY">¥ Iene</option></select>
+        <button class="btn btn-primary" id="authBtnSignup" type="button" onclick="appHandleSignup()" style="height:46px">Criar conta</button>
+        <p style="font-size:11px;color:var(--muted);text-align:center">Após criar, seu login será só com Google ou e-mail/senha.</p>
+      </div>
+
+      <div id="authError" style="display:none;padding:10px 12px;border-radius:10px;background:#FEF2F2;border:1px solid #FECACA;color:#991B1B;font-size:12px;line-height:1.3"></div>
+      <div id="authDebug" style="display:none" class="code"></div>
     </div>
   </div>
 </div>
 
-<!-- COMPLETAR PERFIL (quando Google sem dados) -->
+<!-- COMPLETAR PERFIL OPCIONAL -->
 <div class="overlay" id="overlayCompleteProfile" style="z-index:160">
-  <div class="modal" style="max-width:440px">
-    <div class="modal-head"><h3>Complete seu perfil</h3></div>
+  <div class="modal" style="max-width:420px">
+    <div class="modal-head"><h3>Completar perfil (opcional)</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayCompleteProfile')">Pular</button></div>
     <div class="modal-body">
-      <p style="font-size:13px;color:var(--muted)">Detectamos que seu cadastro Google está incompleto. Preencha para liberar tudo 100% PT-BR.</p>
+      <p style="font-size:12px;color:var(--muted)">Quer deixar seu perfil completo? Pode pular.</p>
       <div class="row"><input id="completeFirstName" class="input" placeholder="Nome"><input id="completeLastName" class="input" placeholder="Sobrenome"></div>
-      <input id="completePhone" class="input" placeholder="Celular com DDD">
-      <input id="completeBirth" class="input" type="date" placeholder="Data nascimento">
-      <select id="completeCurrency" class="input"><option value="BRL">R$ Real</option><option value="USD">US$ Dólar</option><option value="EUR">€ Euro</option><option value="GBP">£ Libra</option></select>
+      <input id="completePhone" class="input" placeholder="Celular (opcional)">
+      <select id="completeCurrency" class="input"><option value="BRL">R$ Real</option><option value="USD">US$ Dólar</option><option value="EUR">€ Euro</option></select>
     </div>
-    <div class="modal-foot"><button class="btn btn-primary" onclick="saveCompleteProfile()">Salvar no Firebase →</button></div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="appCloseModal('overlayCompleteProfile')">Pular</button><button class="btn btn-primary" onclick="appSaveCompleteProfile()">Salvar</button></div>
   </div>
 </div>
 
-<!-- Outros modals (transação, hábito, humor, meta, premium, quick) -->
-<div class="overlay" id="overlayTx">
-  <div class="modal">
-    <div class="modal-head"><h3>Nova transação</h3><button class="btn btn-ghost btn-sm" onclick="closeModal('overlayTx')">✕</button></div>
-    <div class="modal-body">
-      <div class="pills"><button class="pill active" data-type="expense" onclick="setTxType('expense',this)">Despesa</button><button class="pill" data-type="income" onclick="setTxType('income',this)">Receita</button></div>
-      <div class="row"><div><label style="font-size:11px;font-weight:700;color:var(--muted)">VALOR</label><input id="txAmount" class="input" type="number" inputmode="decimal" placeholder="0,00"></div><div><label style="font-size:11px;font-weight:700;color:var(--muted)">DATA</label><input id="txDate" class="input" type="date"></div></div>
-      <div><label style="font-size:11px;font-weight:700;color:var(--muted)">CATEGORIA</label><div class="pills" id="txCategories" style="margin-top:6px"></div><input id="txCategoryCustom" class="input" placeholder="Categoria personalizada" style="margin-top:6px"></div>
-      <div><label style="font-size:11px;font-weight:700;color:var(--muted)">DESCRIÇÃO</label><input id="txDesc" class="input" placeholder="Ex: Mercado"></div>
-      <div style="font-size:10px;color:var(--muted-2)">Grava em Firebase <code>vidaplus/users/{uid}/transactions</code> • Moeda: <span id="txCurrency">BRL</span></div>
-    </div>
-    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('overlayTx')">Cancelar</button><button class="btn btn-primary" onclick="saveTx()">Salvar → Firebase +10 XP</button></div>
-  </div>
-</div>
-<div class="overlay" id="overlayHabit">
-  <div class="modal">
-    <div class="modal-head"><h3>Novo hábito</h3><button class="btn btn-ghost btn-sm" onclick="closeModal('overlayHabit')">✕</button></div>
-    <div class="modal-body">
-      <div class="row"><div><label style="font-size:11px;font-weight:700;color:var(--muted)">NOME</label><input id="habitName" class="input" placeholder="Ex: Beber água"></div><div><label style="font-size:11px;font-weight:700;color:var(--muted)">ÍCONE</label><input id="habitIcon" class="input" placeholder="💧"></div></div>
-      <div class="row"><div><label style="font-size:11px;font-weight:700;color:var(--muted)">META/DIA</label><input id="habitGoal" class="input" type="number" placeholder="1"></div><div><label style="font-size:11px;font-weight:700;color:var(--muted)">COR</label><select id="habitColor" class="input"><option value="#10B981">Verde</option><option value="#6366F1">Violeta</option><option value="#06B6D4">Ciano</option><option value="#F59E0B">Âmbar</option><option value="#F43F5E">Rosa</option><option value="#123C7A">Azul</option></select></div></div>
-    </div>
-    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('overlayHabit')">Cancelar</button><button class="btn btn-primary" onclick="saveHabit()">Criar → Firebase</button></div>
-  </div>
-</div>
-<div class="overlay" id="overlayMood">
-  <div class="modal">
-    <div class="modal-head"><h3>Como você está hoje?</h3><button class="btn btn-ghost btn-sm" onclick="closeModal('overlayMood')">✕</button></div>
-    <div class="modal-body">
-      <div class="mood-grid"><button class="mood-opt" onclick="pickMood(1)"><span class="em">😞</span><b>Muito Ruim</b></button><button class="mood-opt" onclick="pickMood(2)"><span class="em">😐</span><b>Ruim</b></button><button class="mood-opt" onclick="pickMood(3)"><span class="em">🙂</span><b>Normal</b></button><button class="mood-opt" onclick="pickMood(4)"><span class="em">😁</span><b>Bom</b></button><button class="mood-opt" onclick="pickMood(5)"><span class="em">🤩</span><b>Excelente</b></button></div>
-      <textarea id="moodNoteModal" class="input" placeholder="O que influenciou?"></textarea>
-    </div>
-    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('overlayMood')">Depois</button><button class="btn btn-primary" onclick="confirmMood()">Registrar • +15 XP → Firebase</button></div>
-  </div>
-</div>
-<div class="overlay" id="overlayGoal">
-  <div class="modal">
-    <div class="modal-head"><h3>Nova meta</h3><button class="btn btn-ghost btn-sm" onclick="closeModal('overlayGoal')">✕</button></div>
-    <div class="modal-body">
-      <div><label style="font-size:11px;font-weight:700;color:var(--muted)">TÍTULO</label><input id="goalTitle" class="input" placeholder="Ex: Economizar 5k"></div>
-      <div class="row"><div><label style="font-size:11px;font-weight:700;color:var(--muted)">TIPO</label><select id="goalType" class="input"><option value="financeira">Financeira</option><option value="habito">Hábito</option><option value="pessoal">Pessoal</option></select></div><div><label style="font-size:11px;font-weight:700;color:var(--muted)">META</label><input id="goalTarget" class="input" type="number" placeholder="5000"></div></div>
-      <div><label style="font-size:11px;font-weight:700;color:var(--muted)">PRAZO</label><input id="goalDeadline" class="input" type="date"></div>
-    </div>
-    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('overlayGoal')">Cancelar</button><button class="btn btn-primary" onclick="saveGoal()">Criar → Firebase</button></div>
-  </div>
-</div>
-<div class="overlay" id="overlayQuick">
-  <div class="modal"><div class="modal-head"><h3>Ação rápida • 30s</h3><button class="btn btn-ghost btn-sm" onclick="closeModal('overlayQuick')">✕</button></div><div class="modal-body"><div class="grid grid-2"><button class="card card-hover" style="text-align:left" onclick="closeModal('overlayQuick');openTxModal()"><b>💸 Despesa</b><p style="font-size:12px;color:var(--muted);margin-top:4px">10s + Firebase</p></button><button class="card card-hover" style="text-align:left" onclick="closeModal('overlayQuick');openMoodModal()"><b>🙂 Humor</b><p style="font-size:12px;color:var(--muted);margin-top:4px">Como está?</p></button><button class="card card-hover" style="text-align:left" onclick="closeModal('overlayQuick');loadPage('habitos')"><b>✅ Hábitos</b><p style="font-size:12px;color:var(--muted);margin-top:4px">Check hoje</p></button><button class="card card-hover" style="text-align:left" onclick="closeModal('overlayQuick');openGoalModal()"><b>◎ Meta</b><p style="font-size:12px;color:var(--muted);margin-top:4px">Novo nível</p></button></div></div></div>
-</div>
-<div class="overlay" id="overlayPremium">
-  <div class="modal" style="max-width:720px"><div style="padding:22px 22px 0;display:flex;justify-content:space-between;gap:12px"><div><span class="premium-tag" style="background:var(--text);color:white">PREMIUM • 50 NÍVEIS</span><h2 style="font-size:26px;margin-top:8px;line-height:.95">1 ano para nível 50.<br>Você aguenta?</h2><p style="color:var(--muted);margin-top:6px;font-size:13px">7 dias grátis • Recompensa por nível • Premium salvo RTDB</p></div><button class="btn btn-ghost btn-sm" onclick="closeModal('overlayPremium')">✕</button></div><div class="modal-body" style="grid-template-columns:1.2fr .8fr;display:grid"><div style="display:grid;gap:10px"><div class="insight"><div class="i-ico">✦</div><div><b>IA total liberada</b><p>Free vê 3 insights, Premium vê 7 + projeções 90 dias + DNA horário.</p></div></div><div class="insight"><div class="i-ico">🎨</div><div><b>10 temas gradiente</b><p>Aurora, Ocean, Neon, Gold, Sakura - só Premium.</p></div></div><button class="btn btn-primary" style="height:48px" onclick="activatePremium()">Virar Premium → Firebase</button></div><div class="card" style="background:var(--bg-2)"><b style="font-size:12px">NÍVEIS • VANTAGENS</b><ul style="list-style:none;display:grid;gap:8px;margin-top:10px;font-size:12px"><li>Nv 10: PDF básico</li><li>Nv 20: Projeção 30d</li><li>Nv 30: Gold</li><li>Nv 40: Mentoria</li><li>Nv 50: Hall fama + 100 anos Premium</li></ul></div></div></div>
-</div>
+<!-- MODALS TRANSACAO ETC (mantém) -->
+<div class="overlay" id="overlayTx"><div class="modal"><div class="modal-head"><h3>Nova transação</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayTx')">✕</button></div><div class="modal-body"><div class="pills"><button class="pill active" data-type="expense" onclick="appSetTxType('expense',this)">Despesa</button><button class="pill" data-type="income" onclick="appSetTxType('income',this)">Receita</button></div><div class="row"><div><label style="font-size:11px;font-weight:700;color:var(--muted)">VALOR</label><input id="txAmount" class="input" type="number" placeholder="0,00"></div><div><label style="font-size:11px;font-weight:700;color:var(--muted)">DATA</label><input id="txDate" class="input" type="date"></div></div><div><label style="font-size:11px;font-weight:700;color:var(--muted)">CATEGORIA</label><div class="pills" id="txCategories" style="margin-top:6px"></div><input id="txCategoryCustom" class="input" placeholder="Categoria" style="margin-top:6px"></div><div><label style="font-size:11px;font-weight:700;color:var(--muted)">DESCRIÇÃO</label><input id="txDesc" class="input" placeholder="Ex: Mercado"></div></div><div class="modal-foot"><button class="btn btn-ghost" onclick="appCloseModal('overlayTx')">Cancelar</button><button class="btn btn-primary" onclick="appSaveTx()">Salvar +10 XP</button></div></div></div>
+<div class="overlay" id="overlayHabit"><div class="modal"><div class="modal-head"><h3>Novo hábito</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayHabit')">✕</button></div><div class="modal-body"><div class="row"><div><input id="habitName" class="input" placeholder="Ex: Beber água"></div><div><input id="habitIcon" class="input" placeholder="💧"></div></div><div class="row"><div><input id="habitGoal" class="input" type="number" placeholder="Meta/dia 1"></div><div><select id="habitColor" class="input"><option value="#10B981">Verde</option><option value="#6366F1">Violeta</option><option value="#06B6D4">Ciano</option><option value="#F59E0B">Âmbar</option></select></div></div></div><div class="modal-foot"><button class="btn btn-ghost" onclick="appCloseModal('overlayHabit')">Cancelar</button><button class="btn btn-primary" onclick="appSaveHabit()">Criar</button></div></div></div>
+<div class="overlay" id="overlayMood"><div class="modal"><div class="modal-head"><h3>Como está hoje?</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayMood')">✕</button></div><div class="modal-body"><div class="mood-grid"><button class="mood-opt" onclick="appPickMood(1)"><span class="em">😞</span><b>Muito Ruim</b></button><button class="mood-opt" onclick="appPickMood(2)"><span class="em">😐</span><b>Ruim</b></button><button class="mood-opt" onclick="appPickMood(3)"><span class="em">🙂</span><b>Normal</b></button><button class="mood-opt" onclick="appPickMood(4)"><span class="em">😁</span><b>Bom</b></button><button class="mood-opt" onclick="appPickMood(5)"><span class="em">🤩</span><b>Excelente</b></button></div><textarea id="moodNoteModal" class="input" placeholder="O que influenciou?"></textarea></div><div class="modal-foot"><button class="btn btn-ghost" onclick="appCloseModal('overlayMood')">Depois</button><button class="btn btn-primary" onclick="appConfirmMood()">Salvar +15 XP</button></div></div></div>
+<div class="overlay" id="overlayGoal"><div class="modal"><div class="modal-head"><h3>Nova meta</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayGoal')">✕</button></div><div class="modal-body"><input id="goalTitle" class="input" placeholder="Ex: Economizar 5k"><div class="row"><select id="goalType" class="input"><option value="financeira">Financeira</option><option value="habito">Hábito</option><option value="pessoal">Pessoal</option></select><input id="goalTarget" class="input" type="number" placeholder="5000"></div><input id="goalDeadline" class="input" type="date"></div><div class="modal-foot"><button class="btn btn-ghost" onclick="appCloseModal('overlayGoal')">Cancelar</button><button class="btn btn-primary" onclick="appSaveGoal()">Criar</button></div></div></div>
+<div class="overlay" id="overlayQuick"><div class="modal"><div class="modal-head"><h3>Ação rápida</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayQuick')">✕</button></div><div class="modal-body"><div class="grid grid-2"><button class="card card-hover" style="text-align:left" onclick="appCloseModal('overlayQuick');appOpenTxModal()"><b>💸 Despesa</b></button><button class="card card-hover" style="text-align:left" onclick="appCloseModal('overlayQuick');appOpenMoodModal()"><b>🙂 Humor</b></button><button class="card card-hover" style="text-align:left" onclick="appCloseModal('overlayQuick');appLoadPage('habitos')"><b>✅ Hábitos</b></button><button class="card card-hover" style="text-align:left" onclick="appCloseModal('overlayQuick');appOpenGoalModal()"><b>◎ Meta</b></button></div></div></div></div>
+<div class="overlay" id="overlayPremium"><div class="modal" style="max-width:560px"><div style="padding:20px 20px 0;display:flex;justify-content:space-between"><div><h2 style="font-size:22px">Premium • 10 temas • IA total</h2><p style="font-size:12px;color:var(--muted);margin-top:4px">Desbloqueie 50 níveis = 1 ano jornada</p></div><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayPremium')">✕</button></div><div class="modal-body"><button class="btn btn-primary" style="height:46px" onclick="appActivatePremium()">Virar Premium</button></div></div></div>
 
 <div class="toast-stack" id="toasts"></div>
 
 <script type="module">
-import { initApp, loadPage } from './js/app.js';
-window.loadPage = loadPage; // expõe global para pages
+import { initApp, loadPage, toggleTheme, openQuickAdd, openPremium, closeModal, openTxModal, openHabitModal, openMoodModal, openGoalModal, saveTx, saveHabit, saveGoal, toggleHabit, editHabit, deleteHabit, filterTx, setTxType, quickMood, pickMood, confirmMood, saveMoodNote, addGoalProgress, deleteGoal, saveProfile, saveCompleteProfile, changePasswordProfile, changeCurrency, handleLogin, handleSignup, handleGoogleLogin, handleLogout, handleReset, switchAuthMode } from './js/app.js';
+
+// Expõe com prefixo app* para evitar conflito e garantir onclick funciona mesmo se módulo demorar
+window.appLoadPage = loadPage;
+window.appToggleTheme = toggleTheme;
+window.appOpenQuickAdd = openQuickAdd;
+window.appOpenPremium = openPremium;
+window.appCloseModal = closeModal;
+window.appOpenTxModal = openTxModal;
+window.appOpenHabitModal = openHabitModal;
+window.appOpenMoodModal = openMoodModal;
+window.appOpenGoalModal = openGoalModal;
+window.appSaveTx = saveTx;
+window.appSaveHabit = saveHabit;
+window.appSaveGoal = saveGoal;
+window.appToggleHabit = toggleHabit;
+window.appEditHabit = editHabit;
+window.appDeleteHabit = deleteHabit;
+window.appFilterTx = filterTx;
+window.appSetTxType = setTxType;
+window.appQuickMood = quickMood;
+window.appPickMood = pickMood;
+window.appConfirmMood = confirmMood;
+window.appSaveMoodNote = saveMoodNote;
+window.appAddGoalProgress = addGoalProgress;
+window.appDeleteGoal = deleteGoal;
+window.appSaveProfile = saveProfile;
+window.appSaveCompleteProfile = saveCompleteProfile;
+window.appChangePasswordProfile = changePasswordProfile;
+window.appChangeCurrency = changeCurrency;
+window.appHandleLogin = handleLogin;
+window.appHandleSignup = handleSignup;
+window.appHandleGoogleLogin = handleGoogleLogin;
+window.appHandleLogout = handleLogout;
+window.appHandleReset = handleReset;
+window.appSwitchAuthMode = switchAuthMode;
+
+// Compat velho (sem prefixo) para páginas antigas ainda
+window.loadPage = loadPage;
+window.toggleTheme = toggleTheme;
+window.openQuickAdd = openQuickAdd;
+window.openPremium = openPremium;
+window.closeModal = closeModal;
+window.openTxModal = openTxModal;
+window.openHabitModal = openHabitModal;
+window.openMoodModal = openMoodModal;
+window.openGoalModal = openGoalModal;
+window.saveTx = saveTx;
+window.saveHabit = saveHabit;
+window.saveGoal = saveGoal;
+window.toggleHabit = toggleHabit;
+window.editHabit = editHabit;
+window.deleteHabit = deleteHabit;
+window.filterTx = filterTx;
+window.setTxType = setTxType;
+window.quickMood = quickMood;
+window.pickMood = pickMood;
+window.confirmMood = confirmMood;
+window.saveMoodNote = saveMoodNote;
+window.addGoalProgress = addGoalProgress;
+window.deleteGoal = deleteGoal;
+window.handleLogin = handleLogin;
+window.handleSignup = handleSignup;
+window.handleGoogleLogin = handleGoogleLogin;
+window.handleLogout = handleLogout;
+window.handleReset = handleReset;
+window.switchAuthMode = switchAuthMode;
+window.saveCompleteProfile = saveCompleteProfile;
+
+  // Debug loader
+  const ls = document.getElementById('loaderStatus');
+  if(ls) ls.textContent = 'Firebase carregando...';
+  
+  initApp();
 </script>
 </body>
 </html>
