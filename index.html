@@ -29,7 +29,7 @@
 </head>
 <body>
 <div class="app">
-  <!-- MENU SEMPRE VISÍVEL - NO INDEX -->
+  <!-- MENU SEMPRE VISÍVEL -->
   <aside class="sidebar">
     <div class="brand">
       <div class="logo has-img"><img id="logoImg" src="assets/logo.png" alt="Vida+ AI"><span style="display:none">V+</span></div>
@@ -100,7 +100,7 @@
       </div>
     </div>
 
-    <!-- CONTAINER PARA PAGES - QUANDO ABRE PAGE, ESCONDE HOME E MOSTRA AQUI (MENU CONTINUA) -->
+    <!-- CONTAINER PARA PAGES -->
     <div id="pageContainer" style="display:none"></div>
 
   </main>
@@ -154,7 +154,7 @@
   </div>
 </div>
 
-<!-- MODAIS ESSENCIAIS - FICAM NO INDEX, PAGES PUXAM DELE -->
+<!-- MODAIS ESSENCIAIS -->
 <div class="overlay" id="overlayTx"><div class="modal"><div class="modal-head"><h3>Nova transação</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayTx')">✕</button></div><div class="modal-body"><div class="pills"><button class="pill active" data-type="expense" onclick="appSetTxType('expense',this)">Despesa</button><button class="pill" data-type="income" onclick="appSetTxType('income',this)">Receita</button></div><div class="row"><div><input id="txAmount" class="input" type="number" placeholder="Valor"></div><div><input id="txDate" class="input" type="date"></div></div><div><div class="pills" id="txCategories"></div><input id="txCategoryCustom" class="input" placeholder="Categoria" style="margin-top:6px"></div><input id="txDesc" class="input" placeholder="Descrição"></div><div class="modal-foot"><button class="btn btn-ghost" onclick="appCloseModal('overlayTx')">Cancelar</button><button class="btn btn-primary" onclick="appSaveTx()">Salvar</button></div></div></div>
 <div class="overlay" id="overlayHabit"><div class="modal"><div class="modal-head"><h3>Novo hábito</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayHabit')">✕</button></div><div class="modal-body"><div class="row"><input id="habitName" class="input" placeholder="Nome"><input id="habitIcon" class="input" placeholder="💧"></div><div class="row"><input id="habitGoal" class="input" type="number" placeholder="1"><select id="habitColor" class="input"><option value="#10B981">Verde</option><option value="#6366F1">Violeta</option></select></div></div><div class="modal-foot"><button class="btn btn-ghost" onclick="appCloseModal('overlayHabit')">Cancelar</button><button class="btn btn-primary" onclick="appSaveHabit()">Criar</button></div></div></div>
 <div class="overlay" id="overlayMood"><div class="modal"><div class="modal-head"><h3>Como está?</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayMood')">✕</button></div><div class="modal-body"><div class="mood-grid"><button class="mood-opt" onclick="appPickMood(1)"><span class="em">😞</span><b>Muito Ruim</b></button><button class="mood-opt" onclick="appPickMood(2)"><span class="em">😐</span><b>Ruim</b></button><button class="mood-opt" onclick="appPickMood(3)"><span class="em">🙂</span><b>Normal</b></button><button class="mood-opt" onclick="appPickMood(4)"><span class="em">😁</span><b>Bom</b></button><button class="mood-opt" onclick="appPickMood(5)"><span class="em">🤩</span><b>Excelente</b></button></div><textarea id="moodNoteModal" class="input" placeholder="O que influenciou?"></textarea></div><div class="modal-foot"><button class="btn btn-primary" onclick="appConfirmMood()">Salvar</button></div></div></div>
