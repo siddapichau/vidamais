@@ -380,43 +380,76 @@ function applyThemePreview(id){
   state.settings.theme=id; state.app.theme=id; saveState(); trySyncAll();
 }
 
-// ROUTER PAGES
+// ROUTER PAGES COM FALLBACK 100% FUNCIONAL SE /pages/ NÃO EXISTIR (evita travamento no celular)
 export async function loadPage(pageName){
-  // normalize: id=humor.html, page=humor, etc
   let name = pageName.replace('.html','').toLowerCase();
   const allowed = ['dashboard','financeiro','habitos','humor','metas','relatorios','conquistas','perfil'];
   if(!allowed.includes(name)) name='dashboard';
   currentPage=name;
 
-  // atualiza nav active
   document.querySelectorAll('.nav button').forEach(b=>{ b.classList.toggle('active', b.dataset.page===name); });
 
-  // atualiza URL sem reload: index.html?page=xxx (inteligente)
   const url = new URL(window.location);
   url.searchParams.set('page', name);
   window.history.pushState({}, '', url);
 
-  // loader
   const container=document.getElementById('pageContainer');
-  container.innerHTML=`<div class="page-loader"><div style="font-size:32px">◍</div><b>Carregando ${name}...</b><p style="font-size:12px;color:var(--muted);margin-top:4px">Módulo separado • Firebase vidamaisai • 100% PT-BR</p></div>`;
+  if(!container) return;
+  container.innerHTML=`<div class="page-loader"><div style="font-size:32px">◍</div><b>Carregando ${name}...</b><p style="font-size:12px;color:var(--muted)">Se demorar, verifique se pasta /pages/ existe no GitHub</p><p style="font-size:10px;color:var(--muted-2)" id="loaderStatus">Tentando fetch pages/${name}.html...</p></div>`;
 
   try{
-    const res = await fetch(`pages/${name}.html?embedded=true`);
-    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const res = await fetch(`pages/${name}.html?embedded=true&_=${Date.now()}`, {cache:'no-store'});
+    if(!res.ok) throw new Error(`HTTP ${res.status} - pasta /pages/ não encontrada? Verifique GitHub.`);
     let html = await res.text();
-    // Se vier full HTML, extrai body inner
     const match = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
     if(match) html = match[1];
-    // Também remove scripts de redirect (que já não executam via innerHTML)
     html = html.replace(/<script[^>]*>[\s\S]*?location\.replace[\s\S]*?<\/script>/gi, '');
-
+    if(!html.trim()) throw new Error("Página vazia");
     container.innerHTML = html;
-    // após injetar, renderiza dados da página
-    setTimeout(()=>{ renderCurrentPage(); }, 50);
+    setTimeout(()=>{ renderCurrentPage(); }, 80);
   }catch(e){
-    container.innerHTML=`<div class="card" style="text-align:center;padding:30px"><b>Erro ao carregar página ${name}</b><p style="color:var(--muted);font-size:13px;margin-top:6px">${e.message}</p><button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="loadPage('${name}')">Tentar novamente</button></div>`;
-    console.error("[loadPage]", e);
+    console.warn("[loadPage] falhou, usando fallback inline para não travar:", e.message);
+    // FALLBACK INLINE - garante que app funciona mesmo sem /pages/
+    container.innerHTML = getFallbackPageHTML(name);
+    try{ renderCurrentPage(); }catch(err){ console.warn(err); }
+    // Mostra aviso discreto
+    setTimeout(()=>{ toast(`Pasta /pages/ não encontrada no GitHub (${e.message}). Usando fallback inline. Upe a pasta /pages/`,'⚠️'); }, 500);
   }
+}
+
+function getFallbackPageHTML(name){
+  // Fallbacks completos inline para caso /pages/ não exista no GitHub
+  if(name==='dashboard'){
+    return `
+      <div class="page-dashboard">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px">
+          <div><h1 class="display" style="font-size:34px;line-height:.9">Bom dia, <span id="userName">Usuário</span> 👋</h1><p style="color:var(--muted);margin-top:8px;font-size:13px">Você completou <b id="todayProgressPct">0%</b> • <span id="todayDate"></span></p></div>
+          <button class="btn btn-primary btn-sm" onclick="appOpenMoodModal()">Registrar humor</button>
+        </div>
+        <div class="grid grid-4">
+          <div class="card kpi"><div class="kpi-head"><span class="kpi-label">Saldo</span><span class="kpi-icon" style="background:#E0F2FE">💰</span></div><div class="kpi-value" id="balanceValue">R$ 0</div><div class="kpi-sub"><span class="badge badge-up" id="balanceTrend">+0%</span> <span id="balanceSub">0 transações</span></div><div style="height:44px;margin-top:6px"><canvas id="miniBalance"></canvas></div></div>
+          <div class="card kpi"><div class="kpi-head"><span class="kpi-label">XP & Nível</span><span class="kpi-icon" style="background:#FEF3C7">⚡</span></div><div class="kpi-value"><span id="levelLabel">Nv 1</span> <small id="xpLabel">0 XP</small></div><div class="lvl-bar"><i id="xpBar" style="width:0%"></i></div><div class="lvl-nodes"><span id="xpFrom">0 XP</span><span id="xpTo">500 XP</span></div><div class="kpi-sub">Falta <b id="xpNext">500 XP</b></div></div>
+          <div class="card kpi"><div class="kpi-head"><span class="kpi-label">Hábitos</span><span class="kpi-icon" style="background:#DCFCE7">✅</span></div><div class="kpi-value"><span id="habitsDone">0</span>/<span id="habitsTotal">0</span></div><div class="progress"><i id="habitsProgress" style="width:0%"></i></div><div class="kpi-sub" id="habitsMotivation">Comece!</div></div>
+          <div class="card kpi"><div class="kpi-head"><span class="kpi-label">Humor</span><span class="kpi-icon" style="background:#F3E8FF" id="moodIcon">🙂</span></div><div class="kpi-value" id="moodLabel" style="font-size:20px">--</div><div class="kpi-sub" id="moodSub">Nenhum</div><div style="margin-top:8px;display:flex;gap:6px" id="moodWeekDots"></div></div>
+        </div>
+        <div class="grid grid-2" style="margin-top:16px">
+          <div class="card"><b>Hábitos hoje</b><div id="todayHabits" style="display:grid;gap:10px;margin-top:12px"></div></div>
+          <div class="card"><b>Insights IA</b><span class="badge" style="background:#EEF2FF;color:#4338CA" id="aiBadge">FREE</span><div id="aiInsights" style="display:grid;gap:10px;margin-top:12px"></div></div>
+        </div>
+        <div class="grid grid-2" style="margin-top:16px"><div class="card"><b>Fluxo semanal</b><div class="chart-box" style="margin-top:12px"><canvas id="weeklyFlow"></canvas></div></div><div class="card"><b>Gastos</b><div class="chart-box" style="margin-top:12px"><canvas id="categoryDonut"></canvas></div></div></div>
+        <p style="font-size:11px;color:var(--muted);margin-top:12px;text-align:center">Fallback inline ativo porque pasta /pages/ não encontrada no GitHub. Upe a pasta /pages/ com 8 arquivos HTML para versão completa modular.</p>
+      </div>`;
+  }
+  if(name==='financeiro'){
+    return `<div class="card"><h3>Financeiro</h3><p style="font-size:13px;color:var(--muted)">Fallback inline - pasta /pages/ não encontrada. Upe pages/financeiro.html</p><div class="grid grid-3" style="margin-top:12px"><div class="card"><span class="kpi-label">Receitas</span><div class="kpi-value" id="incomeMonth">R$ 0</div></div><div class="card"><span class="kpi-label">Despesas</span><div class="kpi-value" id="expenseMonth">R$ 0</div></div><div class="card"><span class="kpi-label">Economia</span><div class="kpi-value" id="savingMonth">R$ 0</div></div></div><div id="txList" style="margin-top:12px"></div><div style="margin-top:12px"><button class="btn btn-primary" onclick="appOpenTxModal()">+ Transação</button></div></div>`;
+  }
+  if(name==='habitos'){
+    return `<div class="card"><h3>Hábitos</h3><div id="habitStats" class="grid grid-4" style="margin-top:12px"></div><div id="habitsLibrary" style="display:grid;gap:10px;margin-top:12px"></div><button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="appOpenHabitModal()">+ Novo hábito</button></div>`;
+  }
+  if(name==='perfil'){
+    return `<div class="page-perfil"><div class="card"><h3>Perfil</h3><p style="font-size:12px;color:var(--muted)">Fallback - upa pages/perfil.html completo para edição completa nome/sobrenome/celular</p><div style="margin-top:12px"><b>Nome:</b> <span id="userName"></span><br><b>Email:</b> <span id="profileEmail"></span><br><b>Moeda:</b> <span id="currencyLabelTop"></span><br><b>Streak:</b> <span id="streakLabel"></span></div><button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="appLoadPage('perfil')">Tentar recarregar perfil completo</button></div></div>`;
+  }
+  return `<div class="card" style="text-align:center;padding:30px"><b>Página ${name}</b><p style="font-size:13px;color:var(--muted);margin-top:8px">Pasta /pages/${name}.html não encontrada no GitHub Pages. Verifique se você upou a pasta /pages/ com todos os arquivos. Fallback ativo para não travar.</p><button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="appLoadPage('dashboard')">Ir para Dashboard</button></div>`;
 }
 
 function renderCurrentPage(){
