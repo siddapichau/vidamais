@@ -1,4 +1,4 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getDatabase, ref, set, get, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut as fbSignOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
@@ -14,7 +14,9 @@ export const firebaseConfig = {
   appId: "1:685977764265:web:aab35e2d621856a3e6c4b8"
 };
 
-const app = initializeApp(firebaseConfig);
+// BLINDAGEM: Se já existe um app inicializado, ele usa o atual e não trava o script!
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
+
 export const db = getDatabase(app);
 export const auth = getAuth(app);
 setPersistence(auth, browserLocalPersistence).catch(()=>{});
@@ -23,7 +25,6 @@ googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 let _currentUser = null;
 
-// Roda em Background (Fire-and-forget) - Sem AWAIT fatal que trava o PC
 function ensureUserData(uid, firebaseUser){
   get(ref(db, `vidaplus/users/${uid}`)).then(snap => {
     if(!snap.exists()){
@@ -45,7 +46,7 @@ export function initAuthListener(callback){
   return onAuthStateChanged(auth, (user)=>{
     _currentUser=user;
     if(user){ ensureUserData(user.uid, user); }
-    if(callback) callback(user); // Callback imediato liberando a tela!
+    if(callback) callback(user);
   });
 }
 
