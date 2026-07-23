@@ -1,5 +1,4 @@
-// Vida+ AI - Firebase v4 BULLETPROOF - Mobile + Admin
-// Agora usa apenas Redirect para Google (mais confiável)
+// Vida+ AI - Firebase v4 - apenas Redirect para Google
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAnalytics, isSupported as analyticsSupported } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
 import { getDatabase, ref, set, get, push, onValue, remove, update, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
@@ -141,7 +140,7 @@ export async function signupEmail(email, password, name, extra={}){
 }
 export async function loginGoogle(){
   try {
-    // Sempre usa redirect (mais confiável em celular e desktop)
+    // SEMPRE usa redirect (melhor para celular e desktop)
     await signInWithRedirect(auth, googleProvider);
     return null; // O resultado virá via getRedirectResult
   } catch(e){
@@ -297,4 +296,4 @@ export const VidaFirebase = {
   getStatus: ()=>({connected: !!getCurrentUser(), uid: getUid(), dbUrl: FIREBASE_DB_URL, isAdmin: isCurrentUserAdmin()})
 };
 
-console.log("[Vida+ Firebase v4 BULLETPROOF] Admin:", ADMIN_EMAIL, "DB:", FIREBASE_DB_URL);
+console.log("[Vida+ Firebase v4] Admin:", ADMIN_EMAIL, "DB:", FIREBASE_DB_URL);

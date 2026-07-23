@@ -1,6 +1,4 @@
-// Vida+ AI - CORE v4 FINAL - Sem dados pré-carregados sem login + Pages puxam do Index
-// 100% PT-BR, 50 níveis, 8 moedas, 10 temas
-
+// Vida+ AI - CORE v4 - Sem dados pré-carregados
 export const STORE = {
   user: 'vidaplus_user_v5',
   tx: 'vidaplus_tx_v5',
@@ -112,7 +110,7 @@ export function clearAllLocal(){
 export function loadState(forceClear = false){
   try{
     if (forceClear) {
-      // Remove todas as chaves do localStorage para garantir que não haja vestígios
+      // Remove TODAS as chaves do localStorage
       Object.keys(localStorage).forEach(k => {
         if (k.startsWith('vidaplus_')) localStorage.removeItem(k);
       });
@@ -125,12 +123,12 @@ export function loadState(forceClear = false){
       state.app = {streak:0,maxStreak:0,lastActive:null,premium:false,theme:'light',txType:'expense',selectedMood:null,txFilter:'all',uid:'default_user'};
       state.settings = {theme:'light', currency:'BRL', notifications:true, language:'pt-BR'};
       state.profile = {name:'', firstName:'', lastName:'', email:'', phone:'', photo:'', premium:false, birthDate:'', currency:'BRL'};
+      console.log('[loadState] FORCED CLEAR: estado zerado');
       return true;
     }
     const parse=(k,fb)=>{ try{ const v=localStorage.getItem(k); return v? JSON.parse(v):fb }catch{return fb} };
     const appTmp = parse(STORE.app, null);
     const uid = (appTmp && appTmp.uid) || 'default_user';
-    // Se ainda assim não tiver uid real, reseta
     if(uid === 'default_user') {
       return loadState(true);
     }
