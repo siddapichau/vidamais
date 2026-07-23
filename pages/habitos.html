@@ -1,25 +1,13 @@
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Hábitos</title><link rel="stylesheet" href="../css/style.css"><style>body{background:var(--bg);padding:16px}</style></head><body>
-<h2>Hábitos</h2><p style="font-size:12px;color:var(--muted)">Editável em pages/habitos.html • Iframe</p>
-<div id="habitsList" style="display:grid;gap:10px;margin-top:12px"></div>
-<button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="parent.postMessage({type:'openHabitModal'},'*')">+ Novo hábito</button>
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-const cfg={apiKey:"AIzaSyB3PEDD9LwVeqSVYFkYvfl7GiXARJgLV6Q",authDomain:"vidamaisai.firebaseapp.com",databaseURL:"https://vidamaisai-default-rtdb.firebaseio.com",projectId:"vidamaisai",storageBucket:"vidamaisai.firebasestorage.app",messagingSenderId:"685977764265",appId:"1:685977764265:web:aab35e2d621856a3e6c4b8"};
-const app=initializeApp(cfg); const auth=getAuth(app); const db=getDatabase(app);
-function resize(){ parent.postMessage({type:'resize',height:document.documentElement.scrollHeight},'*'); }
-onAuthStateChanged(auth, async (user)=>{
-  if(!user){ document.body.innerHTML='<p style="text-align:center;padding:20px">Login no Index<br><a href="../index.html?page=habitos">Index</a></p>'; resize(); return; }
-  try{
-    const snap=await get(ref(db, `vidaplus/users/${user.uid}/habits`));
-    const habits=snap.exists()? (Array.isArray(snap.val())? snap.val():Object.values(snap.val())):[];
-    const list=document.getElementById('habitsList');
-    list.innerHTML=habits.map(h=>`<div class="habit"><div class="habit-check">${h.icon||'⭐'}</div><div class="habit-meta"><b>${h.name}</b><span>Streak ${h.streak||0}d</span></div></div>`).join('') || '<p style="color:var(--muted);font-size:12px">Nenhum hábito</p>';
-  }catch(e){ document.getElementById('habitsList').textContent='Erro: '+e.message; }
-  resize();
-});
-window.addEventListener('load', resize);
-if(window.top===window.self && !location.search.includes('embedded')) location.replace('../index.html?page=habitos');
-</script>
-</body></html>
+<script>if(window.top===window.self){ location.replace('../index.html?page=habitos'); }</script>
+<div id="page-habitos-fragment">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div><h2 style="font-size:24px">Hábitos</h2><p style="font-size:12px;color:var(--muted)">Editável em pages/habitos.html • Usa regras do Index</p></div>
+    <button class="btn btn-primary btn-sm" onclick="appOpenHabitModal()">+ Novo hábito</button>
+  </div>
+  <div class="grid grid-4" id="habitStats"></div>
+  <div class="grid grid-2" style="margin-top:14px">
+    <div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><b>Biblioteca</b><span class="link" onclick="appLoadPage('dashboard')">Voltar</span></div><div id="habitsLibrary" style="display:grid;gap:8px"></div></div>
+    <div class="card"><b>Heatmap</b><div id="habitHeatmap" style="display:grid;gap:8px;margin-top:10px"></div></div>
+  </div>
+  <p style="font-size:11px;color:var(--muted);margin-top:10px;text-align:center">Este arquivo é só HTML fragmentado. Não precisa puxar .js ou .css. Edite à vontade.</p>
+</div>

@@ -1,23 +1,22 @@
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Perfil</title><link rel="stylesheet" href="../css/style.css"><style>body{background:var(--bg);padding:16px}</style></head><body>
-<h2>Perfil</h2><p style="font-size:12px;color:var(--muted)">Editável em pages/perfil.html • Iframe do Index</p>
-<div id="perfilInfo" class="card" style="margin-top:12px"></div>
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-const cfg={apiKey:"AIzaSyB3PEDD9LwVeqSVYFkYvfl7GiXARJgLV6Q",authDomain:"vidamaisai.firebaseapp.com",databaseURL:"https://vidamaisai-default-rtdb.firebaseio.com",projectId:"vidamaisai",storageBucket:"vidamaisai.firebasestorage.app",messagingSenderId:"685977764265",appId:"1:685977764265:web:aab35e2d621856a3e6c4b8"};
-const app=initializeApp(cfg); const auth=getAuth(app); const db=getDatabase(app);
-function resize(){ parent.postMessage({type:'resize',height:document.documentElement.scrollHeight},'*'); }
-onAuthStateChanged(auth, async (user)=>{
-  if(!user){ document.getElementById('perfilInfo').innerHTML='<p>Login no Index</p>'; resize(); return; }
-  try{
-    const snap=await get(ref(db, `vidaplus/users/${user.uid}/profile`));
-    const p=snap.exists()? snap.val():{};
-    document.getElementById('perfilInfo').innerHTML=`<b>${p.name||user.email}</b><br><small>${p.email||user.email}</small><br><small>Telefone: ${p.phone||'não informado'}</small><br><small>Moeda: ${p.currency||'BRL'}</small><br><small>Premium: ${p.premium?'Sim ★':'Não'}</small><br><small>UID: ${user.uid.slice(0,10)}...</small>`;
-  }catch(e){ document.getElementById('perfilInfo').textContent='Erro: '+e.message; }
-  resize();
-});
-if(window.top===window.self && !location.search.includes('embedded')) location.replace('../index.html?page=perfil');
-window.addEventListener('load', resize);
-</script>
-</body></html>
+<script>if(window.top===window.self){ location.replace('../index.html?page=perfil'); }</script>
+<div id="page-perfil-fragment">
+  <h2 style="font-size:24px">Meu Perfil</h2><p style="font-size:12px;color:var(--muted);margin-bottom:12px">Editável em pages/perfil.html • Usa regras do Index, não precisa puxar .js/.css</p>
+  <div class="grid grid-2">
+    <div class="card">
+      <b>Dados</b>
+      <div style="display:grid;gap:8px;margin-top:12px">
+        <div class="row"><input id="profileFirstName" class="input" placeholder="Nome"><input id="profileLastName" class="input" placeholder="Sobrenome"></div>
+        <input id="profilePhone" class="input" placeholder="Celular">
+        <input id="profileEmail" class="input" disabled>
+        <div class="row"><select id="profileCurrency" class="input"><option value="BRL">BRL</option><option value="USD">USD</option><option value="EUR">EUR</option></select><select id="profileTheme" class="input"><option value="light">Claro</option><option value="dark">Escuro</option><option value="midnight">Midnight</option></select></div>
+        <button class="btn btn-primary btn-sm" onclick="appSaveProfile()">Salvar perfil</button>
+      </div>
+    </div>
+    <div class="card" style="background:linear-gradient(135deg,var(--primary),var(--violet));color:white;border:none">
+      <b>Premium & XP</b>
+      <div style="font-size:22px;font-weight:800;margin-top:8px" id="perfilLevel">Nv 1</div>
+      <div class="progress" style="background:rgba(255,255,255,.2);margin-top:8px"><i id="perfilBar" style="background:white"></i></div>
+      <button class="btn btn-white btn-sm" style="margin-top:12px;width:100%" onclick="appOpenPremium()">Virar Premium</button>
+    </div>
+  </div>
+</div>
