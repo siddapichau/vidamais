@@ -76,42 +76,60 @@
   </main>
 </div>
 
-<!-- AUTH MODAL - Completo com nome/sobrenome/celular -->
+<!-- AUTH MODAL v5 - SIMPLES: Login com Google ou Email/Senha apenas -->
 <div class="overlay open" id="overlayAuth" style="z-index:150">
-  <div class="modal auth-modal" style="max-width:440px">
+  <div class="modal auth-modal" style="max-width:400px">
     <div style="padding:24px 24px 0;text-align:center">
       <img src="assets/logo.png" style="width:64px;height:64px;border-radius:16px;margin:0 auto 12px;display:block;object-fit:cover">
-      <h2 style="font-size:26px;line-height:1">Bem-vindo ao Vida+ AI</h2>
-      <p style="color:var(--muted);font-size:12px;margin-top:8px;line-height:1.4">Login Email ou Google • Dados salvos em <b>vidamaisai-default-rtdb</b> • Cadastro completo: nome, sobrenome, celular</p>
+      <h2 id="authTitle" style="font-size:26px;line-height:1">Entrar no Vida+ AI</h2>
+      <p id="authSubtitle" style="color:var(--muted);font-size:12px;margin-top:8px;line-height:1.4">Use Google ou e-mail e senha • 100% PT-BR • Firebase vidamaisai</p>
+      <div style="display:flex;gap:6px;justify-content:center;margin-top:14px">
+        <button class="pill active" id="tabLogin" onclick="switchAuthMode('login')">Entrar</button>
+        <button class="pill" id="tabSignup" onclick="switchAuthMode('signup')">Criar conta</button>
+      </div>
     </div>
     <div class="modal-body">
-      <button class="google-btn" id="authBtnGoogle" onclick="handleGoogleLogin()"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px"> Continuar com Google</button>
-      <div class="divider">OU EMAIL COMPLETO</div>
-      <div class="row"><input id="authFirstName" class="input" placeholder="Nome"><input id="authLastName" class="input" placeholder="Sobrenome"></div>
-      <input id="authPhone" class="input" placeholder="Celular (48) 9 9999-9999">
-      <input id="authName" class="input" placeholder="Nome completo (antigo, opcional)" style="display:none">
-      <input id="authEmail" class="input" type="email" placeholder="seu@email.com">
-      <input id="authPass" class="input" type="password" placeholder="Senha (mín 6)">
-      <select id="authCurrency" class="input"><option value="BRL">Moeda: R$ Real (BRL)</option><option value="USD">US$ Dólar</option><option value="EUR">€ Euro</option><option value="GBP">£ Libra</option><option value="JPY">¥ Iene</option><option value="ARS">$AR Peso Argentino</option><option value="MXN">$MX Peso Mexicano</option><option value="BTC">₿ Bitcoin</option></select>
-      <div class="row"><button class="btn btn-primary" id="authBtnLogin" onclick="handleLogin()" style="height:46px">Entrar</button><button class="btn btn-ghost" id="authBtnSignup" onclick="handleSignup()" style="height:46px">Criar conta completa</button></div>
-      <span class="link" style="text-align:center;display:block" onclick="handleReset()">Esqueci senha → email</span>
-      <div class="code" style="font-size:10px;text-align:center">100% Português • Auth vidamaisai • RTDB grava tudo • Admin protegido wesleystudio@gmail.com</div>
+      <!-- LOGIN SIMPLES -->
+      <div id="authLoginView" style="display:grid;gap:10px">
+        <button class="google-btn" id="authBtnGoogle" type="button" onclick="handleGoogleLogin()"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px"> Continuar com Google</button>
+        <div class="divider">OU</div>
+        <input id="authEmail" class="input" type="email" placeholder="seu@email.com" autocomplete="email">
+        <input id="authPass" class="input" type="password" placeholder="Sua senha" autocomplete="current-password">
+        <button class="btn btn-primary" id="authBtnLogin" type="button" onclick="handleLogin()" style="height:46px">Entrar com e-mail</button>
+        <span class="link" style="text-align:center;display:block" onclick="handleReset()">Esqueci senha → enviar e-mail</span>
+      </div>
+
+      <!-- CADASTRO COMPLETO MAS LOGIN DEPOIS É SÓ GOOGLE OU EMAIL/SENHA -->
+      <div id="authSignupView" style="display:none;gap:10px">
+        <button class="google-btn" type="button" onclick="handleGoogleLogin()"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px"> Cadastrar com Google (recomendado)</button>
+        <div class="divider">OU CADASTRO MANUAL</div>
+        <div class="row"><input id="authFirstName" class="input" placeholder="Nome"><input id="authLastName" class="input" placeholder="Sobrenome"></div>
+        <input id="authPhone" class="input" placeholder="Celular (opcional) (48) 9 9999-9999">
+        <input id="authEmailSignup" class="input" type="email" placeholder="seu@email.com" autocomplete="email">
+        <input id="authPassSignup" class="input" type="password" placeholder="Crie senha (mín 6)" autocomplete="new-password">
+        <select id="authCurrency" class="input"><option value="BRL">R$ Real (BRL)</option><option value="USD">US$ Dólar</option><option value="EUR">€ Euro</option><option value="GBP">£ Libra</option><option value="JPY">¥ Iene</option><option value="ARS">$AR Peso Arg</option><option value="MXN">$MX Mex</option><option value="BTC">₿ Bitcoin</option></select>
+        <button class="btn btn-primary" id="authBtnSignup" type="button" onclick="handleSignup()" style="height:46px">Criar conta → depois login com e-mail/senha ou Google</button>
+        <p style="font-size:11px;color:var(--muted);text-align:center">Após criar, seu login futuro será apenas com Google ou e-mail + senha. Celular e nome são só para perfil.</p>
+      </div>
+
+      <div class="code" style="font-size:10px;text-align:center;margin-top:4px">Admin exclusivo: wesleystudio@gmail.com • Firebase: vidamaisai-default-rtdb</div>
+      <div id="authError" style="display:none;padding:10px 12px;border-radius:10px;background:#FEF2F2;border:1px solid #FECACA;color:#991B1B;font-size:12px"></div>
     </div>
   </div>
 </div>
 
-<!-- COMPLETAR PERFIL (quando Google sem dados) -->
+<!-- COMPLETAR PERFIL (quando Google sem dados) - OPCIONAL, NÃO TRAVA -->
 <div class="overlay" id="overlayCompleteProfile" style="z-index:160">
   <div class="modal" style="max-width:440px">
-    <div class="modal-head"><h3>Complete seu perfil</h3></div>
+    <div class="modal-head"><h3>Complete seu perfil (opcional)</h3><button class="btn btn-ghost btn-sm" onclick="closeModal('overlayCompleteProfile')">✕ Pular</button></div>
     <div class="modal-body">
-      <p style="font-size:13px;color:var(--muted)">Detectamos que seu cadastro Google está incompleto. Preencha para liberar tudo 100% PT-BR.</p>
+      <p style="font-size:13px;color:var(--muted)">Seu login Google funcionou! Se quiser, complete para liberar perfil 100% PT-BR. Pode pular e fazer depois em Perfil.</p>
       <div class="row"><input id="completeFirstName" class="input" placeholder="Nome"><input id="completeLastName" class="input" placeholder="Sobrenome"></div>
-      <input id="completePhone" class="input" placeholder="Celular com DDD">
-      <input id="completeBirth" class="input" type="date" placeholder="Data nascimento">
-      <select id="completeCurrency" class="input"><option value="BRL">R$ Real</option><option value="USD">US$ Dólar</option><option value="EUR">€ Euro</option><option value="GBP">£ Libra</option></select>
+      <input id="completePhone" class="input" placeholder="Celular com DDD (opcional)">
+      <input id="completeBirth" class="input" type="date" placeholder="Data nascimento (opcional)">
+      <select id="completeCurrency" class="input"><option value="BRL">R$ Real</option><option value="USD">US$ Dólar</option><option value="EUR">€ Euro</option><option value="GBP">£ Libra</option><option value="JPY">¥ Iene</option></select>
     </div>
-    <div class="modal-foot"><button class="btn btn-primary" onclick="saveCompleteProfile()">Salvar no Firebase →</button></div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('overlayCompleteProfile')">Pular por enquanto</button><button class="btn btn-primary" onclick="saveCompleteProfile()">Salvar no Firebase →</button></div>
   </div>
 </div>
 
