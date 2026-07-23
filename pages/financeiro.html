@@ -1,27 +1,33 @@
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Financeiro - Vida+ AI</title><link rel="stylesheet" href="../css/style.css"><script>if(window.top===window.self && !location.search.includes('embedded')) location.replace('../index.html?page=financeiro');</script></head><body>
-<div class="page-financeiro">
-  <div class="section" style="margin-top:0"><div><h2>Financeiro inteligente</h2><p>Multi-moeda • Firebase RTDB • <span id="currencyLabel">BRL</span></p></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><select id="currencySelect" class="input" style="height:38px;width:120px" onchange="changeCurrency(this.value)"><option value="BRL">R$ BRL</option><option value="USD">US$ USD</option><option value="EUR">€ EUR</option><option value="GBP">£ GBP</option><option value="JPY">¥ JPY</option><option value="ARS">$AR ARS</option><option value="MXN">$MX MXN</option></select><button class="btn btn-ghost btn-sm" onclick="exportFin()">PDF</button><button class="btn btn-primary btn-sm" onclick="openTxModal()">＋ Transação</button></div>
-  </div>
-  <div class="grid grid-3">
-    <div class="card"><span class="kpi-label">Receitas no mês</span><div class="kpi-value" id="incomeMonth" style="color:var(--emerald)">R$ 0</div><div class="kpi-sub">Entradas</div></div>
-    <div class="card"><span class="kpi-label">Despesas no mês</span><div class="kpi-value" id="expenseMonth" style="color:var(--rose)">R$ 0</div><div class="kpi-sub">Saídas</div></div>
-    <div class="card"><span class="kpi-label">Economia</span><div class="kpi-value" id="savingMonth">R$ 0</div><div class="kpi-sub"><span id="savingPct">0%</span> guardado</div></div>
-  </div>
-  <div class="grid grid-2" style="margin-top:16px">
-    <div class="card"><b>Transações</b>
-      <div style="display:flex;gap:6px;margin:12px 0;flex-wrap:wrap">
-        <button class="pill active" data-filter="all" onclick="filterTx('all',this)">Tudo</button>
-        <button class="pill" data-filter="income" onclick="filterTx('income',this)">Receitas</button>
-        <button class="pill" data-filter="expense" onclick="filterTx('expense',this)">Despesas</button>
-        <input id="txSearch" class="input" placeholder="Filtrar..." style="height:36px;flex:1;min-width:120px" oninput="renderTx()">
-      </div>
-      <div id="txList" style="max-height:520px;overflow:auto"></div>
+<script>if(window.top===window.self){ location.replace('../index.html?page=financeiro'); }</script>
+<div id="page-financeiro-fragment">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+    <div><h2 style="font-size:24px">Financeiro</h2><p style="font-size:12px;color:var(--muted)">Editável em pages/financeiro.html • Usa CSS/JS do Index</p></div>
+    <div style="display:flex;gap:8px">
+      <select id="currencySelect" class="input" style="height:36px;width:110px" onchange="appChangeCurrency(this.value)"><option value="BRL">R$ BRL</option><option value="USD">US$ USD</option><option value="EUR">€ EUR</option></select>
+      <button class="btn btn-primary btn-sm" onclick="appOpenTxModal()">+ Transação</button>
     </div>
-    <div style="display:grid;gap:16px">
-      <div class="card"><b>Gastos categoria • Mês</b><div class="chart-box" style="margin-top:12px"><canvas id="finCategory"></canvas></div></div>
-      <div class="card"><b>Saldo 30 dias</b><div class="chart-box" style="margin-top:12px"><canvas id="finLine"></canvas></div><div class="insight" style="margin-top:12px"><div class="i-ico">✦</div><div><b id="finInsightTitle">Análise</b><p id="finInsightText">Adicione dados.</p></div></div></div>
+  </div>
+
+  <div class="grid grid-3">
+    <div class="card"><span class="kpi-label">Receitas</span><div class="kpi-value" id="incomeMonth" style="color:var(--emerald)">R$ 0</div></div>
+    <div class="card"><span class="kpi-label">Despesas</span><div class="kpi-value" id="expenseMonth" style="color:var(--rose)">R$ 0</div></div>
+    <div class="card"><span class="kpi-label">Economia</span><div class="kpi-value" id="savingMonth">R$ 0</div><div class="kpi-sub"><span id="savingPct">0%</span></div></div>
+  </div>
+
+  <div class="grid grid-2" style="margin-top:14px">
+    <div class="card">
+      <b>Transações</b>
+      <div style="display:flex;gap:6px;margin:10px 0;flex-wrap:wrap">
+        <button class="pill active" data-filter="all" onclick="appFilterTx('all',this)">Tudo</button>
+        <button class="pill" data-filter="income" onclick="appFilterTx('income',this)">Receitas</button>
+        <button class="pill" data-filter="expense" onclick="appFilterTx('expense',this)">Despesas</button>
+        <input id="txSearch" class="input" placeholder="Buscar..." style="height:34px;flex:1" oninput="appFilterTx('all',document.querySelector('[data-filter=all]'))">
+      </div>
+      <div id="txList" style="max-height:480px;overflow:auto"></div>
+    </div>
+    <div style="display:grid;gap:12px">
+      <div class="card"><b>Gastos por categoria</b><div class="chart-box" style="margin-top:10px"><canvas id="finCategory"></canvas></div></div>
+      <div class="card"><b>Saldo 30 dias</b><div class="chart-box" style="margin-top:10px"><canvas id="finLine"></canvas></div></div>
     </div>
   </div>
 </div>
-</body></html>

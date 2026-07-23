@@ -1,49 +1,22 @@
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Perfil - Vida+ AI</title><link rel="stylesheet" href="../css/style.css"><script>if(window.top===window.self && !location.search.includes('embedded')) location.replace('../index.html?page=perfil');</script></head><body>
-<div class="page-perfil">
-  <div class="section" style="margin-top:0"><div><h2>Meu Perfil Completo</h2><p>Dados salvos em Firebase • Usado em todo app</p></div><div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" onclick="loadPage('dashboard')">← Voltar</button><button class="btn btn-primary btn-sm" onclick="saveProfile()">💾 Salvar tudo no Firebase</button></div></div>
-
+<script>if(window.top===window.self){ location.replace('../index.html?page=perfil'); }</script>
+<div id="page-perfil-fragment">
+  <h2 style="font-size:24px">Meu Perfil</h2><p style="font-size:12px;color:var(--muted);margin-bottom:12px">Editável em pages/perfil.html • Usa regras do Index, não precisa puxar .js/.css</p>
   <div class="grid grid-2">
     <div class="card">
-      <b>👤 Dados Pessoais</b>
-      <div class="profile-grid" style="margin-top:14px">
-        <div><label style="font-size:11px;font-weight:700;color:var(--muted)">NOME</label><input id="profileFirstName" class="input" placeholder="Nome"></div>
-        <div><label style="font-size:11px;font-weight:700;color:var(--muted)">SOBRENOME</label><input id="profileLastName" class="input" placeholder="Sobrenome"></div>
-        <div><label style="font-size:11px;font-weight:700;color:var(--muted)">CELULAR (com DDD)</label><input id="profilePhone" class="input" placeholder="(48) 9 9999-9999"></div>
-        <div><label style="font-size:11px;font-weight:700;color:var(--muted)">DATA NASC.</label><input id="profileBirth" class="input" type="date"></div>
-        <div style="grid-column:1/-1"><label style="font-size:11px;font-weight:700;color:var(--muted)">EMAIL (não editável - login)</label><input id="profileEmail" class="input" disabled style="opacity:.7"></div>
-        <div style="grid-column:1/-1"><label style="font-size:11px;font-weight:700;color:var(--muted)">FOTO URL (opcional)</label><input id="profilePhoto" class="input" placeholder="https://..."></div>
+      <b>Dados</b>
+      <div style="display:grid;gap:8px;margin-top:12px">
+        <div class="row"><input id="profileFirstName" class="input" placeholder="Nome"><input id="profileLastName" class="input" placeholder="Sobrenome"></div>
+        <input id="profilePhone" class="input" placeholder="Celular">
+        <input id="profileEmail" class="input" disabled>
+        <div class="row"><select id="profileCurrency" class="input"><option value="BRL">BRL</option><option value="USD">USD</option><option value="EUR">EUR</option></select><select id="profileTheme" class="input"><option value="light">Claro</option><option value="dark">Escuro</option><option value="midnight">Midnight</option></select></div>
+        <button class="btn btn-primary btn-sm" onclick="appSaveProfile()">Salvar perfil</button>
       </div>
-      <div style="margin-top:14px;padding:12px;border-radius:12px;background:var(--bg-2);border:1px solid var(--border)"><b style="font-size:12px">UID Firebase</b><p id="profileUid" style="font-size:11px;color:var(--muted);word-break:break-all;margin-top:4px"></p><b style="font-size:12px;margin-top:8px;display:block">Membro desde</b><p id="profileJoined" style="font-size:11px;color:var(--muted)"></p></div>
     </div>
-
-    <div style="display:grid;gap:16px">
-      <div class="card">
-        <b>🔐 Segurança • Alterar Senha</b>
-        <p style="font-size:12px;color:var(--muted);margin:6px 0 12px">Se logou com Google, não precisa senha. Se email, pode trocar.</p>
-        <div style="display:grid;gap:8px">
-          <input id="currentPassword" class="input" type="password" placeholder="Senha atual (só se email)">
-          <input id="newPassword" class="input" type="password" placeholder="Nova senha (mín 6)">
-          <button class="btn btn-primary btn-sm" onclick="changePasswordProfile()">Alterar senha no Firebase</button>
-          <button class="btn btn-ghost btn-sm" onclick="handleReset()">Enviar email reset senha</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <b>💱 Moeda & Aparência</b>
-        <div class="grid grid-2" style="margin-top:12px">
-          <div><label style="font-size:11px;font-weight:700;color:var(--muted)">MOEDA PADRÃO</label><select id="profileCurrency" class="input" onchange="previewCurrency(this.value)"><option value="BRL">R$ Real</option><option value="USD">US$ Dólar</option><option value="EUR">€ Euro</option><option value="GBP">£ Libra</option><option value="JPY">¥ Iene</option><option value="ARS">$AR Peso Arg</option><option value="MXN">$MX Peso Mex</option><option value="BTC">₿ Bitcoin</option></select></div>
-          <div><label style="font-size:11px;font-weight:700;color:var(--muted)">TEMA</label><select id="profileTheme" class="input" onchange="previewTheme(this.value)"><option value="light">Claro</option><option value="dark">Escuro</option><option value="midnight">Midnight</option><option value="forest">Forest</option><option value="sunset">Sunset</option><option value="aurora">Aurora</option><option value="ocean">Ocean</option><option value="neon">Neon</option><option value="gold">Gold</option><option value="sakura">Sakura</option></select></div>
-        </div>
-        <div style="margin-top:12px;display:flex;gap:8px"><button class="btn btn-ghost btn-sm" onclick="handleLogout()">Sair da conta</button><span style="font-size:11px;color:var(--muted);align-self:center">UID: <span id="uidShort"></span></span></div>
-      </div>
-
-      <div class="card" style="background:linear-gradient(135deg,var(--primary),var(--violet));color:white;border:none">
-        <b>XP & Premium</b>
-        <div style="margin-top:10px"><span style="font-size:12px;opacity:.8">NÍVEL</span><div style="font-size:28px;font-weight:800" id="perfilLevel">Nv 1</div><div style="font-size:12px;opacity:.9" id="perfilXp">0 XP</div><div class="progress" style="background:rgba(255,255,255,.25);margin-top:10px"><i id="perfilBar" style="background:white;width:0%"></i></div></div>
-        <div style="margin-top:12px;display:flex;gap:8px"><span class="badge" id="perfilPremium" style="background:white;color:var(--primary)">FREE</span><span class="badge" style="background:rgba(255,255,255,.2);color:white" id="perfilStreak">Streak 0</span></div>
-        <button class="btn btn-white btn-sm" style="margin-top:12px;width:100%" onclick="openPremium()">Virar Premium →</button>
-      </div>
+    <div class="card" style="background:linear-gradient(135deg,var(--primary),var(--violet));color:white;border:none">
+      <b>Premium & XP</b>
+      <div style="font-size:22px;font-weight:800;margin-top:8px" id="perfilLevel">Nv 1</div>
+      <div class="progress" style="background:rgba(255,255,255,.2);margin-top:8px"><i id="perfilBar" style="background:white"></i></div>
+      <button class="btn btn-white btn-sm" style="margin-top:12px;width:100%" onclick="appOpenPremium()">Virar Premium</button>
     </div>
   </div>
 </div>
-</body></html>

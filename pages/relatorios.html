@@ -1,16 +1,10 @@
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Relatórios IA - Vida+ AI</title><link rel="stylesheet" href="../css/style.css"><script>if(window.top===window.self && !location.search.includes('embedded')) location.replace('../index.html?page=relatorios');</script></head><body>
-<div class="page-relatorios">
-  <div class="section" style="margin-top:0"><div><h2>Relatórios Vida+ AI</h2><p>IA cruza finanças + hábitos + humor • Free vê 3, Premium total</p></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost btn-sm" onclick="exportReport()">PDF</button><button class="btn btn-primary btn-sm" onclick="regenerateAI()">Regenerar IA ✦</button><span class="badge" id="premiumBadge" style="background:#EEF2FF;color:#4338CA">FREE</span></div>
-  </div>
+<script>if(window.top===window.self){ location.replace('../index.html?page=relatorios'); }</script>
+<div id="page-relatorios-fragment">
+  <h2 style="font-size:24px">Relatórios IA</h2><p style="font-size:12px;color:var(--muted);margin-bottom:12px">Free 3 insights, Premium 7 • Editável em pages/relatorios.html</p>
   <div class="grid grid-3">
-    <div class="card" style="background:linear-gradient(135deg, var(--primary), var(--violet));color:white;border:none"><span class="kpi-label" style="color:rgba(255,255,255,.7)">Score Vida+ hoje</span><div class="kpi-value" style="font-size:44px" id="lifeScore">0</div><div style="font-size:12px;opacity:.85" id="lifeScoreDesc">Calibrando...</div><div class="progress" style="background:rgba(255,255,255,.2);margin-top:12px"><i id="lifeScoreBar" style="background:white;width:0%"></i></div></div>
-    <div class="card"><b>Resumo financeiro IA</b><div id="reportFinance" style="display:grid;gap:10px;margin-top:12px"></div></div>
-    <div class="card"><b>Comportamental</b><div id="reportBehavior" style="display:grid;gap:10px;margin-top:12px"></div></div>
+    <div class="card" style="background:linear-gradient(135deg,var(--primary),var(--violet));color:white;border:none"><span class="kpi-label" style="color:rgba(255,255,255,.7)">Score</span><div class="kpi-value" style="font-size:36px" id="lifeScore">0</div><div class="progress" style="background:rgba(255,255,255,.2);margin-top:10px"><i id="lifeScoreBar" style="background:white;width:0%"></i></div></div>
+    <div class="card"><b>Financeiro IA</b><div id="reportFinance" style="display:grid;gap:8px;margin-top:10px"></div></div>
+    <div class="card"><b>Comportamento</b><div id="reportBehavior" style="display:grid;gap:8px;margin-top:10px"></div></div>
   </div>
-  <div class="grid grid-2" style="margin-top:16px">
-    <div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><b>Semanal inteligente</b><span class="badge" style="background:#EEF2FF;color:#4338CA">IA Local</span></div><div id="weeklyAIReport" style="margin-top:14px;display:grid;gap:12px"></div></div>
-    <div class="card"><b>Correlações poderosas</b><p style="font-size:12px;color:var(--muted);margin:4px 0 12px">Descobertas automáticas</p><div id="correlations" style="display:grid;gap:10px"></div><div class="card" style="background:var(--bg-2);margin-top:14px;border-style:dashed"><b style="font-size:13px">💡 Premium libera</b><p style="font-size:12px;color:var(--muted);margin-top:4px">Projeção 90 dias, alerta gastos por humor, DNA comportamental por horário.</p><button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="openPremium()">Desbloquear Premium</button></div></div>
-  </div>
+  <div id="correlations" style="display:grid;gap:8px;margin-top:14px"></div>
 </div>
-</body></html>

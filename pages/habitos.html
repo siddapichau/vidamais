@@ -1,10 +1,13 @@
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Hábitos - Vida+ AI</title><link rel="stylesheet" href="../css/style.css"><script>if(window.top===window.self && !location.search.includes('embedded')) location.replace('../index.html?page=habitos');</script></head><body>
-<div class="page-habitos">
-  <div class="section" style="margin-top:0"><div><h2>Hábitos que transformam</h2><p>1 toque = +20 XP • Sync Firebase</p></div><button class="btn btn-primary btn-sm" onclick="openHabitModal()">＋ Novo</button></div>
-  <div class="grid grid-4" id="habitStats"></div>
-  <div class="grid grid-2" style="margin-top:16px">
-    <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><b>Biblioteca</b><span class="link" onclick="seedHabits()">Restaurar</span></div><div id="habitsLibrary" style="display:grid;gap:10px"></div></div>
-    <div class="card"><b>Heatmap semanal</b><p style="font-size:12px;color:var(--muted);margin:4px 0 12px">7 dias • quanto mais escuro, mais feitos</p><div id="habitHeatmap" style="display:grid;gap:10px"></div><div class="insight" style="margin-top:14px"><div class="i-ico">🔥</div><div><b id="habitInsightTitle">Consistência</b><p id="habitInsightText">Continue.</p></div></div></div>
+<script>if(window.top===window.self){ location.replace('../index.html?page=habitos'); }</script>
+<div id="page-habitos-fragment">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div><h2 style="font-size:24px">Hábitos</h2><p style="font-size:12px;color:var(--muted)">Editável em pages/habitos.html • Usa regras do Index</p></div>
+    <button class="btn btn-primary btn-sm" onclick="appOpenHabitModal()">+ Novo hábito</button>
   </div>
+  <div class="grid grid-4" id="habitStats"></div>
+  <div class="grid grid-2" style="margin-top:14px">
+    <div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><b>Biblioteca</b><span class="link" onclick="appLoadPage('dashboard')">Voltar</span></div><div id="habitsLibrary" style="display:grid;gap:8px"></div></div>
+    <div class="card"><b>Heatmap</b><div id="habitHeatmap" style="display:grid;gap:8px;margin-top:10px"></div></div>
+  </div>
+  <p style="font-size:11px;color:var(--muted);margin-top:10px;text-align:center">Este arquivo é só HTML fragmentado. Não precisa puxar .js ou .css. Edite à vontade.</p>
 </div>
-</body></html>

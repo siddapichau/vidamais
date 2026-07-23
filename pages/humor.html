@@ -1,24 +1,15 @@
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Humor - Vida+ AI</title><link rel="stylesheet" href="../css/style.css"><script>if(window.top===window.self && !location.search.includes('embedded')) location.replace('../index.html?page=humor');</script></head><body>
-<div class="page-humor">
-  <div class="section" style="margin-top:0"><div><h2>Diário emocional</h2><p>Humor x hábitos x gastos</p></div><button class="btn btn-primary btn-sm" onclick="openMoodModal()">＋ Como está?</button></div>
+<script>if(window.top===window.self){ location.replace('../index.html?page=humor'); }</script>
+<div id="page-humor-fragment">
+  <h2 style="font-size:24px">Humor Diário</h2><p style="font-size:12px;color:var(--muted);margin-bottom:12px">Editável em pages/humor.html</p>
+  <div class="mood-grid" style="margin:12px 0">
+    <button class="mood-opt" data-mood="1" onclick="appQuickMood(1)"><span class="em">😞</span><b>Muito Ruim</b></button>
+    <button class="mood-opt" data-mood="2" onclick="appQuickMood(2)"><span class="em">😐</span><b>Ruim</b></button>
+    <button class="mood-opt" data-mood="3" onclick="appQuickMood(3)"><span class="em">🙂</span><b>Normal</b></button>
+    <button class="mood-opt" data-mood="4" onclick="appQuickMood(4)"><span class="em">😁</span><b>Bom</b></button>
+    <button class="mood-opt" data-mood="5" onclick="appQuickMood(5)"><span class="em">🤩</span><b>Excelente</b></button>
+  </div>
   <div class="grid grid-2">
-    <div class="card">
-      <b>Hoje, como se sente?</b>
-      <div class="mood-grid" style="margin:14px 0">
-        <button class="mood-opt" data-mood="1" onclick="quickMood(1)"><span class="em">😞</span><b>Muito Ruim</b></button>
-        <button class="mood-opt" data-mood="2" onclick="quickMood(2)"><span class="em">😐</span><b>Ruim</b></button>
-        <button class="mood-opt" data-mood="3" onclick="quickMood(3)"><span class="em">🙂</span><b>Normal</b></button>
-        <button class="mood-opt" data-mood="4" onclick="quickMood(4)"><span class="em">😁</span><b>Bom</b></button>
-        <button class="mood-opt" data-mood="5" onclick="quickMood(5)"><span class="em">🤩</span><b>Excelente</b></button>
-      </div>
-      <textarea id="moodNote" class="input" placeholder="Anote algo..."></textarea>
-      <button class="btn btn-primary" style="width:100%;margin-top:10px" onclick="saveMoodNote()">Salvar • +15 XP</button>
-      <div style="margin-top:16px"><b style="font-size:13px">Calendário</b><div class="cal" id="moodCalendar" style="margin-top:10px"></div></div>
-    </div>
-    <div style="display:grid;gap:16px">
-      <div class="card"><b>Curva 14 dias</b><div class="chart-box" style="margin-top:12px"><canvas id="moodChart"></canvas></div></div>
-      <div class="card"><b>Padrões detectados</b><div id="moodPatterns" style="display:grid;gap:10px;margin-top:12px"></div></div>
-    </div>
+    <div class="card"><b>Calendário</b><div class="cal" id="moodCalendar" style="margin-top:10px"></div></div>
+    <div class="card"><b>Curva 14 dias</b><div class="chart-box"><canvas id="moodChart"></canvas></div></div>
   </div>
 </div>
-</body></html>
