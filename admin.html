@@ -38,13 +38,13 @@
   <div class="topbar-admin">
     <div style="display:flex;align-items:center;gap:10px;min-width:0">
       <img src="assets/logo.png" style="width:40px;height:40px;border-radius:10px;object-fit:cover;flex-shrink:0">
-      <div style="min-width:0"><h1 style="font-size:18px;line-height:.95;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Admin Protegido</h1><p style="color:var(--muted);font-size:10px;margin-top:2px;line-height:1.2">Acesso: <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="463123352a233f353233222f2906212b272f2a6825292b">[email&#160;protected]</a> • Firebase vidamaisai</p><p id="adminEmailStatus" style="font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></p></div>
+      <div style="min-width:0"><h1 style="font-size:18px;line-height:.95;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Admin Protegido</h1><p style="color:var(--muted);font-size:10px;margin-top:2px;line-height:1.2">Acesso: wesleystudio@gmail.com • Firebase vidamaisai</p><p id="adminEmailStatus" style="font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></p></div>
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0"><button class="btn btn-ghost btn-sm" onclick="location.href='index.html'">App</button><button class="btn btn-ghost btn-sm" onclick="refreshAll()">↻</button><button class="btn btn-primary btn-sm" onclick="handleLogoutAdmin()">Sair</button></div>
   </div>
 
   <div id="adminBlocked" style="display:none" class="card" style="border-color:#F43F5E;background:#FEF2F2;text-align:center;padding:24px">
-    <div style="font-size:40px">🔒</div><h2 style="color:#991B1B;margin-top:10px;font-size:18px">Acesso negado</h2><p style="color:#991B1B;font-size:12px;margin-top:8px;line-height:1.4">Painel exclusivo para <b><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="c1b6a4b2ada4b8b2b5b4a5a8ae81a6aca0a8adefa2aeac">[email&#160;protected]</a></b>. Faça login com esse e-mail no app e volte.<br><br>Se você é o admin, verifique se logou com Google usando exatamente esse e-mail.</p><button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="location.href='index.html'">Ir para login</button>
+    <div style="font-size:40px">🔒</div><h2 style="color:#991B1B;margin-top:10px;font-size:18px">Acesso negado</h2><p style="color:#991B1B;font-size:12px;margin-top:8px;line-height:1.4">Painel exclusivo para <b>wesleystudio@gmail.com</b>. Faça login com esse e-mail no app e volte.<br><br>Se você é o admin, verifique se logou com Google usando exatamente esse e-mail.</p><button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="location.href='index.html'">Ir para login</button>
     <div class="code" style="margin-top:12px;text-align:left">Dica celular: no Firebase Console > Auth > Authorized domains adicione seu domínio github.io<br>Se usar signInWithPopup no celular e falhar, tenta login por e-mail/senha.</div>
   </div>
 
@@ -60,14 +60,14 @@
     "vidaplus": {
       "users": {
         "$uid": {
-          ".read": "$uid === auth.uid || auth.token.email == '<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="4d3a283e2128343e39382924220d2a202c2421632e2220">[email&#160;protected]</a>'",
-          ".write": "$uid === auth.uid || auth.token.email == '<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="314654425d544842454455585e71565c50585d1f525e5c">[email&#160;protected]</a>'"
+          ".read": "$uid === auth.uid || auth.token.email == 'wesleystudio@gmail.com'",
+          ".write": "$uid === auth.uid || auth.token.email == 'wesleystudio@gmail.com'"
         }
       }
     },
     "admin": {
-      ".read": "auth.token.email == '<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="0f786a7c636a767c7b7a6b66604f68626e6663216c6062">[email&#160;protected]</a>'",
-      ".write": "auth.token.email == '<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="493e2c3a252c303a3d3c2d2026092e24282025672a2624">[email&#160;protected]</a>'"
+      ".read": "auth.token.email == 'wesleystudio@gmail.com'",
+      ".write": "auth.token.email == 'wesleystudio@gmail.com'"
     }
   }
 }
@@ -135,7 +135,7 @@ Para teste rápido se der PERMISSION_DENIED:
 
 <div class="toast-stack" id="toasts"></div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="module">
+<script type="module">
 import { auth, db, FIREBASE_DB_URL, firebaseConfig, ADMIN_EMAIL } from './js/firebase.js';
 import { VidaFirebase } from './js/firebase.js';
 import { state, loadState, themes, levelTable } from './js/core.js';
@@ -413,5 +413,5 @@ window.clearAllLocal=()=>{ if(!confirm('Limpar localStorage?')) return; localSto
 
 refreshAll();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1f7a103cfe8fefc',t:'MTc4NDc3NzY2Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
