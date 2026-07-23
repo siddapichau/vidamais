@@ -36,22 +36,30 @@
     <div class="topbar">
       <div class="search-wrap"><span class="sico">⌕</span><input id="globalSearch" placeholder="Buscar no Vida+ AI..."></div>
       <div class="top-actions">
-        <!-- O Botão de Tema agora respeita e inverte as cores de qualquer tema escolhido! -->
         <button class="btn btn-ghost btn-sm" onclick="appToggleTheme()">◐</button>
-        <!-- O Avatar agora te leva pro perfil em vez de mandar fazer login (se estiver logado) -->
         <div class="avatar" id="avatar" onclick="appAvatarClick()">?</div>
         <button class="btn btn-primary btn-sm" id="topLoginBtn" onclick="appOpenAuthModal()">Entrar</button>
         <button class="btn btn-ghost btn-sm" id="btnLogout" onclick="appHandleLogout()" style="display:none;">Sair</button>
       </div>
     </div>
 
-    <!-- Container das páginas que serão injetadas via JS -->
-    <div id="homeView"></div>
+    <!-- HOME ISOLADA (Fim do conflito de injeção dupla) -->
+    <div id="homeView" style="display: block;">
+      <div id="home-welcome" style="max-width:900px;margin:0 auto;text-align:center;padding:20px 10px">
+        <div style="width:80px;height:80px;margin:0 auto 16px;border-radius:20px;background:conic-gradient(from 210deg at 50% 50%, #123C7A, #6366F1, #06B6D4, #10B981, #123C7A);display:grid;place-items:center;box-shadow:0 12px 30px rgba(18,60,122,.25)"><span style="font-size:32px; font-weight:800; color:white;">V+</span></div>
+        <h1 class="display" style="font-size:42px;line-height:1;letter-spacing:-.04em">Evolução diária<br>inteligente.</h1>
+        <p style="color:var(--muted);font-size:15px;margin-top:14px;line-height:1.5;max-width:600px;margin-left:auto;margin-right:auto">Una finanças, hábitos e metas. Uma plataforma que ajuda você a tomar decisões melhores, encontrar padrões invisíveis e subir de nível na vida real.</p>
+        <div style="display:flex;gap:10px;justify-content:center;margin-top:24px">
+          <button class="btn btn-primary" style="height:50px;padding:0 28px;font-size:15px" onclick="appOpenAuthModal()">🚀 Acessar o App Gratuitamente</button>
+        </div>
+      </div>
+    </div>
+
     <div id="pageContainer" style="display:none"></div>
   </main>
 </div>
 
-<!-- Modal de Login/Cadastro Centralizado -->
+<!-- Modal Auth -->
 <div class="overlay" id="overlayAuth">
   <div class="modal auth-modal">
     <div style="text-align:center">
@@ -79,8 +87,6 @@
 </div>
 
 <div class="toast-stack" id="toasts"></div>
-
-<!-- Lógica blindada e Roteamento SPA -->
 <script type="module" src="js/app.js"></script>
 </body>
 </html>
