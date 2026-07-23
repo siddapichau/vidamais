@@ -557,15 +557,39 @@ export function activatePremium(){ state.app.premium=true; state.user.premium=tr
 export function regenerateAI(){ toast('IA reanalisando...','✦'); setTimeout(()=>renderCurrentPage(),600); }
 
 export function initApp(){
-  loadState(); ensureSeed();
-  const params=new URLSearchParams(location.search);
-  const page=params.get('page')||params.get('id')||'dashboard';
-  initAuthListener(()=>{});
-  document.querySelectorAll('.overlay').forEach(el=>{ el.addEventListener('click',e=>{ if(e.target===el) el.classList.remove('open'); }); });
-  loadPage(page);
+  // Carrega só essencial primeiro para não travar
+  loadState();
+  // NÃO chama ensureSeed nem loadPage aqui - espera auth
   const forced=localStorage.getItem('vidaplus_forced_theme');
   document.documentElement.setAttribute('data-theme', forced||state.settings.theme||'light');
-  console.log('[Vida+ AI v6 FINAL] Mobile bulletproof - domínio precisa estar em Firebase Auth Authorized domains');
+
+  // Escuta auth - SÓ DEPOIS que souber se está logado carrega o resto
+  initAuthListener((user)=>{
+    if(user){
+      // Logado: garante dados, puxa do Firebase, depois carrega página
+      ensureSeed();
+      pullFromFirebase().then(()=>{
+        const params=new URLSearchParams(location.search);
+        const page=params.get('page')||params.get('id')||'dashboard';
+        console.log('[Init] Logado, carregando página:', page);
+        loadPage(page);
+      });
+    }else{
+      console.log('[Init] Não logado, mostrando login, sem carregar páginas');
+      // Não carrega páginas, só mostra login
+      const home=document.getElementById('homeView');
+      if(home) home.style.display='block';
+      const pc=document.getElementById('pageContainer');
+      if(pc){ pc.style.display='none'; pc.innerHTML=''; }
+    }
+  });
+
+  document.querySelectorAll('.overlay').forEach(el=>{ el.addEventListener('click',e=>{ if(e.target===el) el.classList.remove('open'); }); });
+
+  // NÃO carrega página aqui para evitar conflito - espera auth listener
+  console.log('[Vida+ AI v6 FINAL] Iniciando só essencial, aguardando auth...');
+  const homeEssential=document.getElementById('homeEssential');
+  if(homeEssential) homeEssential.style.display='block';
 }
 if(typeof window!=='undefined'){
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', initApp);
