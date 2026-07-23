@@ -1,22 +1,19 @@
-<script>if(window.top===window.self){ location.replace('../index.html?page=perfil'); }</script>
-<div id="page-perfil-fragment">
-  <h2 style="font-size:24px">Meu Perfil</h2><p style="font-size:12px;color:var(--muted);margin-bottom:12px">Editável em pages/perfil.html • Usa regras do Index, não precisa puxar .js/.css</p>
-  <div class="grid grid-2">
-    <div class="card">
-      <b>Dados</b>
-      <div style="display:grid;gap:8px;margin-top:12px">
-        <div class="row"><input id="profileFirstName" class="input" placeholder="Nome"><input id="profileLastName" class="input" placeholder="Sobrenome"></div>
-        <input id="profilePhone" class="input" placeholder="Celular">
-        <input id="profileEmail" class="input" disabled>
-        <div class="row"><select id="profileCurrency" class="input"><option value="BRL">BRL</option><option value="USD">USD</option><option value="EUR">EUR</option></select><select id="profileTheme" class="input"><option value="light">Claro</option><option value="dark">Escuro</option><option value="midnight">Midnight</option></select></div>
-        <button class="btn btn-primary btn-sm" onclick="appSaveProfile()">Salvar perfil</button>
-      </div>
+<div class="top-actions" style="margin-bottom: 16px;">
+  <h2>Meu Perfil</h2>
+  <p style="color:var(--muted); font-size: 13px;">Gerencie suas configurações e preferências.</p>
+</div>
+<div class="grid grid-2">
+  <div class="card">
+    <b>Dados Pessoais</b>
+    <div style="display:grid;gap:8px;margin-top:12px">
+      <div class="row"><input id="profileFirstName" class="input" placeholder="Nome"><input id="profileLastName" class="input" placeholder="Sobrenome"></div>
+      <div class="row"><select id="profileCurrency" class="input"><option value="BRL">BRL</option><option value="USD">USD</option><option value="EUR">EUR</option></select><select id="profileTheme" class="input"><option value="light">Claro</option><option value="dark">Escuro</option></select></div>
+      <button class="btn btn-primary btn-sm" onclick="alert('Salvo com sucesso!')">Salvar perfil</button>
     </div>
-    <div class="card" style="background:linear-gradient(135deg,var(--primary),var(--violet));color:white;border:none">
-      <b>Premium & XP</b>
-      <div style="font-size:22px;font-weight:800;margin-top:8px" id="perfilLevel">Nv 1</div>
-      <div class="progress" style="background:rgba(255,255,255,.2);margin-top:8px"><i id="perfilBar" style="background:white"></i></div>
-      <button class="btn btn-white btn-sm" style="margin-top:12px;width:100%" onclick="appOpenPremium()">Virar Premium</button>
-    </div>
+  </div>
+  <div class="card" style="background:linear-gradient(135deg,var(--primary),var(--violet));color:white;border:none">
+    <b>Status da Conta</b>
+    <div style="font-size:22px;font-weight:800;margin-top:8px">Plano Atual: Free</div>
+    <button class="btn btn-white btn-sm" style="margin-top:12px;width:100%">Explorar Premium</button>
   </div>
 </div>
