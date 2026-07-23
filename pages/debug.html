@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Debug Vida+ AI - Teste Firebase Auth + RTDB</title>
+<style>
+body{font-family:system-ui;padding:16px;background:#0B1020;color:#E2E8F0;line-height:1.5}
+.card{background:#141F3B;border:1px solid #1E2D55;border-radius:14px;padding:14px;margin:12px 0}
+.ok{color:#34D399} .err{color:#F87171} .warn{color:#FBBF24}
+button{padding:10px 14px;border-radius:10px;border:1px solid #1E2D55;background:#1E293B;color:white;font-weight:700;cursor:pointer}
+input{width:100%;padding:10px;border-radius:10px;border:1px solid #1E2D55;background:#0B1020;color:white;margin:6px 0}
+pre{white-space:pre-wrap;word-break:break-all;background:#0B1020;padding:10px;border-radius:10px;border:1px solid #1E2D55;max-height:300px;overflow:auto}
+</style>
+</head>
+<body>
+<h1>🔧 Debug Vida+ AI</h1>
+<p>Teste Firebase Auth + RTDB + Domínio autorizado • Use no celular mesmo</p>
+
+<div class="card">
+  <h3>1. Ambiente</h3>
+  <div id="env"></div>
+</div>
+
+<div class="card">
+  <h3>2. Teste Firebase Config</h3>
+  <div id="configStatus"></div>
+  <pre id="configPre"></pre>
+</div>
+
+<div class="card">
+  <h3>3. Teste Auth - Login Email</h3>
+  <input id="email" placeholder="seu@email.com" value="wesleystudio@gmail.com">
+  <input id="pass" placeholder="senha" type="password">
+  <div style="display:flex;gap:8px">
+    <button onclick="testLogin()">Testar Login</button>
+    <button onclick="testSignup()">Testar Cadastro</button>
+    <button onclick="testGoogle()">Testar Google (popup)</button>
+    <button onclick="testGoogleRedirect()">Google Redirect (celular)</button>
+  </div>
+  <div id="authResult" style="margin-top:10px"></div>
+</div>
+
+<div class="card">
+  <h3>4. Teste RTDB - Leitura/Escrita</h3>
+  <button onclick="testRTDB()">Testar RTDB vidaplus/users/test</button>
+  <div id="rtdbResult" style="margin-top:10px"></div>
+  <pre id="rtdbPre"></pre>
+</div>
+
+<div class="card">
+  <h3>5. Domínio Autorizado?</h3>
+  <p>Se aparecer <b>auth/unauthorized-domain</b>, você precisa adicionar seu domínio Vercel no Firebase:</p>
+  <ol style="font-size:13px">
+    <li>Abra <a href="https://console.firebase.google.com/project/vidamaisai/authentication/settings" target="_blank" style="color:#818CF8">Firebase Console > Auth > Settings</a></li>
+    <li>Em <b>Authorized domains</b> clique Add domain</li>
+    <li>Adicione: <code>vidamais-tan.vercel.app</code> e também <code>vidamais.vercel.app</code> se usar</li>
+    <li>Se testar no GitHub Pages, adicione <code>siddapichau.github.io</code></li>
+  </ol>
+  <div id="domainCheck"></div>
+</div>
+
+<div class="card">
+  <h3>6. Logs</h3>
+  <pre id="logs"></pre>
+  <button onclick="document.getElementById('logs').textContent=''">Limpar logs</button>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const log = (msg, type='')=>{
+  const el=document.getElementById('logs');
+  const time=new Date().toLocaleTimeString();
+  el.textContent+=`[${time}] ${msg}\n`;
+  console.log(msg);
+};
+window.log=log;
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB3PEDD9LwVeqSVYFkYvfl7GiXARJgLV6Q",
+  authDomain: "vidamaisai.firebaseapp.com",
+  databaseURL: "https://vidamaisai-default-rtdb.firebaseio.com",
+  projectId: "vidamaisai",
+  storageBucket: "vidamaisai.firebasestorage.app",
+  messagingSenderId: "685977764265",
+  appId: "1:685977764265:web:aab35e2d621856a3e6c4b8",
+  measurementId: "G-2BJZ5C1F9G"
+};
+
+document.getElementById('env').innerHTML=`
+  UserAgent: ${navigator.userAgent.slice(0,120)}<br>
+  URL: ${location.href}<br>
+  Host: ${location.hostname}<br>
+  Mobile: ${/mobile|android|iphone/i.test(navigator.userAgent)?'<span class="ok">Sim</span>':'Não'}<br>
+  Protocolo: ${location.protocol}
+`;
+document.getElementById('configPre').textContent=JSON.stringify(firebaseConfig, null, 2);
+document.getElementById('configStatus').innerHTML='<span class="ok">✓ Config carregada</span>';
+document.getElementById('domainCheck').innerHTML=`Domínio atual: <b>${location.hostname}</b><br>Precisa estar em Authorized domains no Firebase, senão dá <code>auth/unauthorized-domain</code> e login trava.`;
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+const provider = new GoogleAuthProvider();
+
+getRedirectResult(auth).then(res=>{
+  if(res && res.user){
+    log(`Redirect Google OK: ${res.user.email}`, 'ok');
+    document.getElementById('authResult').innerHTML=`<span class="ok">✓ Redirect Google OK: ${res.user.email}</span>`;
+  }
+}).catch(e=>{
+  log(`Redirect error: ${e.code} ${e.message}`, 'err');
+});
+
+window.testLogin = async()=>{
+  const email=document.getElementById('email').value.trim();
+  const pass=document.getElementById('pass').value;
+  const out=document.getElementById('authResult');
+  out.innerHTML='Tentando login...';
+  log(`Teste login ${email}`);
+  try{
+    const cred=await signInWithEmailAndPassword(auth, email, pass);
+    out.innerHTML=`<span class="ok">✓ Login OK: ${cred.user.email} UID:${cred.user.uid.slice(0,10)}</span>`;
+    log(`Login OK: ${cred.user.email} ${cred.user.uid}`, 'ok');
+  }catch(e){
+    out.innerHTML=`<span class="err">✕ Erro login: ${e.code} - ${e.message}</span><br>${e.code==='auth/unauthorized-domain' ? '<b style="color:#FBBF24">→ Adicione '+location.hostname+' em Firebase > Auth > Authorized domains</b>' : ''}`;
+    log(`Login ERRO: ${e.code} ${e.message}`, 'err');
+  }
+};
+window.testSignup = async()=>{
+  const email=document.getElementById('email').value.trim();
+  const pass=document.getElementById('pass').value;
+  const out=document.getElementById('authResult');
+  out.innerHTML='Tentando cadastro...';
+  log(`Teste cadastro ${email}`);
+  try{
+    const cred=await createUserWithEmailAndPassword(auth, email, pass);
+    out.innerHTML=`<span class="ok">✓ Cadastro OK: ${cred.user.email}</span>`;
+    log(`Cadastro OK: ${cred.user.email}`, 'ok');
+  }catch(e){
+    out.innerHTML=`<span class="err">✕ Erro cadastro: ${e.code} - ${e.message}</span>`;
+    log(`Cadastro ERRO: ${e.code} ${e.message}`, 'err');
+  }
+};
+window.testGoogle = async()=>{
+  const out=document.getElementById('authResult');
+  out.innerHTML='Tentando Google popup... (pode ser bloqueado no celular)';
+  log('Teste Google popup');
+  try{
+    const cred=await signInWithPopup(auth, provider);
+    out.innerHTML=`<span class="ok">✓ Google popup OK: ${cred.user.email}</span>`;
+    log(`Google popup OK: ${cred.user.email}`, 'ok');
+  }catch(e){
+    out.innerHTML=`<span class="err">✕ Erro Google popup: ${e.code} - ${e.message}</span><br>${e.code==='auth/popup-blocked' ? '<b style="color:#FBBF24">Popup bloqueado, tente botão Redirect abaixo (melhor para celular)</b>' : ''} ${e.code==='auth/unauthorized-domain' ? '<b style="color:#FBBF24">Adicione '+location.hostname+' em Authorized domains</b>' : ''}`;
+    log(`Google popup ERRO: ${e.code} ${e.message}`, 'err');
+  }
+};
+window.testGoogleRedirect = async()=>{
+  const out=document.getElementById('authResult');
+  out.innerHTML='Redirecionando para Google... (vai recarregar página)';
+  log('Google redirect iniciando...');
+  try{
+    await signInWithRedirect(auth, provider);
+  }catch(e){
+    out.innerHTML=`<span class="err">✕ Erro redirect: ${e.code} - ${e.message}</span>`;
+    log(`Redirect ERRO: ${e.code} ${e.message}`, 'err');
+  }
+};
+window.testRTDB = async()=>{
+  const out=document.getElementById('rtdbResult');
+  const pre=document.getElementById('rtdbPre');
+  out.innerHTML='Testando RTDB...';
+  log('Teste RTDB vidaplus/test');
+  try{
+    const r=ref(db, 'vidaplus/test');
+    await set(r, {teste: 'ok', por: auth.currentUser?.email||'anon', em: new Date().toISOString()});
+    pre.textContent='Escrita OK, tentando leitura...';
+    log('RTDB escrita OK', 'ok');
+    const snap=await get(r);
+    if(snap.exists()){
+      pre.textContent=JSON.stringify(snap.val(), null, 2);
+      out.innerHTML='<span class="ok">✓ RTDB leitura/escrita OK</span>';
+      log('RTDB leitura OK: '+JSON.stringify(snap.val()), 'ok');
+    }else{
+      out.innerHTML='<span class="warn">RTDB escrita OK mas leitura null</span>';
+    }
+  }catch(e){
+    out.innerHTML=`<span class="err">✕ RTDB erro: ${e.code||''} - ${e.message}</span>`;
+    pre.textContent=e.message + '\n\nSe for PERMISSION_DENIED, sua Rule está bloqueando. Use regra temporária:\n{ "rules": { ".read": true, ".write": true } }';
+    log(`RTDB ERRO: ${e.code} ${e.message}`, 'err');
+  }
+};
+log('Debug pronto. Host: '+location.hostname+' - Teste login para ver erro real.');
+</script>
+</body>
+</html>
