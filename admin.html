@@ -3,95 +3,106 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vida+ AI — Admin Console</title>
+<title>Vida+ AI — Admin Console • vidamaisai</title>
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Fraunces:wght@700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <style>
-.admin{max-width:1280px;margin:0 auto;padding:28px 20px 80px}
-.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.admin{max-width:1320px;margin:0 auto;padding:28px 20px 80px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
 .apanel{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:18px;box-shadow:var(--shadow-sm)}
 .apanel h3{font-size:18px;margin-bottom:2px}
 .apanel small{color:var(--muted);font-size:12px}
 .kv{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px}
 .kv:last-child{border:none}
 .json{white-space:pre-wrap;word-break:break-all}
+.user-row{display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid var(--border);border-radius:14px;background:var(--card);gap:8px}
 </style>
 </head>
 <body>
 <div class="admin">
   <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:22px">
     <div style="display:flex;align-items:center;gap:14px">
-      <img src="assets/logo.png" style="width:46px;height:46px;border-radius:12px;object-fit:cover">
-      <div><h1 style="font-size:30px;line-height:.9">Vida+ Admin Console</h1><p style="color:var(--muted);font-size:13px;margin-top:4px">Gerencie tudo: temas, usuários, premium, finanças, hábitos • Firebase: <code id="dbLabel"></code></p></div>
+      <img src="assets/logo.png" style="width:48px;height:48px;border-radius:12px;object-fit:cover">
+      <div><h1 style="font-size:30px;line-height:.9">Vida+ Admin • vidamaisai</h1><p style="color:var(--muted);font-size:13px;margin-top:4px">Firebase: vidamaisai-default-rtdb.firebaseio.com • Auth: Email + Google • RTDB Total Control</p></div>
     </div>
-    <div style="display:flex;gap:8px"><button class="btn btn-ghost" onclick="location.href='index.html'">← Voltar ao App</button><button class="btn btn-primary" onclick="refreshAll()">↻ Atualizar</button></div>
+    <div style="display:flex;gap:8px"><button class="btn btn-ghost" onclick="location.href='index.html'">← App</button><button class="btn btn-primary" onclick="refreshAll()">↻ Atualizar</button><button class="btn btn-ghost" onclick="handleLogoutAdmin()">Sair</button></div>
   </div>
 
   <div class="tiles">
     <div class="apanel">
-      <h3>📡 Status Firebase</h3><small>Conexão RTDB</small>
+      <h3>📡 Firebase Status</h3><small>vidamaisai - Realtime DB + Auth</small>
       <div id="fbStatus" style="margin-top:12px"></div>
-      <div style="margin-top:12px;display:grid;gap:8px">
-        <label style="font-size:12px;font-weight:700;color:var(--muted)">DATABASE URL</label>
-        <input id="dbUrlInput" class="input" style="height:38px;font-size:12px">
-        <label style="font-size:12px;font-weight:700;color:var(--muted)">Firebase Config JSON (para desbloquear SDK completo)</label>
-        <textarea id="fbConfigInput" class="input" style="min-height:110px;font-size:11px" placeholder='{"apiKey":"...","authDomain":"...","projectId":"rodadosabor"}'></textarea>
-        <button class="btn btn-primary btn-sm" onclick="saveFbConfig()">Salvar config & reconectar</button>
-        <div class="code" style="font-size:11px;margin-top:8px">Dica: Vá em Firebase Console > Configurações do projeto > Seus apps > copie o firebaseConfig. Depois atualize as Rules do RTDB para: <br>{"rules":{".read":"auth != null || true",".write":"auth != null || true"}} para testes (depois restrinja por uid).</div>
+      <div class="code" style="margin-top:12px;font-size:11px">Config carregada via js/firebase.js<br>Se precisar trocar, edite firebaseConfig em js/firebase.js e faça upload.<br><br>Rules recomendadas (seguras):<br>{
+  "rules": {
+    "vidaplus": {
+      "users": {
+        "$uid": {
+          ".read": "$uid === auth.uid",
+          ".write": "$uid === auth.uid"
+        }
+      }
+    },
+    "admin": {
+      ".read": "auth != null",
+      ".write": "auth.token.email == 'seu@email.com'"
+    }
+  }
+}
       </div>
     </div>
 
     <div class="apanel">
-      <h3>🎨 Temas & Aparência</h3><small>Controle global, força tema, premium gate</small>
+      <h3>🎨 Temas • Controle Global</h3><small>Força tema para todos via admin/settings/theme</small>
       <div id="themeControls" style="margin-top:12px;display:grid;gap:10px"></div>
       <div style="margin-top:14px" class="grid grid-2">
         <div><label style="font-size:11px;font-weight:700;color:var(--muted)">COR PRIMÁRIA</label><input id="primaryColor" type="color" value="#123C7A" class="input" style="padding:4px;height:42px" oninput="updatePrimary(this.value)"></div>
-        <div><label style="font-size:11px;font-weight:700;color:var(--muted)">MODO</label><select id="forceTheme" class="input" style="height:42px" onchange="forceTheme(this.value)"><option value="">Auto (usuário escolhe)</option><option value="light">Forçar Claro</option><option value="dark">Forçar Escuro</option><option value="midnight">Midnight</option><option value="forest">Forest</option><option value="sunset">Sunset</option></select></div>
+        <div><label style="font-size:11px;font-weight:700;color:var(--muted)">FORÇAR TEMA</label><select id="forceTheme" class="input" style="height:42px" onchange="forceTheme(this.value)"><option value="">Auto (usuário)</option><option value="light">Claro</option><option value="dark">Escuro</option><option value="midnight">Midnight • Premium</option><option value="forest">Forest • Premium</option><option value="sunset">Sunset • Premium</option></select></div>
       </div>
-      <button class="btn btn-ghost btn-sm" style="margin-top:10px;width:100%" onclick="broadcastTheme()">📢 Aplicar tema para todos (Firebase)</button>
+      <button class="btn btn-primary btn-sm" style="margin-top:10px;width:100%" onclick="broadcastTheme()">📢 Broadcast tema (grava em /admin)</button>
     </div>
 
     <div class="apanel">
-      <h3>👥 Usuários & Premium</h3><small>Lista local + tentativa Firebase</small>
-      <div id="usersList" style="margin-top:12px;max-height:320px;overflow:auto;display:grid;gap:8px"></div>
-      <div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-ghost btn-sm" onclick="loadUsers()">Listar do Firebase</button><button class="btn btn-primary btn-sm" onclick="createTestUser()">＋ Criar usuário teste</button></div>
+      <h3>👥 Usuários • vidaplus/users</h3><small>Todos os usuários reais do RTDB</small>
+      <div style="display:flex;gap:8px;margin-top:12px"><input id="userSearch" class="input" placeholder="Buscar nome/email..." style="height:36px" oninput="filterUsers()"><button class="btn btn-ghost btn-sm" onclick="loadUsers()">↻ Reload</button></div>
+      <div id="usersList" style="margin-top:12px;max-height:520px;overflow:auto;display:grid;gap:10px"></div>
+      <div style="margin-top:12px;display:flex;gap:8px"><button class="btn btn-ghost btn-sm" onclick="exportUsers()">⬇️ Export usuários JSON</button><span id="userCount" style="font-size:12px;color:var(--muted);align-self:center">0 usuários</span></div>
     </div>
 
     <div class="apanel">
-      <h3>💰 Financeiro Global</h3><small>Visão agregada (simulação)</small>
+      <h3>💰 Financeiro Global</h3><small>Agregado de todos (estimativa local + remoto)</small>
       <div id="finGlobal" style="margin-top:12px"></div>
-      <button class="btn btn-ghost btn-sm" style="margin-top:10px;width:100%" onclick="clearAllData()">⚠️ Limpar todos os dados locais</button>
+      <button class="btn btn-ghost btn-sm" style="margin-top:10px;width:100%" onclick="clearAllLocal()">⚠️ Limpar localStorage deste navegador</button>
     </div>
 
     <div class="apanel">
-      <h3>🧠 Hábitos & Engajamento</h3><small>KPIs de retenção</small>
+      <h3>📊 Engajamento & XP</h3><small>Hábitos, streaks, níveis</small>
       <div id="habGlobal" style="margin-top:12px"></div>
+      <div class="code" id="engExtra" style="margin-top:10px"></div>
     </div>
 
     <div class="apanel">
-      <h3>⚙️ Sistema & Backup</h3><small>Export/Import, logs, GitHub</small>
+      <h3>⚙️ Sistema & Backup & GitHub</h3><small>Export, import, push</small>
       <div style="display:grid;gap:8px;margin-top:12px">
-        <button class="btn btn-primary btn-sm" onclick="exportJson()">⬇️ Exportar JSON completo</button>
-        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('importFile').click()">⬆️ Importar JSON</button>
+        <button class="btn btn-primary btn-sm" onclick="exportJson()">⬇️ Export backup completo (meus dados)</button>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('importFile').click()">⬆️ Import JSON</button>
         <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJson(event)">
-        <div class="code" id="sysInfo"></div>
-        <button class="btn btn-ghost btn-sm" onclick="initGit()">🟣 Preparar GitHub repo</button>
-        <div id="gitLog" class="code" style="min-height:60px"></div>
+        <div class="code" id="sysInfo" style="max-height:180px;overflow:auto"></div>
+        <div class="code">GitHub: pasta já versionada. Para subir:<br>git remote add origin https://TOKEN@github.com/USER/vida-plus-ai.git<br>git push -u origin main</div>
       </div>
     </div>
   </div>
 
   <div style="margin-top:18px" class="grid grid-2">
-    <div class="apanel"><h3>📋 RTDB Explorer (live)</h3><small>Visualização direta do nó vidaplus</small><div style="margin-top:12px;display:flex;gap:8px"><input id="rtdbPath" class="input" value="vidaplus" style="height:38px"><button class="btn btn-primary btn-sm" onclick="exploreRtdb()">Buscar</button></div><pre id="rtdbOut" class="code" style="margin-top:12px;max-height:420px;overflow:auto">Clique Buscar...</pre></div>
-    <div class="apanel"><h3>📢 Anúncios & Monetização</h3><small>Controle de anúncios e mensagens premium</small>
+    <div class="apanel"><h3>📋 RTDB Explorer</h3><small>Leitura direta do RTDB - qualquer path</small><div style="margin-top:12px;display:flex;gap:8px"><input id="rtdbPath" class="input" value="vidaplus" style="height:38px"><button class="btn btn-primary btn-sm" onclick="exploreRtdb()">Buscar</button></div><pre id="rtdbOut" class="code" style="margin-top:12px;max-height:520px;overflow:auto">...</pre></div>
+    <div class="apanel"><h3>📢 Banner & Monetização & Premium Global</h3><small>Controla mensagem no app + flag premium</small>
       <div style="display:grid;gap:10px;margin-top:12px">
-        <label style="font-size:12px;font-weight:700;color:var(--muted)">BANNER ATIVO (aparece no app)</label><input id="bannerText" class="input" placeholder="Ex: Novo tema Forest liberado por 48h!" value="🔥 Black Friday Vida+ Premium - 50% OFF vitalício!">
-        <div style="display:flex;gap:8px;align-items:center"><span style="font-size:12px">Anúncios ligados</span><div class="switch on" id="adsSwitch" onclick="this.classList.toggle('on')"><i></i></div><span style="font-size:12px">Premium forçado</span><div class="switch" id="premiumForce" onclick="this.classList.toggle('on')"><i></i></div></div>
-        <button class="btn btn-primary btn-sm" onclick="saveBanner()">Salvar & transmitir para app</button>
-        <div class="code">AdMob Placeholder: ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY<br>Será injetado via js/ads.js quando publicar.</div>
+        <label style="font-size:11px;font-weight:700;color:var(--muted)">BANNER ATIVO</label><input id="bannerText" class="input" value="🔥 Vida+ Premium - libere temas e IA infinita por R$19,90 vitalício!">
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><span style="font-size:12px">Ads ON</span><div class="switch on" id="adsSwitch" onclick="this.classList.toggle('on')"><i></i></div><span style="font-size:12px">Force Premium todos</span><div class="switch" id="premiumForce" onclick="this.classList.toggle('on')"><i></i></div></div>
+        <button class="btn btn-primary btn-sm" onclick="saveBanner()">📢 Salvar banner em /admin/banner (RTDB)</button>
+        <button class="btn btn-ghost btn-sm" onclick="forcePremiumAll()">⚡ Tornar TODOS Premium (adminSetPremium loop)</button>
+        <div class="code">Ads: placeholder AdMob ca-app-pub-XXXXXXXX<br>Premium flag grava em /vidaplus/users/{uid}/profile/premium = true<br>App lê via listener e libera temas.</div>
+        <div id="bannerStatus" style="font-size:11px;color:var(--muted)"></div>
       </div>
     </div>
   </div>
@@ -100,39 +111,45 @@
 <div class="toast-stack" id="toasts"></div>
 
 <script type="module">
-import { VidaFirebase, FIREBASE_DB_URL, firebaseConfig, setFirebaseConfig, initFirebaseSDK, restGet } from './js/firebase.js';
-import { state, loadState, saveState, themes, exportAll, importAll } from './js/core.js';
+import { auth, db, FIREBASE_DB_URL, firebaseConfig } from './js/firebase.js';
+import { VidaFirebase } from './js/firebase.js';
+import { state, loadState, saveState, themes, exportAll, importAll, calcHabitRate } from './js/core.js';
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { ref, get, set, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-window.toast = (msg,ico='✦')=>{ const s=document.getElementById('toasts'); const el=document.createElement('div'); el.className='toast'; el.innerHTML=`<div class="t-ico">${ico}</div><div>${msg}</div>`; s.appendChild(el); setTimeout(()=>el.remove(),3200); };
+window.toast=(msg,ico='✦')=>{ const s=document.getElementById('toasts'); const el=document.createElement('div'); el.className='toast'; el.innerHTML=`<div class="t-ico">${ico}</div><div>${msg}</div>`; s.appendChild(el); setTimeout(()=>el.remove(),3400); };
+
+let allUsersCache = [];
 
 function refreshAll(){
   loadState();
   renderThemes();
-  renderUsers();
+  loadUsers();
   renderFinance();
   renderHabits();
   updateSysInfo();
   checkFb();
 }
+window.refreshAll=refreshAll;
 
 function renderThemes(){
   const cont=document.getElementById('themeControls'); cont.innerHTML='';
   Object.values(themes).forEach(t=>{
     const row=document.createElement('div'); row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--border);border-radius:12px';
-    row.innerHTML=`<div><b style="font-size:13px">${t.label}</b><br><small style="font-size:11px">${t.id} ${t.premium?'• Premium':''}</small></div><div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm" onclick="previewTheme('${t.id}')">Ver</button><button class="btn btn-primary btn-sm" onclick="toggleThemePremium('${t.id}')">${t.premium?'🔒 Toggle':'✓ Free'}</button></div>`;
+    row.innerHTML=`<div><b style="font-size:13px">${t.label}</b><br><small style="font-size:11px">${t.id} ${t.premium?'• Premium':''}</small></div><div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm" onclick="previewTheme('${t.id}')">Ver</button><button class="btn btn-primary btn-sm" onclick="toggleThemePremium('${t.id}')">${t.premium?'🔒 Premium':'✓ Free'}</button></div>`;
     cont.appendChild(row);
   });
 }
-
 window.previewTheme=(id)=>{ document.documentElement.setAttribute('data-theme', id); toast('Preview: '+id,'◐'); };
-window.forceTheme=(id)=>{ if(!id){ localStorage.removeItem('vidaplus_forced_theme'); toast('Tema livre','✓'); return; } localStorage.setItem('vidaplus_forced_theme', id); document.documentElement.setAttribute('data-theme', id); };
+window.forceTheme=(id)=>{ if(!id){ localStorage.removeItem('vidaplus_forced_theme'); toast('Auto','✓'); return; } localStorage.setItem('vidaplus_forced_theme', id); document.documentElement.setAttribute('data-theme', id); };
 window.updatePrimary=(val)=>{ document.documentElement.style.setProperty('--primary', val); localStorage.setItem('vidaplus_primary', val); };
 window.broadcastTheme=async()=>{
-  const forced=localStorage.getItem('vidaplus_forced_theme')||''; 
-  try{ await VidaFirebase.syncCollection('admin_settings','theme',{forced, primary: localStorage.getItem('vidaplus_primary')||'#123C7A'}); toast('Tema enviado ao Firebase (admin_settings)','📢'); }catch(e){ toast('Falha, mantido local','⚠️'); }
+  const forced=document.getElementById('forceTheme').value || localStorage.getItem('vidaplus_forced_theme')||''; 
+  const primary=document.getElementById('primaryColor').value;
+  const ok=await VidaFirebase.adminBroadcastTheme(forced, primary);
+  toast(ok?'Tema broadcast OK no RTDB /admin/settings/theme':'Falha broadcast','📢');
 };
 window.toggleThemePremium=(id)=>{
-  // flip premium flag local
   themes[id].premium = !themes[id].premium;
   localStorage.setItem('vidaplus_themes', JSON.stringify(themes));
   renderThemes();
@@ -140,100 +157,81 @@ window.toggleThemePremium=(id)=>{
 };
 
 async function checkFb(){
-  document.getElementById('dbLabel').textContent=FIREBASE_DB_URL;
-  document.getElementById('dbUrlInput').value=FIREBASE_DB_URL;
-  document.getElementById('fbConfigInput').value=JSON.stringify(firebaseConfig,null,2);
   const status=document.getElementById('fbStatus');
-  try{ await initFirebaseSDK(); const s=VidaFirebase.getStatus(); status.innerHTML=`<div class="kv"><span>Conectado SDK</span><b>${s.connected?'✓ Sim':'✕ Não (REST fallback)'}</b></div><div class="kv"><span>URL</span><span style="font-size:11px">${FIREBASE_DB_URL}</span></div><div class="kv"><span>Último erro</span><span>${s.lastError||'nenhum'}</span></div>`; }
-  catch(e){ status.textContent='Erro: '+e.message; }
-}
-
-window.saveFbConfig=async()=>{
-  try{
-    const custom=JSON.parse(document.getElementById('fbConfigInput').value);
-    const url=document.getElementById('dbUrlInput').value.trim();
-    setFirebaseConfig({...custom, databaseURL:url});
-    localStorage.setItem('vidaplus_fb_config', JSON.stringify({...custom, databaseURL:url}));
-    await initFirebaseSDK();
-    toast('Config Firebase salva!','✓');
-    checkFb();
-  }catch(e){ toast('JSON inválido: '+e.message,'⚠️'); }
-};
-
-function renderUsers(){
-  const cont=document.getElementById('usersList'); cont.innerHTML='';
-  const localUsers=[{id: state.app.uid||'default_user', name: state.user.name, xp: state.user.xp, premium: state.app.premium||false, source:'localStorage'}];
-  localUsers.forEach(u=>{
-    const div=document.createElement('div'); div.className='card'; div.style.padding='12px';
-    div.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center"><div><b>${u.name}</b> <span class="badge" style="background:${u.premium?'#DCFCE7':'var(--bg-2)'}">${u.premium?'PREMIUM':'FREE'}</span><br><small style="color:var(--muted)">${u.id} • ${u.xp} XP • ${u.source}</small></div><div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm" onclick="togglePremium('${u.id}')">${u.premium?'Remover ★':'Tornar ★'}</button><button class="btn btn-primary btn-sm" onclick="impersonate('${u.id}')">Entrar</button></div></div>`;
-    cont.appendChild(div);
-  });
+  status.innerHTML=`<div class="kv"><span>DB URL</span><span style="font-size:10px">${FIREBASE_DB_URL}</span></div><div class="kv"><span>Project</span><b>${firebaseConfig.projectId}</b></div><div class="kv"><span>AuthDomain</span><span>${firebaseConfig.authDomain}</span></div><div class="kv"><span>User logado</span><b>${auth.currentUser? auth.currentUser.email : 'nenhum (faça login no app)'} </b></div><div class="kv"><span>API Key</span><span style="font-size:10px">${firebaseConfig.apiKey.slice(0,12)}…</span></div>`;
 }
 
 window.loadUsers=async()=>{
-  const list=await VidaFirebase.adminListUsers();
   const cont=document.getElementById('usersList');
-  if(!list.length){ toast('Nenhum usuário no Firebase ou permissão negada','⚠️'); return; }
+  cont.innerHTML='<p style="font-size:13px;color:var(--muted)">Carregando de vidaplus/users...</p>';
+  const list = await VidaFirebase.adminListUsers();
+  allUsersCache = list;
+  renderUsersFiltered(list);
+  document.getElementById('userCount').textContent = `${list.length} usuários`;
+  if(!list.length) toast('Nenhum usuário ou permissão negada (cheque Rules)','⚠️');
+  else toast(`${list.length} usuários carregados`,'👥');
+};
+function renderUsersFiltered(list){
+  const cont=document.getElementById('usersList');
   cont.innerHTML='';
   list.forEach(u=>{
-    const div=document.createElement('div'); div.className='card'; div.style.padding='12px';
-    div.innerHTML=`<div style="display:flex;justify-content:space-between"><div><b>${u.name||u.id}</b><br><small>${u.xp||0} XP • premium:${u.premium?'sim':'não'}</small></div><button class="btn btn-ghost btn-sm" onclick="toggleRemotePremium('${u.id}', ${!u.premium})">${u.premium?'Remover Premium':'Dar Premium'}</button></div>`;
+    const div=document.createElement('div'); div.className='user-row';
+    div.innerHTML=`<div style="flex:1;min-width:0"><b style="font-size:13px">${u.name||'Sem nome'} ${u.premium?'★':''}</b><br><small style="color:var(--muted);font-size:11px;word-break:break-all">${u.email||''} • ${u.uid.slice(0,8)}… • ${u.xp||0} XP • streak ${u.streak||0}d</small><br><span class="badge" style="background:${u.premium?'#DCFCE7':'var(--bg-2)'};color:${u.premium?'#166534':'var(--muted)'}">${u.premium?'PREMIUM':'FREE'}</span></div><div style="display:flex;flex-direction:column;gap:6px"><button class="btn btn-ghost btn-sm" onclick="toggleRemotePremium('${u.uid}', ${!u.premium})">${u.premium?'Remover Premium':'Tornar Premium'}</button><button class="btn btn-ghost btn-sm" onclick="copyUid('${u.uid}')">Copiar UID</button><button class="btn btn-primary btn-sm" onclick="deleteUser('${u.uid}')">Excluir</button></div>`;
     cont.appendChild(div);
   });
-  toast(`${list.length} usuários carregados`,'👥');
+}
+window.filterUsers=()=>{
+  const q=document.getElementById('userSearch').value.toLowerCase();
+  if(!q){ renderUsersFiltered(allUsersCache); return; }
+  const f=allUsersCache.filter(u=> (u.name||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q) || (u.uid||'').toLowerCase().includes(q));
+  renderUsersFiltered(f);
 };
-
-window.togglePremium=(id)=>{
-  state.app.premium=!state.app.premium;
-  state.user.premium=state.app.premium;
-  saveState();
-  renderUsers();
-  toast(state.app.premium?'Premium ativado local':'Premium removido','★');
+window.toggleRemotePremium=async(uid,val)=>{
+  const ok=await VidaFirebase.adminSetPremium(uid,val);
+  toast(ok? (val?'Premium ativado':'Premium removido') : 'Falha','★');
+  if(ok) loadUsers();
 };
-window.toggleRemotePremium=async(id,val)=>{
-  const ok=await VidaFirebase.adminSetPremium(id,val);
-  toast(ok?'Premium atualizado no Firebase':'Falha ao atualizar','★');
-};
-window.impersonate=(id)=>{ state.app.uid=id; saveState(); toast('Impersonado: '+id+' - recarregue o app','👤'); };
-window.createTestUser=()=>{
-  const name=prompt('Nome do usuário teste?','Teste'); if(!name) return;
-  state.user.name=name; state.user.xp=Math.floor(Math.random()*2000); saveState(); renderUsers(); renderFinance();
+window.copyUid=(uid)=>{ navigator.clipboard.writeText(uid); toast('UID copiado','✓'); };
+window.deleteUser=async(uid)=>{ if(!confirm('EXCLUIR usuário '+uid+' do RTDB? Isso apaga todos os dados dele.')) return; const ok=await VidaFirebase.adminDeleteUser(uid); toast(ok?'Usuário excluído':'Falha','⚠️'); if(ok) loadUsers(); };
+window.exportUsers=()=>{
+  const blob=new Blob([JSON.stringify(allUsersCache,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='vidaplus-users.json'; a.click();
 };
 
 function renderFinance(){
   const cont=document.getElementById('finGlobal');
   const inc=state.tx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
   const exp=state.tx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
-  cont.innerHTML=`<div class="kv"><span>Transações totais</span><b>${state.tx.length}</b></div><div class="kv"><span>Receitas</span><b style="color:var(--emerald)">R$ ${inc}</b></div><div class="kv"><span>Despesas</span><b style="color:var(--rose)">R$ ${exp}</b></div><div class="kv"><span>Saldo</span><b>R$ ${inc-exp}</b></div><div class="kv"><span>Ticket médio</span><b>R$ ${state.tx.length? Math.round((inc+exp)/state.tx.length):0}</b></div>`;
+  cont.innerHTML=`<div class="kv"><span>Transações (local)</span><b>${state.tx.length}</b></div><div class="kv"><span>Receitas local</span><b style="color:#10B981">R$ ${inc}</b></div><div class="kv"><span>Despesas local</span><b style="color:#F43F5E">R$ ${exp}</b></div><div class="kv"><span>Saldo local</span><b>R$ ${inc-exp}</b></div><div class="kv"><span>Usuários RTDB</span><b>${allUsersCache.length}</b></div>`;
 }
 function renderHabits(){
   const cont=document.getElementById('habGlobal');
   const totalDone=state.habits.reduce((s,h)=>s+Object.keys(h.history||{}).length,0);
-  cont.innerHTML=`<div class="kv"><span>Hábitos cadastrados</span><b>${state.habits.length}</b></div><div class="kv"><span>Checks totais</span><b>${totalDone}</b></div><div class="kv"><span>Streak atual</span><b>${state.app.streak||0} dias</b></div><div class="kv"><span>Max streak</span><b>${state.app.maxStreak||0} dias</b></div><div class="kv"><span>Taxa 7 dias</span><b>${Math.round((state.habits.length? (state.habits.filter(h=>h.history&&h.history[new Date().toISOString().slice(0,10)]).length/state.habits.length*100):0))}%</b></div>`;
+  cont.innerHTML=`<div class="kv"><span>Hábitos (local)</span><b>${state.habits.length}</b></div><div class="kv"><span>Checks totais</span><b>${totalDone}</b></div><div class="kv"><span>Streak</span><b>${state.app.streak||0} dias</b></div><div class="kv"><span>Max streak</span><b>${state.app.maxStreak||0} dias</b></div>`;
+  document.getElementById('engExtra').textContent=`Moods: ${state.moods.length}\nGoals: ${state.goals.length}\nTaxa 7d: ${Math.round(calcHabitRate()*100)}%\nUID local: ${state.app.uid||'default_user'}`;
 }
-
 function updateSysInfo(){
-  document.getElementById('sysInfo').textContent=`Build: ${new Date().toLocaleString('pt-BR')}\nUserAgent: ${navigator.userAgent.slice(0,80)}\nLocalStorage: ${JSON.stringify(localStorage).length} chars\nFirebase URL: ${FIREBASE_DB_URL}\n`+
-  `Versão Core: v2 - Modular\nArquivos: css/style.css, js/firebase.js, js/core.js, js/app.js, admin.html, assets/logo.png`;
+  document.getElementById('sysInfo').textContent=`Build: ${new Date().toLocaleString('pt-BR')}\nFirebase: ${FIREBASE_DB_URL}\nProject: ${firebaseConfig.projectId}\nLocalStorage chars: ${JSON.stringify(localStorage).length}\nUser: ${auth.currentUser? auth.currentUser.email : 'deslogado'}\n\nArquivos: css/style.css, js/firebase.js (vidamaisai), js/core.js, js/app.js, admin.html`;
 }
-
 window.exportJson=()=>{
   const data=exportAll();
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a'); a.href=url; a.download=`vidaplus-backup-${new Date().toISOString().slice(0,10)}.json`; a.click();
+  const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`vidaplus-backup-${new Date().toISOString().slice(0,10)}.json`; a.click();
 };
 window.importJson=(e)=>{
   const file=e.target.files[0]; if(!file) return;
-  const r=new FileReader(); r.onload=()=>{ try{ const data=JSON.parse(r.result); importAll(data); toast('Backup importado! Recarregue.','✓'); refreshAll(); }catch(err){ toast('Erro: '+err.message,'⚠️'); } }; r.readAsText(file);
+  const r=new FileReader(); r.onload=()=>{ try{ const data=JSON.parse(r.result); importAll(data); toast('Importado! Recarregue app','✓'); refreshAll(); }catch(err){ toast('Erro: '+err.message,'⚠️'); } }; r.readAsText(file);
 };
-window.clearAllData=()=>{ if(!confirm('Apagar TUDO localStorage Vida+?')) return; Object.values(JSON.parse(JSON.stringify(localStorage))).forEach(()=>{}); ['vidaplus_user_v2','vidaplus_tx_v2','vidaplus_habits_v2','vidaplus_moods_v2','vidaplus_goals_v2','vidaplus_app_v2'].forEach(k=>localStorage.removeItem(k)); toast('Dados locais apagados','⚠️'); setTimeout(()=>location.reload(),800); };
+window.clearAllLocal=()=>{ if(!confirm('Apagar localStorage Vida+ deste navegador?')) return; ['vidaplus_user_v2','vidaplus_tx_v2','vidaplus_habits_v2','vidaplus_moods_v2','vidaplus_goals_v2','vidaplus_app_v2','vidaplus_settings_v2','vidaplus_profile_v2'].forEach(k=>localStorage.removeItem(k)); toast('Local limpo','⚠️'); setTimeout(()=>location.reload(),600); };
 
 window.exploreRtdb=async()=>{
   const path=document.getElementById('rtdbPath').value.trim()||'vidaplus';
-  const out=document.getElementById('rtdbOut');
-  out.textContent='Buscando...';
-  try{ const data=await restGet(path); out.textContent=JSON.stringify(data,null,2).slice(0,8000) || 'null (sem dados ou sem permissão)'; }catch(e){ out.textContent='Erro: '+e.message+'\n\nDica: libere as Rules temporariamente no Console:\n{\n  \"rules\":{\n    \".read\": true,\n    \".write\": true\n  }\n}'; }
+  const out=document.getElementById('rtdbOut'); out.textContent='Buscando...';
+  try{
+    const snap = await get(ref(db, path));
+    if(snap.exists()) out.textContent=JSON.stringify(snap.val(),null,2).slice(0,10000);
+    else out.textContent='null - sem dados neste path ou sem permissão';
+  }catch(e){ out.textContent='Erro: '+e.message+'\n\nVerifique Rules no Firebase Console. Para teste use:\n{\n  \"rules\": {\n    \".read\": true,\n    \".write\": true\n  }\n}'; }
 };
 
 window.saveBanner=async()=>{
@@ -241,19 +239,37 @@ window.saveBanner=async()=>{
   const adsOn=document.getElementById('adsSwitch').classList.contains('on');
   const premForce=document.getElementById('premiumForce').classList.contains('on');
   const payload={text, adsOn, premForce, updatedAt:new Date().toISOString()};
-  localStorage.setItem('vidaplus_banner', JSON.stringify(payload));
-  try{ await VidaFirebase.syncCollection('admin','banner', payload); toast('Banner salvo & enviado ao Firebase','📢'); }catch{ toast('Banner salvo local (Firebase falhou)','⚠️'); }
+  const ok=await VidaFirebase.adminSetBanner(payload);
+  document.getElementById('bannerStatus').textContent= ok? '✓ Salvo em /admin/banner' : '✕ Falha ao salvar (Rules?)';
+  toast(ok?'Banner salvo no RTDB':'Falha','📢');
+};
+window.forcePremiumAll=async()=>{
+  if(!confirm(`Tornar TODOS os ${allUsersCache.length} usuários Premium?`)) return;
+  let okCount=0;
+  for(const u of allUsersCache){
+    const ok=await VidaFirebase.adminSetPremium(u.uid, true);
+    if(ok) okCount++;
+  }
+  toast(`${okCount}/${allUsersCache.length} usuários tornados Premium`,'★');
+  loadUsers();
 };
 
-window.initGit=async()=>{
-  const log=document.getElementById('gitLog'); log.textContent='Preparando repositório local...\n';
-  try{
-    const res=await fetch('/.arena/bash', {method:'POST'}).catch(()=>null);
-    // fallback: instruir
-    log.textContent+=`1. Estrutura modular pronta: css/, js/, assets/, admin.html\n2. Para GitHub, no terminal rode:\n   git init\n   git add .\n   git commit -m \"Vida+ AI v2 modular + Firebase\"\n   git branch -M main\n   git remote add origin https://github.com/SEUUSER/vida-plus-ai.git\n   git push -u origin main\n\nDica: crie token em github.com/settings/tokens e use como senha.\n\nEsta página já é um PWA pronto para Vercel: só arraste a pasta para vercel.com/new.`;
-    toast('Instruções GitHub prontas','🟣');
-  }catch(e){ log.textContent+='Erro '+e.message; }
+window.handleLogoutAdmin=async()=>{
+  await signOut(auth);
+  toast('Deslogado - faça login no app','👋');
+  setTimeout(()=>location.href='index.html',800);
 };
+
+// Auth guard - se não logado, redireciona para login?
+onAuthStateChanged(auth, (user)=>{
+  checkFb();
+  if(!user){
+    // permite admin mesmo deslogado? avisa
+    console.log("[Admin] sem login");
+  }else{
+    console.log("[Admin] logado", user.email);
+  }
+});
 
 refreshAll();
 exploreRtdb();
