@@ -1,36 +1,41 @@
-<div class="top-actions" style="margin-bottom: 16px;">
-  <h2>Financeiro Inteligente</h2>
+<div class="top-actions" style="margin-bottom: 20px;">
+  <h2 style="font-size:26px">Financeiro Inteligente</h2>
   <p style="color:var(--muted); font-size: 13px;">Controle simplificado com categorias e análise automática.</p>
 </div>
+
 <div class="grid grid-3">
   <div class="card kpi">
     <div class="kpi-head"><span class="kpi-label">RECEITAS NO MÊS</span><span class="kpi-icon" style="background:#DCFCE7;color:#10B981">↑</span></div>
     <div class="kpi-value" id="dashIncome">R$ 0,00</div>
     <div class="kpi-sub">Total de entradas</div>
   </div>
+  
   <div class="card kpi">
     <div class="kpi-head"><span class="kpi-label">ECONOMIA</span><span class="kpi-icon" style="background:#E0E7FF;color:#6366F1">💰</span></div>
     <div class="kpi-value" id="dashEconomy">R$ 0,00</div>
     <div class="kpi-sub" id="dashEconomyPct">0% da renda guardada</div>
   </div>
+  
   <div class="card kpi">
     <div class="kpi-head"><span class="kpi-label">DESPESAS NO MÊS</span><span class="kpi-icon" style="background:#FEE2E2;color:#F43F5E">↓</span></div>
     <div class="kpi-value" id="dashExpense">R$ 0,00</div>
     <div class="kpi-sub">Total de saídas</div>
   </div>
 </div>
-<div class="grid grid-2" style="margin-top:16px">
+
+<div class="grid grid-2" style="margin-top:20px">
   <div class="card">
-    <b>Transações Recentes</b>
-    <div id="dashTxList" style="margin-top:12px; display:grid; gap:8px;">
-       <p style="color:var(--muted);font-size:12px">Nenhuma transação ainda.</p>
+    <b style="font-size:16px;">Transações Recentes</b>
+    <div id="dashTxList" style="margin-top:16px; display:grid; gap:8px;">
+       <p style="color:var(--muted);font-size:12px">Buscando transações...</p>
     </div>
   </div>
+  
   <div class="card">
-    <b>Insights de Inteligência</b>
-    <div style="margin-top:12px; padding:14px; background:var(--bg-2); border-radius:12px; border:1px solid var(--border)">
-      <b style="color:var(--primary)">Oportunidade Detectada</b>
-      <p style="font-size:13px; margin-top:6px;">Seus gastos com alimentação aumentam 15% nos fins de semana. Reduzir 2 pedidos por mês poupa R$ 120,00.</p>
+    <b style="font-size:16px;">Insights de IA e Correlações</b>
+    <div style="margin-top:16px; padding:18px; background:linear-gradient(135deg, var(--bg-2), var(--card)); border-radius:14px; border:1px solid var(--border)">
+      <b style="color:var(--primary); font-size:14px;">Alerta de Oportunidade ✨</b>
+      <p style="font-size:13px; margin-top:8px; line-height:1.5; color:var(--text);">Você gasta mais com <b>Alimentação e Delivery</b> aos fins de semana quando seu humor está registrado como "Estressado".<br><br><b>Dica da IA:</b> Tente preparar refeições na sexta-feira à noite. Isso pode poupar até R$ 280,00 nas próximas 2 semanas.</p>
     </div>
   </div>
 </div>
