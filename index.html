@@ -6,24 +6,19 @@
 <title>Vida+ AI — Evolução Diária</title>
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="stylesheet" href="css/style.css">
-<link rel="manifest" href="manifest.json">
 <style>
-.auth-modal .modal{max-width:400px}
-.google-btn{width:100%;height:46px;border-radius:12px;border:1px solid var(--border);background:white;color:var(--text);font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer}
 .auth-tabs{display:flex;gap:6px;background:var(--bg-2);padding:4px;border-radius:12px;margin-top:12px}
 .auth-tabs button{flex:1;height:36px;border-radius:9px;border:none;background:transparent;font-weight:700;font-size:13px;cursor:pointer;color:var(--muted)}
 .auth-tabs button.active{background:var(--card);color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.08);border:1px solid var(--border)}
-.divider{display:flex;align-items:center;gap:12px;color:var(--muted-2);font-size:11px;font-weight:700;letter-spacing:.12em;margin:8px 0}
-.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--border)}
-#pageContainer{display:none;animation:fade .25s ease}
-#homeView{display:block;animation:fade .3s ease}
-.page-loader{padding:50px 20px;text-align:center;color:var(--muted)}
 </style>
 </head>
 <body>
 <div class="app">
   <aside class="sidebar">
-    <div class="brand"><div class="logo has-img"><img src="assets/logo.png" alt="Logo" onerror="this.style.display='none'"><span>V+</span></div><div class="brand-text"><b>Vida+ AI</b><i>Painel</i></div></div>
+    <div class="brand">
+      <div class="logo"><img src="assets/logo.png" onerror="this.style.display='none'"><span>V+</span></div>
+      <div class="brand-text"><b>Vida+ AI</b><i>Painel</i></div>
+    </div>
     <nav class="nav" id="nav">
       <button class="active" data-page="home" onclick="appLoadPage('home')"><span class="ico">⌂</span> Home</button>
       <button data-page="dashboard" onclick="appLoadPage('dashboard')"><span class="ico">◧</span> Dashboard</button>
@@ -35,84 +30,53 @@
       <button data-page="conquistas" onclick="appLoadPage('conquistas')"><span class="ico">★</span> Conquistas</button>
       <button data-page="perfil" onclick="appLoadPage('perfil')"><span class="ico">👤</span> Perfil</button>
     </nav>
-    <div class="sidebar-foot">
-      <span class="premium-tag" id="premiumTag">Free</span>
-      <h4 id="sidebarName">Bem-vindo</h4>
-      <p id="userEmailChip" style="font-size:11px;opacity:.9;word-break:break-all">Visitante • Faça login</p>
-      <div id="syncStatus" style="font-size:10px;margin-top:8px;opacity:.8">● Pronto</div>
-      <button class="btn btn-white btn-sm" style="margin-top:10px;width:100%" id="btnMainAction" onclick="appOpenAuthModal()">Entrar / Criar conta</button>
-      <button class="btn btn-ghost btn-sm" style="margin-top:6px;background:rgba(255,255,255,.12);border:none;color:white;width:100%;display:none" id="btnLogout" onclick="appHandleLogout()">Sair</button>
-    </div>
   </aside>
 
   <main class="main">
     <div class="topbar">
-      <div class="search-wrap"><span class="sico">⌕</span><input id="globalSearch" placeholder="Buscar... (Ex: transações, hábitos)" onkeydown="if(event.key==='Enter'){ appLoadPage('financeiro'); }"></div>
+      <div class="search-wrap"><span class="sico">⌕</span><input id="globalSearch" placeholder="Buscar..."></div>
       <div class="top-actions">
-        <span class="chip"><span class="dot"></span> <span id="streakLabel">Visitante</span></span>
         <button class="btn btn-ghost btn-sm" onclick="appToggleTheme()">◐</button>
-        <div class="avatar" id="avatar" onclick="appOpenAuthModal()">?</div>
+        <!-- AQUI ESTÁ A CORREÇÃO DO AVATAR -->
+        <div class="avatar" id="avatar" onclick="appAvatarClick()">?</div>
         <button class="btn btn-primary btn-sm" id="topLoginBtn" onclick="appOpenAuthModal()">Entrar</button>
+        <button class="btn btn-ghost btn-sm" id="btnLogout" onclick="appHandleLogout()" style="display:none;">Sair</button>
       </div>
     </div>
 
-    <!-- VIEWS CONTAINER -->
     <div id="homeView"></div>
     <div id="pageContainer" style="display:none"></div>
   </main>
 </div>
 
-<!-- MODALS -->
-<div class="overlay" id="overlayAuth" style="z-index:150;display:none">
-  <div class="modal" style="max-width:400px">
-    <div style="padding:22px 22px 0;text-align:center">
-      <h2 id="authTitle" style="font-size:22px">Entrar no Vida+ AI</h2>
-      <p style="color:var(--muted);font-size:12px;margin-top:6px">Seus dados salvos e sincronizados com segurança.</p>
+<!-- Modal Auth -->
+<div class="overlay" id="overlayAuth">
+  <div class="modal auth-modal">
+    <div style="text-align:center">
+      <h2 id="authTitle">Entrar no Vida+ AI</h2>
       <div class="auth-tabs">
         <button class="active" id="tabLogin" onclick="appSwitchAuthMode('login')">Entrar</button>
         <button id="tabSignup" onclick="appSwitchAuthMode('signup')">Criar conta</button>
       </div>
     </div>
-    <div style="padding:16px 20px;display:grid;gap:10px">
+    <div style="margin-top:16px;">
       <div id="authLoginView" style="display:grid;gap:10px">
-        <button class="google-btn" id="authBtnGoogle" onclick="appHandleGoogleLogin()"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px"> Continuar com Google</button>
-        <div class="divider">OU E-MAIL</div>
         <input id="authEmail" class="input" type="email" placeholder="seu@email.com">
         <input id="authPass" class="input" type="password" placeholder="Sua senha">
-        <button class="btn btn-primary" id="authBtnLogin" onclick="appHandleLogin()" style="height:44px">Entrar</button>
-        <span class="link" style="text-align:center;display:block;font-size:12px" onclick="appHandleReset()">Esqueci senha</span>
+        <button class="btn btn-primary" onclick="appHandleLogin()" style="height:44px">Entrar</button>
       </div>
       <div id="authSignupView" style="display:none;gap:10px">
-        <button class="google-btn" onclick="appHandleGoogleLogin()"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px"> Cadastrar com Google</button>
-        <div class="divider">OU</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input id="authFirstName" class="input" placeholder="Nome"><input id="authLastName" class="input" placeholder="Sobrenome"></div>
+        <div class="row"><input id="authFirstName" class="input" placeholder="Nome"><input id="authLastName" class="input" placeholder="Sobrenome"></div>
         <input id="authEmailSignup" class="input" type="email" placeholder="seu@email.com">
         <input id="authPassSignup" class="input" type="password" placeholder="Senha mín 6">
-        <button class="btn btn-primary" id="authBtnSignup" onclick="appHandleSignup()" style="height:44px">Criar conta</button>
+        <button class="btn btn-primary" onclick="appHandleSignup()" style="height:44px">Criar conta</button>
       </div>
-      <div id="authError" style="display:none;padding:10px;border-radius:10px;background:#FEF2F2;border:1px solid #FECACA;color:#991B1B;font-size:12px"></div>
-      <button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayAuth')" style="width:100%">Fechar</button>
+      <button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayAuth')" style="width:100%; margin-top:10px;">Fechar</button>
     </div>
   </div>
 </div>
-
-<div class="overlay" id="overlayCompleteProfile" style="z-index:160;display:none">
-  <div class="modal" style="max-width:400px">
-    <div class="modal-head"><h3>Completar perfil (opcional)</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayCompleteProfile')">Pular</button></div>
-    <div class="modal-body">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input id="completeFirstName" class="input" placeholder="Nome"><input id="completeLastName" class="input" placeholder="Sobrenome"></div>
-      <input id="completePhone" class="input" placeholder="Celular">
-    </div>
-    <div class="modal-foot"><button class="btn btn-ghost" onclick="appCloseModal('overlayCompleteProfile')">Pular</button><button class="btn btn-primary" onclick="appSaveCompleteProfile()">Salvar</button></div>
-  </div>
-</div>
-
-<div class="overlay" id="overlayTx" style="display:none"><div class="modal"><div class="modal-head"><h3>Nova transação</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayTx')">✕</button></div><div class="modal-body"><div class="pills"><button class="pill active" data-type="expense" onclick="appSetTxType('expense',this)">Despesa</button><button class="pill" data-type="income" onclick="appSetTxType('income',this)">Receita</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input id="txAmount" class="input" type="number" placeholder="Valor"><input id="txDate" class="input" type="date"></div><div><input id="txCategoryCustom" class="input" placeholder="Categoria" style="margin-top:6px"></div><input id="txDesc" class="input" placeholder="Descrição"></div><div class="modal-foot"><button class="btn btn-ghost" onclick="appCloseModal('overlayTx')">Cancelar</button><button class="btn btn-primary" onclick="appSaveTx()">Salvar</button></div></div></div>
-<div class="overlay" id="overlayPremium" style="display:none"><div class="modal" style="max-width:480px"><div class="modal-head"><h3>Premium</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayPremium')">✕</button></div><div class="modal-body"><p style="font-size:13px;color:var(--muted)">10 temas exclusivos + Análise avançada por IA + 50 níveis épicos.</p><button class="btn btn-primary" onclick="appCloseModal('overlayPremium')">Desbloquear agora</button></div></div></div>
 
 <div class="toast-stack" id="toasts"></div>
-
-<!-- Lógica central de negócio -->
 <script type="module" src="js/app.js"></script>
 </body>
 </html>
