@@ -3,236 +3,267 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Vida+ AI — Evolution OS - Home</title>
+<title>Vida+ AI — Home</title>
 <link rel="icon" type="image/png" href="assets/favicon.png">
-<link rel="apple-touch-icon" href="assets/logo.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,700;9..144,800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#123C7A">
 <style>
-.auth-modal .modal{max-width:400px}
-.google-btn{background:white;border:1px solid var(--border);color:var(--text);height:46px;border-radius:12px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;transition:.2s;width:100%}
-.google-btn:hover{background:var(--bg-2)}
-.google-btn:disabled{opacity:.6;cursor:not-allowed}
+#pageFrame{width:100%;border:none;display:block;min-height:70vh;background:transparent}
+#pageFrameContainer{display:block}
+#homeEssential{display:none}
+.google-btn{width:100%;height:46px;border-radius:12px;border:1px solid var(--border);background:white;color:var(--text);font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer}
+.auth-tabs{display:flex;gap:6px;background:var(--bg-2);padding:4px;border-radius:12px;margin-top:12px}
+.auth-tabs button{flex:1;height:36px;border-radius:9px;border:none;background:transparent;font-weight:700;font-size:13px;cursor:pointer;color:var(--muted)}
+.auth-tabs button.active{background:var(--card);color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.08);border:1px solid var(--border)}
 .divider{display:flex;align-items:center;gap:12px;color:var(--muted-2);font-size:11px;font-weight:700;letter-spacing:.12em;margin:8px 0}
 .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--border)}
-.auth-tabs{display:flex;gap:6px;background:var(--bg-2);padding:4px;border-radius:12px;margin-top:12px}
-.auth-tabs button{flex:1;height:36px;border-radius:9px;border:none;background:transparent;font-weight:700;font-size:13px;cursor:pointer;transition:.2s;color:var(--muted)}
-.auth-tabs button.active{background:var(--card);color:var(--text);box-shadow:0 2px 8px rgba(15,23,42,.08);border:1px solid var(--border)}
-#pageContainer{animation:fade .25s ease}
-#homeView .grid{animation:fade .35s ease}
-.page-loader{padding:50px 20px;text-align:center;color:var(--muted)}
 </style>
 </head>
 <body>
 <div class="app">
-  <!-- MENU SEMPRE VISÍVEL - NO INDEX -->
   <aside class="sidebar">
-    <div class="brand">
-      <div class="logo has-img"><img id="logoImg" src="assets/logo.png" alt="Vida+ AI"><span style="display:none">V+</span></div>
-      <div class="brand-text"><b>Vida+ AI</b><i>Evolution OS</i></div>
-    </div>
+    <div class="brand"><div class="logo has-img"><img src="assets/logo.png" alt="" onerror="this.style.display='none'"><span>V+</span></div><div class="brand-text"><b>Vida+ AI</b><i>Home</i></div></div>
     <nav class="nav" id="nav">
-      <button class="active" data-page="dashboard" onclick="appLoadPage('dashboard')"><span class="ico">◧</span> Dashboard</button>
-      <button data-page="financeiro" onclick="appLoadPage('financeiro')"><span class="ico">₿</span> Financeiro</button>
-      <button data-page="habitos" onclick="appLoadPage('habitos')"><span class="ico">◍</span> Hábitos</button>
-      <button data-page="humor" onclick="appLoadPage('humor')"><span class="ico">☺</span> Humor</button>
-      <button data-page="metas" onclick="appLoadPage('metas')"><span class="ico">◎</span> Metas</button>
-      <button data-page="relatorios" onclick="appLoadPage('relatorios')"><span class="ico">✦</span> IA</button>
-      <button data-page="conquistas" onclick="appLoadPage('conquistas')"><span class="ico">★</span> Conquistas</button>
-      <button data-page="perfil" onclick="appLoadPage('perfil')"><span class="ico">👤</span> Perfil</button>
+      <button class="active" data-page="home" onclick="navigate('home')"><span class="ico">⌂</span> Home</button>
+      <button data-page="dashboard" onclick="navigate('dashboard')"><span class="ico">◧</span> Dashboard</button>
+      <button data-page="financeiro" onclick="navigate('financeiro')"><span class="ico">₿</span> Financeiro</button>
+      <button data-page="habitos" onclick="navigate('habitos')"><span class="ico">◍</span> Hábitos</button>
+      <button data-page="humor" onclick="navigate('humor')"><span class="ico">☺</span> Humor</button>
+      <button data-page="metas" onclick="navigate('metas')"><span class="ico">◎</span> Metas</button>
+      <button data-page="relatorios" onclick="navigate('relatorios')"><span class="ico">✦</span> IA</button>
+      <button data-page="conquistas" onclick="navigate('conquistas')"><span class="ico">★</span> Conquistas</button>
+      <button data-page="perfil" onclick="navigate('perfil')"><span class="ico">👤</span> Perfil</button>
     </nav>
     <div class="sidebar-foot">
       <span class="premium-tag" id="premiumTag">Vida+ AI</span>
-      <h4 id="sidebarName">Sua evolução</h4>
-      <p id="userEmailChip" style="word-break:break-all;font-size:11px;opacity:.9">carregando...</p>
-      <div id="syncStatus" style="margin-top:8px;font-size:10px;opacity:.85">● Conectando...</div>
-      <button class="btn btn-white btn-sm" style="margin-top:10px;width:100%" onclick="appOpenPremium()">Premium</button>
-      <button class="btn btn-ghost btn-sm" style="margin-top:6px;background:rgba(255,255,255,.12);border:none;color:white;width:100%" onclick="appHandleLogout()">Sair</button>
+      <h4 id="sidebarName">Bem-vindo</h4>
+      <p id="userEmailChip" style="font-size:11px;opacity:.9;word-break:break-all">Visitante • Faça login</p>
+      <div id="syncStatus" style="font-size:10px;margin-top:8px;opacity:.8">● Pronto</div>
+      <button class="btn btn-white btn-sm" style="margin-top:10px;width:100%" onclick="openLogin()">Entrar / Criar conta</button>
+      <button class="btn btn-ghost btn-sm" style="margin-top:6px;background:rgba(255,255,255,.12);border:none;color:white;width:100%;display:none" id="btnLogout" onclick="doLogout()">Sair</button>
     </div>
   </aside>
 
   <main class="main">
     <div class="topbar">
-      <div class="search-wrap">
-        <span class="sico">⌕</span>
-        <input id="globalSearch" placeholder="Buscar..." />
-      </div>
+      <div class="search-wrap"><span class="sico">⌕</span><input id="globalSearch" placeholder="Buscar... (só funciona logado)" onkeydown="if(event.key==='Enter'){ navigate('financeiro'); }"></div>
       <div class="top-actions">
-        <span class="chip" id="currencyChip"><span class="dot"></span> <span id="currencyLabelTop">BRL</span></span>
-        <span class="chip"><span class="dot"></span> <span id="streakLabel">Streak 0d</span></span>
-        <button class="btn btn-ghost btn-sm" onclick="appToggleTheme()">◐</button>
-        <div class="avatar" id="avatar" onclick="appLoadPage('perfil')">W</div>
-        <button class="btn btn-primary btn-sm" onclick="appOpenQuickAdd()">＋</button>
+        <span class="chip"><span class="dot"></span> <span id="streakLabel">Visitante</span></span>
+        <button class="btn btn-ghost btn-sm" onclick="toggleTheme()">◐</button>
+        <div class="avatar" id="avatar" onclick="openLogin()">?</div>
+        <button class="btn btn-primary btn-sm" onclick="openLogin()">Entrar</button>
       </div>
     </div>
 
-    <!-- HOME VIEW - INDEX SÓ CARREGA ESSENCIAL (DASHBOARD) -->
-    <div id="homeView">
-      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px">
-        <div>
-          <h1 class="display" style="font-size:36px;line-height:.9">Bom dia, <span id="userName">Usuário</span> 👋</h1>
-          <p style="color:var(--muted);margin-top:8px;font-size:13px">Você completou <b id="todayProgressPct">0%</b> • <span id="todayDate"></span> • <span style="font-size:10px;background:var(--bg-2);padding:3px 8px;border-radius:100px;border:1px solid var(--border)" id="currencyBadge">BRL</span></p>
-        </div>
-        <div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" onclick="appLoadPage('relatorios')">IA</button><button class="btn btn-primary btn-sm" onclick="appOpenMoodModal()">Humor</button></div>
-      </div>
-
-      <div class="grid grid-4">
-        <div class="card kpi"><div class="kpi-head"><span class="kpi-label">Saldo</span><span class="kpi-icon" style="background:#E0F2FE">💰</span></div><div class="kpi-value" id="balanceValue">R$ 0,00</div><div class="kpi-sub"><span class="badge badge-up" id="balanceTrend">+0%</span> <span id="balanceSub">0 transações</span></div><div style="height:44px;margin-top:6px"><canvas id="miniBalance"></canvas></div></div>
-        <div class="card kpi"><div class="kpi-head"><span class="kpi-label">XP & Nível</span><span class="kpi-icon" style="background:#FEF3C7">⚡</span></div><div class="kpi-value"><span id="levelLabel">Nv 1</span> <small id="xpLabel">0 XP</small></div><div class="lvl-bar"><i id="xpBar" style="width:0%"></i></div><div class="lvl-nodes"><span id="xpFrom">0</span><span id="xpTo">500</span></div><div class="kpi-sub">Falta <b id="xpNext">500 XP</b> • <span id="levelReward" style="font-size:10px">+1 slot</span></div></div>
-        <div class="card kpi"><div class="kpi-head"><span class="kpi-label">Hábitos</span><span class="kpi-icon" style="background:#DCFCE7">✅</span></div><div class="kpi-value"><span id="habitsDone">0</span>/<span id="habitsTotal">0</span></div><div class="progress"><i id="habitsProgress" style="width:0%"></i></div><div class="kpi-sub" id="habitsMotivation">Comece!</div></div>
-        <div class="card kpi"><div class="kpi-head"><span class="kpi-label">Humor</span><span class="kpi-icon" id="moodIcon">🙂</span></div><div class="kpi-value" id="moodLabel" style="font-size:20px">--</div><div class="kpi-sub" id="moodSub">--</div><div style="display:flex;gap:6px;margin-top:8px" id="moodWeekDots"></div></div>
-      </div>
-
-      <div class="section"><div><h2>Seu dia em foco</h2><p>30s • Firebase vidamaisai</p></div><span class="link" onclick="appLoadPage('habitos')">Gerenciar →</span></div>
-      <div class="grid grid-2">
-        <div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:12px"><b>Hábitos hoje</b><span style="font-size:11px;color:var(--muted)" id="habitsDate"></span></div><div id="todayHabits" style="display:grid;gap:10px"></div></div>
-        <div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:12px"><b>Insights IA</b><span class="badge" style="background:#EEF2FF;color:#4338CA" id="aiBadge">FREE</span></div><div id="aiInsights" style="display:grid;gap:10px"></div><button class="btn btn-ghost" style="width:100%;margin-top:12px" onclick="appLoadPage('relatorios')">Relatório completo</button></div>
-      </div>
-
-      <div class="section"><div><h2>Resumo financeiro</h2><p>7 dias + categorias</p></div><span class="link" onclick="appLoadPage('financeiro')">Ver →</span></div>
-      <div class="grid grid-2">
-        <div class="card"><b>Fluxo semanal</b><div class="chart-box" style="margin-top:12px"><canvas id="weeklyFlow"></canvas></div></div>
-        <div class="card"><b>Gastos</b><div class="chart-box" style="margin-top:12px"><canvas id="categoryDonut"></canvas></div></div>
-      </div>
+    <div id="pageFrameContainer">
+      <iframe id="pageFrame" src="pages/home.html?embedded=1" loading="lazy"></iframe>
     </div>
-
-    <!-- CONTAINER PARA PAGES - QUANDO ABRE PAGE, ESCONDE HOME E MOSTRA AQUI (MENU CONTINUA) -->
-    <div id="pageContainer" style="display:none"></div>
-
   </main>
 </div>
 
-<!-- AUTH - SEM INFO ADMIN, SÓ GOOGLE OU EMAIL/SENHA -->
-<div class="overlay open" id="overlayAuth" style="z-index:150">
-  <div class="modal auth-modal" style="max-width:400px">
-    <div style="padding:22px 22px 0;text-align:center">
-      <img src="assets/logo.png" style="width:60px;height:60px;border-radius:14px;margin:0 auto 10px;display:block;object-fit:cover" onerror="this.style.display='none'">
-      <h2 id="authTitle" style="font-size:24px;line-height:1">Entrar no Vida+ AI</h2>
-      <p style="color:var(--muted);font-size:12px;margin-top:6px">Acesse sua evolução diária</p>
-      <div class="auth-tabs">
-        <button class="active" id="tabLogin" onclick="appSwitchAuthMode('login')">Entrar</button>
-        <button id="tabSignup" onclick="appSwitchAuthMode('signup')">Criar conta</button>
-      </div>
-    </div>
-    <div class="modal-body">
-      <div id="authLoginView" style="display:grid;gap:10px">
-        <button class="google-btn" id="authBtnGoogle" type="button" onclick="appHandleGoogleLogin()"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px"> Continuar com Google</button>
-        <div class="divider">OU E-MAIL</div>
-        <input id="authEmail" class="input" type="email" placeholder="seu@email.com" autocomplete="email">
-        <input id="authPass" class="input" type="password" placeholder="Sua senha" autocomplete="current-password">
-        <button class="btn btn-primary" id="authBtnLogin" type="button" onclick="appHandleLogin()" style="height:46px">Entrar</button>
-        <span class="link" style="text-align:center;display:block" onclick="appHandleReset()">Esqueci minha senha</span>
-      </div>
-      <div id="authSignupView" style="display:none;gap:10px">
-        <button class="google-btn" type="button" onclick="appHandleGoogleLogin()"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px"> Cadastrar com Google</button>
-        <div class="divider">OU</div>
-        <div class="row"><input id="authFirstName" class="input" placeholder="Nome"><input id="authLastName" class="input" placeholder="Sobrenome"></div>
-        <input id="authEmailSignup" class="input" type="email" placeholder="seu@email.com">
-        <input id="authPassSignup" class="input" type="password" placeholder="Crie senha (mín 6)">
-        <select id="authCurrency" class="input"><option value="BRL">R$ Real</option><option value="USD">US$ Dólar</option><option value="EUR">€ Euro</option></select>
-        <button class="btn btn-primary" id="authBtnSignup" type="button" onclick="appHandleSignup()" style="height:46px">Criar conta</button>
-      </div>
-      <div id="authError" style="display:none;padding:10px 12px;border-radius:10px;background:#FEF2F2;border:1px solid #FECACA;color:#991B1B;font-size:12px"></div>
-    </div>
-  </div>
-</div>
-
-<!-- COMPLETAR PERFIL OPCIONAL -->
-<div class="overlay" id="overlayCompleteProfile" style="z-index:160">
+<!-- LOGIN SÓ APARECE QUANDO CLICAR EM ACESSAR/LOGAR -->
+<div class="overlay" id="overlayAuth" style="z-index:150">
   <div class="modal" style="max-width:400px">
-    <div class="modal-head"><h3>Completar perfil (opcional)</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayCompleteProfile')">Pular</button></div>
-    <div class="modal-body">
-      <div class="row"><input id="completeFirstName" class="input" placeholder="Nome"><input id="completeLastName" class="input" placeholder="Sobrenome"></div>
-      <input id="completePhone" class="input" placeholder="Celular">
-      <select id="completeCurrency" class="input"><option value="BRL">R$ Real</option><option value="USD">US$ Dólar</option></select>
+    <div style="padding:22px 22px 0;text-align:center">
+      <img src="assets/logo.png" style="width:56px;height:56px;border-radius:14px;margin:0 auto 10px;display:block;object-fit:cover" onerror="this.style.display='none'">
+      <h2 id="authTitle" style="font-size:22px">Entrar no Vida+ AI</h2>
+      <p style="color:var(--muted);font-size:12px;margin-top:6px">Login será pedido só agora que clicou em Acessar</p>
+      <div class="auth-tabs">
+        <button class="active" id="tabLogin" onclick="switchAuth('login')">Entrar</button>
+        <button id="tabSignup" onclick="switchAuth('signup')">Criar conta</button>
+      </div>
     </div>
-    <div class="modal-foot"><button class="btn btn-ghost" onclick="appCloseModal('overlayCompleteProfile')">Pular</button><button class="btn btn-primary" onclick="appSaveCompleteProfile()">Salvar</button></div>
+    <div style="padding:16px 20px;display:grid;gap:10px">
+      <div id="loginView" style="display:grid;gap:10px">
+        <button class="google-btn" id="btnGoogle" onclick="loginGoogle()"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px"> Continuar com Google</button>
+        <div class="divider">OU E-MAIL</div>
+        <input id="email" class="input" type="email" placeholder="seu@email.com">
+        <input id="pass" class="input" type="password" placeholder="Sua senha">
+        <button class="btn btn-primary" id="btnLogin" onclick="loginEmail()" style="height:44px">Entrar</button>
+        <span class="link" style="text-align:center;display:block;font-size:12px" onclick="resetPass()">Esqueci senha</span>
+      </div>
+      <div id="signupView" style="display:none;gap:10px">
+        <button class="google-btn" onclick="loginGoogle()"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px"> Cadastrar com Google</button>
+        <div class="divider">OU</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input id="firstName" class="input" placeholder="Nome"><input id="lastName" class="input" placeholder="Sobrenome"></div>
+        <input id="emailSignup" class="input" type="email" placeholder="seu@email.com">
+        <input id="passSignup" class="input" type="password" placeholder="Senha mín 6">
+        <button class="btn btn-primary" id="btnSignup" onclick="signupEmail()" style="height:44px">Criar conta</button>
+      </div>
+      <div id="authError" style="display:none;padding:10px;border-radius:10px;background:#FEF2F2;border:1px solid #FECACA;color:#991B1B;font-size:12px"></div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('overlayAuth')" style="width:100%">Continuar sem login (ver Home)</button>
+    </div>
   </div>
 </div>
-
-<!-- MODAIS ESSENCIAIS - FICAM NO INDEX, PAGES PUXAM DELE -->
-<div class="overlay" id="overlayTx"><div class="modal"><div class="modal-head"><h3>Nova transação</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayTx')">✕</button></div><div class="modal-body"><div class="pills"><button class="pill active" data-type="expense" onclick="appSetTxType('expense',this)">Despesa</button><button class="pill" data-type="income" onclick="appSetTxType('income',this)">Receita</button></div><div class="row"><div><input id="txAmount" class="input" type="number" placeholder="Valor"></div><div><input id="txDate" class="input" type="date"></div></div><div><div class="pills" id="txCategories"></div><input id="txCategoryCustom" class="input" placeholder="Categoria" style="margin-top:6px"></div><input id="txDesc" class="input" placeholder="Descrição"></div><div class="modal-foot"><button class="btn btn-ghost" onclick="appCloseModal('overlayTx')">Cancelar</button><button class="btn btn-primary" onclick="appSaveTx()">Salvar</button></div></div></div>
-<div class="overlay" id="overlayHabit"><div class="modal"><div class="modal-head"><h3>Novo hábito</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayHabit')">✕</button></div><div class="modal-body"><div class="row"><input id="habitName" class="input" placeholder="Nome"><input id="habitIcon" class="input" placeholder="💧"></div><div class="row"><input id="habitGoal" class="input" type="number" placeholder="1"><select id="habitColor" class="input"><option value="#10B981">Verde</option><option value="#6366F1">Violeta</option></select></div></div><div class="modal-foot"><button class="btn btn-ghost" onclick="appCloseModal('overlayHabit')">Cancelar</button><button class="btn btn-primary" onclick="appSaveHabit()">Criar</button></div></div></div>
-<div class="overlay" id="overlayMood"><div class="modal"><div class="modal-head"><h3>Como está?</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayMood')">✕</button></div><div class="modal-body"><div class="mood-grid"><button class="mood-opt" onclick="appPickMood(1)"><span class="em">😞</span><b>Muito Ruim</b></button><button class="mood-opt" onclick="appPickMood(2)"><span class="em">😐</span><b>Ruim</b></button><button class="mood-opt" onclick="appPickMood(3)"><span class="em">🙂</span><b>Normal</b></button><button class="mood-opt" onclick="appPickMood(4)"><span class="em">😁</span><b>Bom</b></button><button class="mood-opt" onclick="appPickMood(5)"><span class="em">🤩</span><b>Excelente</b></button></div><textarea id="moodNoteModal" class="input" placeholder="O que influenciou?"></textarea></div><div class="modal-foot"><button class="btn btn-primary" onclick="appConfirmMood()">Salvar</button></div></div></div>
-<div class="overlay" id="overlayGoal"><div class="modal"><div class="modal-head"><h3>Nova meta</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayGoal')">✕</button></div><div class="modal-body"><input id="goalTitle" class="input" placeholder="Título"><div class="row"><select id="goalType" class="input"><option value="financeira">Financeira</option><option value="habito">Hábito</option><option value="pessoal">Pessoal</option></select><input id="goalTarget" class="input" type="number" placeholder="5000"></div><input id="goalDeadline" class="input" type="date"></div><div class="modal-foot"><button class="btn btn-primary" onclick="appSaveGoal()">Criar</button></div></div></div>
-<div class="overlay" id="overlayQuick"><div class="modal"><div class="modal-head"><h3>Ação rápida</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayQuick')">✕</button></div><div class="modal-body"><div class="grid grid-2"><button class="card" onclick="appCloseModal('overlayQuick');appOpenTxModal()"><b>💸 Despesa</b></button><button class="card" onclick="appCloseModal('overlayQuick');appOpenMoodModal()"><b>🙂 Humor</b></button><button class="card" onclick="appCloseModal('overlayQuick');appLoadPage('habitos')"><b>✅ Hábitos</b></button><button class="card" onclick="appCloseModal('overlayQuick');appOpenGoalModal()"><b>◎ Meta</b></button></div></div></div></div>
-<div class="overlay" id="overlayPremium"><div class="modal" style="max-width:520px"><div class="modal-head"><h3>Premium</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayPremium')">✕</button></div><div class="modal-body"><p style="font-size:13px;color:var(--muted)">10 temas + IA total + 50 níveis</p><button class="btn btn-primary" style="height:44px" onclick="appActivatePremium()">Virar Premium</button></div></div></div>
 
 <div class="toast-stack" id="toasts"></div>
 
 <script type="module">
-import { initApp, loadPage, toggleTheme, openQuickAdd, openPremium, closeModal, openTxModal, openHabitModal, openMoodModal, openGoalModal, saveTx, saveHabit, saveGoal, toggleHabit, editHabit, deleteHabit, filterTx, setTxType, quickMood, pickMood, confirmMood, saveMoodNote, addGoalProgress, deleteGoal, saveProfile, saveCompleteProfile, changeCurrency, handleLogin, handleSignup, handleGoogleLogin, handleLogout, handleReset, switchAuthMode } from './js/app.js';
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, sendPasswordResetEmail, updateProfile, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getDatabase, ref, set, get, update, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-window.appLoadPage = loadPage;
-window.appToggleTheme = toggleTheme;
-window.appOpenQuickAdd = openQuickAdd;
-window.appOpenPremium = openPremium;
-window.appCloseModal = closeModal;
-window.appOpenTxModal = openTxModal;
-window.appOpenHabitModal = openHabitModal;
-window.appOpenMoodModal = openMoodModal;
-window.appOpenGoalModal = openGoalModal;
-window.appSaveTx = saveTx;
-window.appSaveHabit = saveHabit;
-window.appSaveGoal = saveGoal;
-window.appToggleHabit = toggleHabit;
-window.appEditHabit = editHabit;
-window.appDeleteHabit = deleteHabit;
-window.appFilterTx = filterTx;
-window.appSetTxType = setTxType;
-window.appQuickMood = quickMood;
-window.appPickMood = pickMood;
-window.appConfirmMood = confirmMood;
-window.appSaveMoodNote = saveMoodNote;
-window.appAddGoalProgress = addGoalProgress;
-window.appDeleteGoal = deleteGoal;
-window.appSaveProfile = saveProfile;
-window.appSaveCompleteProfile = saveCompleteProfile;
-window.appChangeCurrency = changeCurrency;
-window.appHandleLogin = handleLogin;
-window.appHandleSignup = handleSignup;
-window.appHandleGoogleLogin = handleGoogleLogin;
-window.appHandleLogout = handleLogout;
-window.appHandleReset = handleReset;
-window.appSwitchAuthMode = switchAuthMode;
+const cfg={
+  apiKey:"AIzaSyB3PEDD9LwVeqSVYFkYvfl7GiXARJgLV6Q",
+  authDomain:"vidamaisai.firebaseapp.com",
+  databaseURL:"https://vidamaisai-default-rtdb.firebaseio.com",
+  projectId:"vidamaisai",
+  storageBucket:"vidamaisai.firebasestorage.app",
+  messagingSenderId:"685977764265",
+  appId:"1:685977764265:web:aab35e2d621856a3e6c4b8"
+};
+const ADMIN_EMAIL="wesleystudio@gmail.com";
+const app=initializeApp(cfg);
+const auth=getAuth(app);
+const db=getDatabase(app);
+setPersistence(auth,browserLocalPersistence).catch(()=>{});
+const provider=new GoogleAuthProvider();
+provider.setCustomParameters({prompt:'select_account'});
 
-// compat
-window.loadPage = loadPage;
-window.toggleTheme = toggleTheme;
-window.openQuickAdd = openQuickAdd;
-window.openPremium = openPremium;
-window.closeModal = closeModal;
-window.openTxModal = openTxModal;
-window.openHabitModal = openHabitModal;
-window.openMoodModal = openMoodModal;
-window.openGoalModal = openGoalModal;
-window.saveTx = saveTx;
-window.saveHabit = saveHabit;
-window.saveGoal = saveGoal;
-window.toggleHabit = toggleHabit;
-window.editHabit = editHabit;
-window.deleteHabit = deleteHabit;
-window.filterTx = filterTx;
-window.setTxType = setTxType;
-window.quickMood = quickMood;
-window.pickMood = pickMood;
-window.confirmMood = confirmMood;
-window.saveMoodNote = saveMoodNote;
-window.addGoalProgress = addGoalProgress;
-window.deleteGoal = deleteGoal;
-window.handleLogin = handleLogin;
-window.handleSignup = handleSignup;
-window.handleGoogleLogin = handleGoogleLogin;
-window.handleLogout = handleLogout;
-window.handleReset = handleReset;
-window.switchAuthMode = switchAuthMode;
-window.saveCompleteProfile = saveCompleteProfile;
+const $=id=>document.getElementById(id);
+function toast(msg,ico='✦'){
+  const s=$('toasts'); if(!s) return;
+  const el=document.createElement('div'); el.className='toast'; el.innerHTML=`<div class="t-ico">${ico}</div><div>${msg}</div>`;
+  s.appendChild(el); setTimeout(()=>{ el.style.opacity='0'; setTimeout(()=>el.remove(),300); },4000);
+}
+function showErr(m){ const e=$('authError'); if(!e) return; if(!m){ e.style.display='none'; return; } e.style.display='block'; e.textContent=m; toast(m,'⚠️'); }
 
-initApp();
+// Verifica redirect Google (celular)
+getRedirectResult(auth).then(r=>{ if(r&&r.user){ toast('Google OK: '+r.user.email,'✓'); } }).catch(e=>{ console.warn(e); });
+
+let currentUser=null;
+onAuthStateChanged(auth, async (user)=>{
+  currentUser=user;
+  if(user){
+    console.log('Logado', user.email);
+    $('overlayAuth').classList.remove('open');
+    $('userEmailChip').textContent=user.email;
+    $('sidebarName').textContent='Olá, '+(user.displayName?.split(' ')[0]||user.email.split('@')[0]);
+    $('avatar').textContent=(user.displayName||user.email||'U').charAt(0).toUpperCase();
+    $('btnLogout').style.display='block';
+    // garante dados RTDB sem travar
+    try{
+      const snap=await get(ref(db, `vidaplus/users/${user.uid}`));
+      if(!snap.exists()){
+        const isAdmin=user.email.toLowerCase()===ADMIN_EMAIL.toLowerCase();
+        const fullName=user.displayName||user.email.split('@')[0];
+        const parts=fullName.split(' ');
+        await set(ref(db, `vidaplus/users/${user.uid}`), {
+          profile:{name:fullName, firstName:parts[0]||fullName, lastName:parts.slice(1).join(' ')||'', email:user.email, phone:'', photo:user.photoURL||'', currency:'BRL', premium:isAdmin, isAdmin:isAdmin, createdAt:new Date().toISOString()},
+          user:{name:fullName, xp:0, level:1, joined:new Date().toISOString(), premium:isAdmin},
+          app:{streak:0,premium:isAdmin,theme:'light',uid:user.uid},
+          settings:{theme:'light',currency:'BRL'},
+          transactions:[], habits:[], moods:[], goals:[]
+        });
+      }
+    }catch(e){ console.warn('RTDB ensure', e.code, e.message); if(e.code==='PERMISSION_DENIED') toast('RTDB bloqueado, verifique Rules','⚠️'); }
+    // Se estava na home, vai pro dashboard após login
+    const params=new URLSearchParams(location.search);
+    const page=params.get('page')||'dashboard';
+    if(page!=='home') navigate(page); else navigate('dashboard');
+  }else{
+    console.log('Deslogado, mostrando home sem exigir login');
+    $('userEmailChip').textContent='Visitante • Faça login';
+    $('sidebarName').textContent='Bem-vindo';
+    $('avatar').textContent='?';
+    $('btnLogout').style.display='none';
+    // Não abre login automaticamente, só quando clicar em Acessar
+    // Mostra home de boas vindas
+    navigate('home');
+  }
+});
+
+window.navigate=(page)=>{
+  let n=(page||'home').replace('.html','').toLowerCase();
+  const allowed=['home','dashboard','financeiro','habitos','humor','metas','relatorios','conquistas','perfil'];
+  if(!allowed.includes(n)) n='home';
+  document.querySelectorAll('.nav button').forEach(b=>{ b.classList.toggle('active', b.dataset.page===n); });
+  try{ const u=new URL(location.href); u.searchParams.set('page', n); history.pushState({},'',u); }catch{}
+  const frame=$('pageFrame');
+  // Páginas protegidas: se não logado e tenta acessar diferente de home, pede login
+  const protectedPages=['dashboard','financeiro','habitos','humor','metas','relatorios','conquistas','perfil'];
+  if(protectedPages.includes(n) && !currentUser){
+    // Mostra login quando clica em Acessar
+    openLogin();
+    toast('Faça login para acessar '+n,'🔒');
+    return;
+  }
+  frame.src=`pages/${n}.html?embedded=1&_=${Date.now()}`;
+  frame.onload=()=>{
+    try{
+      const doc=frame.contentDocument||frame.contentWindow.document;
+      if(doc){ frame.style.height=(Math.max(doc.body.scrollHeight, doc.documentElement.scrollHeight)+40)+'px'; }
+    }catch{}
+  };
+};
+window.addEventListener('message', (e)=>{
+  if(e.data && e.data.type==='resize' && e.data.height){
+    const frame=$('pageFrame');
+    if(frame) frame.style.height=(e.data.height+40)+'px';
+  }
+  if(e.data && e.data.type==='navigate'){
+    navigate(e.data.page);
+  }
+  if(e.data && e.data.type==='openLogin'){
+    openLogin();
+  }
+});
+window.addEventListener('popstate', ()=>{ const p=new URLSearchParams(location.search).get('page')||'home'; navigate(p); });
+
+window.openLogin=()=>{ $('overlayAuth').classList.add('open'); };
+window.closeModal=(id)=>{ const el=document.getElementById(id); if(el) el.classList.remove('open'); };
+window.switchAuth=(mode)=>{
+  const lv=$('loginView'), sv=$('signupView'), tl=$('tabLogin'), ts=$('tabSignup');
+  if(mode==='signup'){ lv.style.display='none'; sv.style.display='grid'; tl.classList.remove('active'); ts.classList.add('active'); }
+  else{ lv.style.display='grid'; sv.style.display='none'; tl.classList.add('active'); ts.classList.remove('active'); }
+  showErr('');
+};
+let busy=false;
+window.loginEmail=async()=>{
+  if(busy) return; busy=true;
+  const email=$('email').value.trim(); const pass=$('pass').value;
+  const btn=$('btnLogin');
+  if(!email||!pass){ showErr('Digite e-mail e senha'); busy=false; return; }
+  const orig=btn.textContent;
+  try{ btn.textContent='Entrando...'; btn.disabled=true; showErr(''); await signInWithEmailAndPassword(auth, email, pass); }
+  catch(e){ let m=e.message; if(e.code==='auth/invalid-credential') m='E-mail ou senha incorretos'; if(e.code==='auth/unauthorized-domain') m=`Domínio ${location.hostname} não autorizado`; showErr(m+' ('+e.code+')'); }
+  finally{ busy=false; btn.textContent=orig; btn.disabled=false; }
+};
+window.signupEmail=async()=>{
+  if(busy) return; busy=true;
+  const fn=$('firstName').value.trim(); const ln=$('lastName').value.trim();
+  const email=$('emailSignup').value.trim(); const pass=$('passSignup').value;
+  const btn=$('btnSignup');
+  if(!fn){ showErr('Nome obrigatório'); busy=false; return; }
+  if(!email){ showErr('E-mail obrigatório'); busy=false; return; }
+  if(!pass||pass.length<6){ showErr('Senha mín 6'); busy=false; return; }
+  const orig=btn.textContent;
+  try{ btn.textContent='Criando...'; btn.disabled=true; showErr(''); const cred=await createUserWithEmailAndPassword(auth, email, pass); const fullName=`${fn} ${ln}`.trim(); if(fullName) await updateProfile(cred.user, {displayName:fullName}); }
+  catch(e){ let m=e.message; if(e.code==='auth/email-already-in-use') m='E-mail já existe, faça login'; showErr(m+' ('+e.code+')'); }
+  finally{ busy=false; btn.textContent=orig; btn.disabled=false; }
+};
+window.loginGoogle=async()=>{
+  if(busy) return; busy=true;
+  const btn=$('btnGoogle');
+  const orig=btn.textContent;
+  try{ btn.textContent='Conectando Google...'; btn.disabled=true; showErr(''); try{ await signInWithPopup(auth, provider); }catch(e){ if(e.code==='auth/popup-blocked' || /mobile|android|iphone/i.test(navigator.userAgent)){ await signInWithRedirect(auth, provider); return; } throw e; } }
+  catch(e){ let m=e.message; if(e.code==='auth/unauthorized-domain') m=`Domínio ${location.hostname} não autorizado`; showErr(m+' ('+e.code+')'); }
+  finally{ busy=false; btn.textContent=orig; btn.disabled=false; }
+};
+window.resetPass=async()=>{
+  const email=$('email').value.trim()||$('emailSignup').value.trim();
+  if(!email){ showErr('Digite e-mail'); return; }
+  try{ await sendPasswordResetEmail(auth, email); showErr('E-mail enviado para '+email); toast('E-mail enviado','📧'); }catch(e){ showErr(e.message); }
+};
+window.doLogout=async()=>{ if(!confirm('Sair?')) return; try{ await signOut(auth); localStorage.clear(); location.href='index.html?page=home'; }catch(e){ localStorage.clear(); location.reload(); } };
+window.toggleTheme=()=>{ const cur=document.documentElement.getAttribute('data-theme')||'light'; const next=cur==='light'?'dark':'light'; document.documentElement.setAttribute('data-theme', next); localStorage.setItem('vidaplus_theme', next); };
+
+// Inicial: carrega home de boas vindas sem exigir login, sem puxar Firebase pesado
+(function(){
+  const p=new URLSearchParams(location.search).get('page')||'home';
+  // Não carrega dashboard direto, carrega home leve primeiro
+  navigate(p);
+})();
 </script>
 </body>
 </html>
