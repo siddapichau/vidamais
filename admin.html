@@ -9,27 +9,19 @@
 <link rel="stylesheet" href="css/style.css">
 <style>
 .admin{max-width:1280px;margin:0 auto;padding:16px 12px 100px}
-@media(max-width:700px){.admin{padding:12px 10px 120px}}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
-@media(max-width:700px){.tiles{grid-template-columns:1fr;gap:10px}}
 .apanel{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:14px;box-shadow:var(--shadow-sm)}
-@media(max-width:700px){.apanel{padding:12px;border-radius:16px}}
 .apanel h3{font-size:16px;margin-bottom:2px;line-height:1.1}
-@media(max-width:700px){.apanel h3{font-size:15px}}
 .apanel small{color:var(--muted);font-size:11px;line-height:1.3;display:block}
 .kv{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;gap:8px}
 .kv:last-child{border:none}
 .code{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--bg-2);padding:10px 12px;border-radius:10px;border:1px solid var(--border);overflow:auto;word-break:break-all;white-space:pre-wrap;line-height:1.4}
-@media(max-width:700px){.code{font-size:10px;padding:8px 10px}}
 .user-row{display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid var(--border);border-radius:14px;background:var(--card);gap:8px}
-@media(max-width:700px){.user-row{flex-direction:column;align-items:flex-start;padding:10px}}
 .ai-chat{height:300px;overflow:auto;display:grid;gap:8px;padding:10px;background:var(--bg-2);border-radius:12px;border:1px solid var(--border)}
-@media(max-width:700px){.ai-chat{height:260px}}
 .msg{padding:10px 12px;border-radius:12px;font-size:12px;line-height:1.4;max-width:90%;word-break:break-word}
 .msg.user{background:var(--text);color:white;justify-self:end;border-bottom-right-radius:4px}
 .msg.ai{background:var(--card);border:1px solid var(--border);justify-self:start;border-bottom-left-radius:4px}
 .topbar-admin{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:16px;padding:12px 14px;background:var(--card);border:1px solid var(--border);border-radius:16px;position:sticky;top:10px;z-index:10;backdrop-filter:blur(12px)}
-@media(max-width:700px){.topbar-admin{padding:10px 12px;top:6px;border-radius:14px}}
 </style>
 </head>
 <body>
@@ -37,97 +29,27 @@
   <div id="authGuard"></div>
   <div class="topbar-admin">
     <div style="display:flex;align-items:center;gap:10px;min-width:0">
-      <img src="assets/logo.png" style="width:40px;height:40px;border-radius:10px;object-fit:cover;flex-shrink:0">
-      <div style="min-width:0"><h1 style="font-size:18px;line-height:.95;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Admin Protegido</h1><p style="color:var(--muted);font-size:10px;margin-top:2px;line-height:1.2">Acesso: wesleystudio@gmail.com • Firebase vidamaisai</p><p id="adminEmailStatus" style="font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></p></div>
+      <div style="min-width:0"><h1 style="font-size:18px;line-height:.95;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Admin Dashboard</h1><p id="adminEmailStatus" style="font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></p></div>
     </div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0"><button class="btn btn-ghost btn-sm" onclick="location.href='index.html'">App</button><button class="btn btn-ghost btn-sm" onclick="refreshAll()">↻</button><button class="btn btn-primary btn-sm" onclick="handleLogoutAdmin()">Sair</button></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0"><button class="btn btn-ghost btn-sm" onclick="location.href='index.html'">Voltar ao App</button><button class="btn btn-primary btn-sm" onclick="handleLogoutAdmin()">Sair</button></div>
   </div>
 
-  <div id="adminBlocked" style="display:none" class="card" style="border-color:#F43F5E;background:#FEF2F2;text-align:center;padding:24px">
-    <div style="font-size:40px">🔒</div><h2 style="color:#991B1B;margin-top:10px;font-size:18px">Acesso negado</h2><p style="color:#991B1B;font-size:12px;margin-top:8px;line-height:1.4">Painel exclusivo para <b>wesleystudio@gmail.com</b>. Faça login com esse e-mail no app e volte.<br><br>Se você é o admin, verifique se logou com Google usando exatamente esse e-mail.</p><button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="location.href='index.html'">Ir para login</button>
-    <div class="code" style="margin-top:12px;text-align:left">Dica celular: no Firebase Console > Auth > Authorized domains adicione seu domínio github.io<br>Se usar signInWithPopup no celular e falhar, tenta login por e-mail/senha.</div>
+  <div id="adminBlocked" style="display:none; border-color:#F43F5E; background:#FEF2F2; text-align:center; padding:24px" class="card">
+    <div style="font-size:40px">🔒</div><h2 style="color:#991B1B;margin-top:10px;font-size:18px">Acesso negado</h2><p style="color:#991B1B;font-size:12px;margin-top:8px;line-height:1.4">Painel exclusivo para administradores.</p><button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="location.href='index.html'">Voltar</button>
   </div>
 
   <div id="adminContent" style="display:none">
     <div class="tiles">
       <div class="apanel">
-        <h3>📡 Firebase Status</h3><small>RTDB + Auth • Se der erro de conexão, leia abaixo</small>
-        <div id="fbStatus" style="margin-top:10px"></div>
-        <div id="rtdbErrorBox" style="display:none;margin-top:10px;padding:10px 12px;border-radius:10px;background:#FEF2F2;border:1px solid #FECACA;color:#991B1B;font-size:11px;line-height:1.4"></div>
-        <div class="code" style="margin-top:10px;font-size:10px">Regra segura com seu e-mail (cole em RTDB > Rules):
-{
-  "rules": {
-    "vidaplus": {
-      "users": {
-        "$uid": {
-          ".read": "$uid === auth.uid || auth.token.email == 'wesleystudio@gmail.com'",
-          ".write": "$uid === auth.uid || auth.token.email == 'wesleystudio@gmail.com'"
-        }
-      }
-    },
-    "admin": {
-      ".read": "auth.token.email == 'wesleystudio@gmail.com'",
-      ".write": "auth.token.email == 'wesleystudio@gmail.com'"
-    }
-  }
-}
-Para teste rápido se der PERMISSION_DENIED:
-{ "rules": { ".read": true, ".write": true } }
-        </div>
+        <h3>Sistema de Usuários</h3><small>Listagem geral do banco de dados</small>
+        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap"><button class="btn btn-ghost btn-sm" onclick="loadUsers()">↻ Carregar Usuários</button></div>
+        <div id="usersList" style="margin-top:10px;max-height:460px;overflow:auto;display:grid;gap:8px"></div>
+        <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><span id="userCount" style="font-size:10px;color:var(--muted);align-self:center">0 usuários</span></div>
       </div>
-
       <div class="apanel">
-        <h3>🎨 Temas • 10 gradientes</h3><small>Broadcast global</small>
-        <div id="themeControls" style="margin-top:10px;display:grid;gap:8px;max-height:240px;overflow:auto"></div>
-        <div style="margin-top:10px" class="grid grid-2">
-          <div><label style="font-size:10px;font-weight:700;color:var(--muted)">COR PRIMÁRIA</label><input id="primaryColor" type="color" value="#123C7A" class="input" style="padding:4px;height:38px" oninput="updatePrimary(this.value)"></div>
-          <div><label style="font-size:10px;font-weight:700;color:var(--muted)">FORÇAR TEMA</label><select id="forceTheme" class="input" style="height:38px"><option value="">Auto</option><option value="light">Claro</option><option value="dark">Escuro</option><option value="midnight">Midnight</option><option value="forest">Forest</option><option value="sunset">Sunset</option><option value="aurora">Aurora</option><option value="ocean">Ocean</option><option value="neon">Neon</option><option value="gold">Gold</option><option value="sakura">Sakura</option></select></div>
-        </div>
-        <button class="btn btn-primary btn-sm" style="margin-top:8px;width:100%" onclick="broadcastTheme()">📢 Broadcast tema</button>
-      </div>
-
-      <div class="apanel">
-        <h3>🤖 Assistente Admin IA</h3><small>Ajuda inteligente • 100% PT-BR • Analisa RTDB</small>
+        <h3>Assistente IA Admin</h3><small>Controle e relatórios</small>
         <div id="aiChat" class="ai-chat" style="margin-top:10px"></div>
         <div style="display:flex;gap:6px;margin-top:8px"><input id="aiInput" class="input" placeholder="Pergunte..." style="height:38px" onkeydown="if(event.key==='Enter') sendAI()"><button class="btn btn-primary btn-sm" onclick="sendAI()">Enviar</button></div>
-        <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
-          <button class="btn btn-ghost btn-sm" onclick="quickAI('resumo')">📊 Resumo</button>
-          <button class="btn btn-ghost btn-sm" onclick="quickAI('inativos')">😴 Inativos</button>
-          <button class="btn btn-ghost btn-sm" onclick="quickAI('premium')">💎 Premium</button>
-          <button class="btn btn-ghost btn-sm" onclick="quickAI('erro rtdb')">❓ Erro RTDB</button>
-        </div>
-      </div>
-
-      <div class="apanel" style="grid-column:span 1">
-        <h3>👥 Usuários • Inclui admin</h3><small>Busca nome/email/telefone • Mostra seu admin mesmo com 0 dados</small>
-        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap"><input id="userSearch" class="input" placeholder="Buscar..." style="height:36px;flex:1;min-width:140px" oninput="filterUsers()"><select id="userFilter" class="input" style="height:36px;width:110px" onchange="filterUsers()"><option value="all">Todos</option><option value="premium">Premium</option><option value="free">Free</option><option value="admin">Admin</option></select><button class="btn btn-ghost btn-sm" onclick="loadUsers()">↻</button></div>
-        <div id="usersList" style="margin-top:10px;max-height:460px;overflow:auto;display:grid;gap:8px"></div>
-        <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-ghost btn-sm" onclick="exportUsers()">⬇️ JSON</button><button class="btn btn-ghost btn-sm" onclick="forcePremiumAll()">⚡ Todos Premium</button><span id="userCount" style="font-size:10px;color:var(--muted);align-self:center">0</span></div>
-      </div>
-
-      <div class="apanel">
-        <h3>💰 Financeiro Global</h3><small>Agregado RTDB</small>
-        <div id="finGlobal" style="margin-top:10px"></div>
-        <div class="code" id="finExtra" style="margin-top:8px;max-height:100px"></div>
-        <button class="btn btn-ghost btn-sm" style="margin-top:8px;width:100%" onclick="clearAllLocal()">Limpar localStorage</button>
-      </div>
-
-      <div class="apanel">
-        <h3>🏆 Níveis • 50 = 1 ano</h3><small>78k XP = 390 dias</small>
-        <div id="levelsAdmin" style="margin-top:10px;max-height:220px;overflow:auto;display:grid;gap:6px"></div>
-      </div>
-    </div>
-
-    <div style="margin-top:12px" class="grid grid-2">
-      <div class="apanel"><h3>📋 RTDB Explorer</h3><small>Leitura direta • Digite path</small><div style="margin-top:10px;display:flex;gap:6px"><input id="rtdbPath" class="input" value="vidaplus/users" style="height:36px"><button class="btn btn-primary btn-sm" onclick="exploreRtdb()">Buscar</button></div><div id="rtdbErrorDetail" style="display:none;margin-top:8px;padding:8px 10px;border-radius:8px;background:#FEF2F2;border:1px solid #FECACA;color:#991B1B;font-size:11px"></div><pre id="rtdbOut" class="code" style="margin-top:10px;max-height:400px;overflow:auto">Clique Buscar...</pre></div>
-      <div class="apanel"><h3>📢 Banner & Premium Global</h3><small>Controla app via RTDB</small>
-        <div style="display:grid;gap:8px;margin-top:10px">
-          <label style="font-size:10px;font-weight:700;color:var(--muted)">BANNER</label><input id="bannerText" class="input" value="🔥 Premium - 10 temas + IA total = R$19,90 vitalício!">
-          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span style="font-size:11px">Ads ON</span><div class="switch on" id="adsSwitch" onclick="this.classList.toggle('on')"><i></i></div><span style="font-size:11px">Force Premium</span><div class="switch" id="premiumForce" onclick="this.classList.toggle('on')"><i></i></div></div>
-          <button class="btn btn-primary btn-sm" onclick="saveBanner()">Salvar banner</button>
-          <button class="btn btn-ghost btn-sm" onclick="saveAiConfig()">Salvar config IA Free 3 / Premium 7</button>
-          <div id="bannerStatus" style="font-size:10px;color:var(--muted)"></div>
-        </div>
       </div>
     </div>
   </div>
@@ -138,9 +60,7 @@ Para teste rápido se der PERMISSION_DENIED:
 <script type="module">
 import { auth, db, FIREBASE_DB_URL, firebaseConfig, ADMIN_EMAIL } from './js/firebase.js';
 import { VidaFirebase } from './js/firebase.js';
-import { state, loadState, themes, levelTable } from './js/core.js';
 import { onAuthStateChanged, signOut as fbSignOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { ref, get, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 window.toast=(msg,ico='✦')=>{ const s=document.getElementById('toasts'); const el=document.createElement('div'); el.className='toast'; el.innerHTML=`<div class="t-ico">${ico}</div><div>${msg}</div>`; s.appendChild(el); setTimeout(()=>el.remove(),3500); };
 
@@ -150,90 +70,17 @@ onAuthStateChanged(auth, async (user)=>{
   const blocked=document.getElementById('adminBlocked');
   const content=document.getElementById('adminContent');
   const status=document.getElementById('adminEmailStatus');
-  if(!user){
+  if(!user || user.email.toLowerCase()!==ADMIN_EMAIL.toLowerCase()){
     blocked.style.display='block';
     content.style.display='none';
-    if(status) status.textContent='Deslogado - faça login com '+ADMIN_EMAIL;
-    toast('Admin requer login '+ADMIN_EMAIL,'🔒');
-    return;
-  }
-  if(user.email.toLowerCase()!==ADMIN_EMAIL.toLowerCase()){
-    blocked.style.display='block';
-    content.style.display='none';
-    if(status) status.textContent=`Logado ${user.email} - NÃO AUTORIZADO. Só ${ADMIN_EMAIL}`;
-    toast(`Negado: ${user.email} não é admin`,'🔒');
+    if(status) status.textContent='Acesso não autorizado.';
     return;
   }
   blocked.style.display='none';
   content.style.display='block';
-  if(status) status.textContent=`✓ ${user.email} • Admin master • Mobile OK`;
-  refreshAll();
-});
-
-window.refreshAll=refreshAll;
-function refreshAll(){
-  loadState();
-  renderThemes();
-  loadUsers();
-  renderFinance();
-  renderLevels();
-  updateSysInfo();
-  checkFb();
+  if(status) status.textContent=`✓ Logado como admin: ${user.email}`;
   initAiChat();
-}
-
-function renderThemes(){
-  const cont=document.getElementById('themeControls'); if(!cont) return;
-  cont.innerHTML='';
-  Object.values(themes).forEach(t=>{
-    const row=document.createElement('div');
-    row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:'+(t.gradient||'var(--card)');
-    row.innerHTML=`<div><b style="font-size:11px">${t.label}</b><br><small style="font-size:10px">${t.id}</small></div><div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm" onclick="previewTheme('${t.id}')">Ver</button><button class="btn btn-primary btn-sm" style="padding:6px 8px" onclick="toggleThemePremium('${t.id}')">${t.premium?'🔒':'✓'}</button></div>`;
-    cont.appendChild(row);
-  });
-}
-window.previewTheme=(id)=>{ document.documentElement.setAttribute('data-theme', id); toast('Tema: '+id,'◐'); };
-window.updatePrimary=(val)=>{ document.documentElement.style.setProperty('--primary', val); localStorage.setItem('vidaplus_primary', val); };
-window.broadcastTheme=async()=>{
-  const forced=document.getElementById('forceTheme').value; const primary=document.getElementById('primaryColor').value;
-  try{
-    const ok=await VidaFirebase.adminBroadcastTheme(forced, primary);
-    toast(ok?'Broadcast OK':'Falha (verifique Rules)','📢');
-  }catch(e){
-    toast('Erro broadcast: '+e.message,'⚠️');
-    showRtdbError(e.message);
-  }
-};
-window.toggleThemePremium=(id)=>{
-  themes[id].premium=!themes[id].premium;
-  localStorage.setItem('vidaplus_themes', JSON.stringify(themes));
-  renderThemes();
-  toast(`${id} ${themes[id].premium?'Premium':'Free'}`,'🎨');
-};
-
-async function checkFb(){
-  const status=document.getElementById('fbStatus');
-  if(!status) return;
-  const user=auth.currentUser;
-  status.innerHTML=`<div class="kv"><span>DB</span><span style="font-size:9px">${FIREBASE_DB_URL.replace('https://','')}</span></div><div class="kv"><span>Project</span><b>${firebaseConfig.projectId}</b></div><div class="kv"><span>Admin</span><b style="color:#10B981">${ADMIN_EMAIL}</b></div><div class="kv"><span>Logado</span><b style="font-size:10px;word-break:break-all">${user? user.email : 'checando...'}</b></div><div class="kv"><span>UID</span><span style="font-size:9px">${user? user.uid.slice(0,10)+'...' : '-'}</span></div>`;
-  if(user){
-    // testa leitura rápida para detectar erro RTDB
-    try{
-      const snap=await get(ref(db, `vidaplus/users/${user.uid}`));
-      if(snap.exists()) hideRtdbError();
-      else hideRtdbError();
-    }catch(e){
-      showRtdbError(e.message, e.code);
-    }
-  }
-}
-function showRtdbError(msg, code){
-  const box=document.getElementById('rtdbErrorBox');
-  if(!box) return;
-  box.style.display='block';
-  box.innerHTML=`<b>❌ Erro RTDB: ${code||''}</b><br>${msg}<br><br><b>Solução:</b> Verifique Rules no Firebase Console. Use regra abaixo com seu email admin.<br>Se for PERMISSION_DENIED, seu email logado não tem permissão. Só ${ADMIN_EMAIL} pode ler tudo.`;
-}
-function hideRtdbError(){ const box=document.getElementById('rtdbErrorBox'); if(box) box.style.display='none'; }
+});
 
 window.loadUsers=async()=>{
   const cont=document.getElementById('usersList');
@@ -241,177 +88,50 @@ window.loadUsers=async()=>{
   try{
     const list=await VidaFirebase.adminListUsers();
     allUsersCache=list;
-    const current=auth.currentUser;
-    if(current && !list.find(u=>u.uid===current.uid)){
-      list.unshift({uid:current.uid, name:current.displayName||current.email, email:current.email, xp:0, premium:true, isAdmin:true, phone:'', streak:0, joined:new Date().toISOString()});
-      allUsersCache=list;
-    }
     renderUsersFiltered(list);
     const countEl=document.getElementById('userCount');
     if(countEl) countEl.textContent=`${list.length} usuários`;
-    hideRtdbError();
   }catch(e){
     console.error(e);
-    showRtdbError(e.message, e.code);
-    const cont=document.getElementById('usersList');
-    if(cont) cont.innerHTML=`<div class="code" style="background:#FEF2F2;border-color:#FECACA;color:#991B1B">Erro ao listar: ${e.message}<br><br>Regra necessária:<br>{
-  "rules": {
-    "vidaplus": {
-      "users": {
-        "$uid": {
-          ".read": "$uid === auth.uid || auth.token.email == 'wesleystudio@gmail.com'",
-          ".write": "$uid === auth.uid || auth.token.email == 'wesleystudio@gmail.com'"
-        }
-      }
-    },
-    "admin": {
-      ".read": "auth.token.email == 'wesleystudio@gmail.com'",
-      ".write": "auth.token.email == 'wesleystudio@gmail.com'"
-    }
-  }
-}</div>`;
-    toast('Erro RTDB: '+e.message,'⚠️');
+    toast('Erro: '+e.message,'⚠️');
   }
 };
+
 function renderUsersFiltered(list){
   const cont=document.getElementById('usersList'); if(!cont) return;
   cont.innerHTML='';
   list.forEach(u=>{
-    const isAdmin = u.email && u.email.toLowerCase()===ADMIN_EMAIL.toLowerCase();
     const div=document.createElement('div'); div.className='user-row';
-    div.style.borderColor=isAdmin?'#10B981':'var(--border)';
-    div.style.background=isAdmin?'#F0FDF4':'var(--card)';
-    div.innerHTML=`<div style="flex:1;min-width:0"><b style="font-size:12px">${u.name||'Sem nome'} ${u.premium?'★':''} ${isAdmin?'👑':''}</b><br><small style="color:var(--muted);font-size:10px;word-break:break-all">${u.email||''} • ${u.phone||'sem tel'} • ${u.uid.slice(0,8)} • ${u.xp||0} XP</small><br><span class="badge" style="background:${u.premium?'#DCFCE7':'var(--bg-2)'};color:${u.premium?'#166534':'var(--muted)'}">${u.premium?'PREMIUM':'FREE'}</span></div><div style="display:flex;flex-direction:column;gap:6px"><button class="btn btn-ghost btn-sm" onclick="toggleRemotePremium('${u.uid}', ${!u.premium})" style="font-size:11px">${u.premium?'Remover Premium':'Premium'}</button><button class="btn btn-primary btn-sm" style="font-size:11px" onclick="deleteUser('${u.uid}')">Excluir</button></div>`;
+    div.innerHTML=`<div style="flex:1;min-width:0"><b style="font-size:12px">${u.name||'Sem nome'}</b><br><small style="color:var(--muted);font-size:10px;word-break:break-all">${u.email||''} • ${u.xp||0} XP</small></div><div style="display:flex;flex-direction:column;gap:6px"><button class="btn btn-ghost btn-sm" style="font-size:11px" onclick="toggleRemotePremium('${u.uid}', ${!u.premium})">${u.premium?'Remover Premium':'Ativar Premium'}</button></div>`;
     cont.appendChild(div);
   });
 }
-window.filterUsers=()=>{
-  const q=document.getElementById('userSearch').value.toLowerCase();
-  const f=document.getElementById('userFilter').value;
-  let list=[...allUsersCache];
-  if(q) list=list.filter(u=> (u.name||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q) || (u.phone||'').toLowerCase().includes(q));
-  if(f==='premium') list=list.filter(u=>u.premium);
-  if(f==='free') list=list.filter(u=>!u.premium);
-  if(f==='admin') list=list.filter(u=>u.email && u.email.toLowerCase()===ADMIN_EMAIL.toLowerCase());
-  renderUsersFiltered(list);
-};
+
 window.toggleRemotePremium=async(uid,val)=>{
-  try{ const ok=await VidaFirebase.adminSetPremium(uid,val); toast(ok?(val?'Premium ON':'Premium OFF'):'Falha','★'); if(ok) loadUsers(); }catch(e){ toast('Erro: '+e.message,'⚠️'); showRtdbError(e.message); }
+  try{ const ok=await VidaFirebase.adminSetPremium(uid,val); toast(ok?(val?'Premium ON':'Premium OFF'):'Falha','★'); if(ok) loadUsers(); }catch(e){ toast('Erro: '+e.message,'⚠️'); }
 };
-window.deleteUser=async(uid)=>{ if(!confirm('Excluir '+uid+'?')) return; try{ const ok=await VidaFirebase.adminDeleteUser(uid); toast(ok?'Excluído':'Falha','⚠️'); if(ok) loadUsers(); }catch(e){ toast('Erro: '+e.message,'⚠️'); } };
-window.exportUsers=()=>{ const blob=new Blob([JSON.stringify(allUsersCache,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='vidaplus-users.json'; a.click(); };
-window.forcePremiumAll=async()=>{ if(!confirm(`Premium todos ${allUsersCache.length}?`)) return; let c=0; for(const u of allUsersCache){ try{ const ok=await VidaFirebase.adminSetPremium(u.uid,true); if(ok) c++; }catch{} } toast(`${c} Premium`,'★'); loadUsers(); };
 
-function renderFinance(){
-  const cont=document.getElementById('finGlobal'); if(!cont) return;
-  cont.innerHTML=`<div class="kv"><span>Local tx</span><b>${state.tx.length}</b></div><div class="kv"><span>Usuários RTDB</span><b>${allUsersCache.length}</b></div><div class="kv"><span>Premium</span><b>${allUsersCache.filter(u=>u.premium).length}</b></div>`;
-}
-function renderLevels(){
-  const cont=document.getElementById('levelsAdmin'); if(!cont) return;
-  cont.innerHTML='';
-  const table = levelTable || [];
-  table.slice(0,12).forEach(l=>{
-    const div=document.createElement('div');
-    div.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;border:1px solid var(--border);background:var(--bg-2);font-size:11px';
-    div.innerHTML=`<span>${l.icon||'⚡'}</span><b>${l.level}. ${l.name}</b><span style="margin-left:auto">${l.xp} XP</span>`;
-    cont.appendChild(div);
-  });
-}
-function updateSysInfo(){
-  const el=document.getElementById('sysInfo'); if(!el) return;
-  el.textContent=`Build: ${new Date().toLocaleString('pt-BR')}\nFirebase: ${FIREBASE_DB_URL}\nAdmin: ${ADMIN_EMAIL}\nUsers: ${allUsersCache.length}\nMobile: ${/mobile|android|iphone/i.test(navigator.userAgent)?'Sim - celular':'Desktop'}\n\nSe RTDB erro: verifique Rules e se logado como ${ADMIN_EMAIL}`;
-}
-
-window.exploreRtdb=async()=>{
-  const path=document.getElementById('rtdbPath').value.trim()||'vidaplus/users';
-  const out=document.getElementById('rtdbOut');
-  const errDetail=document.getElementById('rtdbErrorDetail');
-  if(out) out.textContent='Buscando '+path+'...';
-  if(errDetail) errDetail.style.display='none';
-  try{
-    const snap=await get(ref(db, path));
-    if(snap.exists()){
-      if(out) out.textContent=JSON.stringify(snap.val(),null,2).slice(0,8000);
-      hideRtdbError();
-      if(errDetail){ errDetail.style.display='none'; }
-    }else{
-      if(out) out.textContent='null - sem dados ou path vazio';
-    }
-  }catch(e){
-    if(out) out.textContent='Erro: '+e.message;
-    if(errDetail){
-      errDetail.style.display='block';
-      errDetail.innerHTML=`<b>Erro RTDB:</b> ${e.code} - ${e.message}<br><br><b>Causa provável:</b> Rules bloqueando. Você está logado como ${auth.currentUser?.email||'deslogado'}. Só ${ADMIN_EMAIL} pode ler ${path} com regra segura.<br><br><b>Solução:</b> Use regra temporária <code>{".read":true,".write":true}</code> para testar, depois volte para segura.`;
-    }
-    showRtdbError(e.message, e.code);
-    console.error(e);
-  }
-};
-window.saveBanner=async()=>{
-  const text=document.getElementById('bannerText').value;
-  const adsOn=document.getElementById('adsSwitch').classList.contains('on');
-  const premForce=document.getElementById('premiumForce').classList.contains('on');
-  try{
-    const ok=await VidaFirebase.adminSetBanner({text, adsOn, premForce});
-    const status=document.getElementById('bannerStatus');
-    if(status) status.textContent=ok?'✓ Salvo':'✕ Falha';
-    toast(ok?'Banner salvo':'Falha - verifique Rules','📢');
-  }catch(e){
-    toast('Erro: '+e.message,'⚠️');
-    showRtdbError(e.message);
-  }
-};
-window.saveAiConfig=async()=>{
-  try{ await set(ref(db, 'admin/config/ai'), {freeInsights:3, premiumInsights:7, updatedAt: new Date().toISOString()}); toast('Config IA salva: Free 3, Premium 7','💾'); }catch(e){ toast('Erro: '+e.message,'⚠️'); showRtdbError(e.message); }
-};
 window.handleLogoutAdmin=async()=>{ await fbSignOut(auth); toast('Deslogado','👋'); setTimeout(()=>location.href='index.html',600); };
 
-// AI Chat
-let aiHistory=[];
 function initAiChat(){
   const chat=document.getElementById('aiChat'); if(!chat) return;
   chat.innerHTML='';
-  addAiMsg('ai','Olá Wesley! Assistente admin pronto 🤖\n\nDetectei que RTDB pode dar erro se Rules não tiver seu email. Se der PERMISSION_DENIED, use regra temporária true para testar.\n\nMobile otimizado: este admin agora funciona 100% no celular com layout responsivo.');
+  addAiMsg('ai','Painel IA carregado com sucesso. Selecione os usuários no painel lateral ou gere relatórios gerenciais.');
 }
+
 function addAiMsg(who,text){
   const chat=document.getElementById('aiChat'); if(!chat) return;
   const div=document.createElement('div'); div.className='msg '+who; div.textContent=text; chat.appendChild(div); chat.scrollTop=chat.scrollHeight;
 }
+
 window.sendAI=()=>{
   const input=document.getElementById('aiInput'); if(!input) return;
   const q=input.value.trim(); if(!q) return;
   addAiMsg('user', q); input.value='';
-  setTimeout(()=>generateAiResponse(q),500);
+  setTimeout(()=>{
+    addAiMsg('ai', 'Recebido: "'+q+'". Função em desenvolvimento para análise de dados do RTDB.');
+  }, 500);
 };
-window.quickAI=(type)=>{
-  const map={resumo:'resumo geral',inativos:'quem inativo 7 dias',premium:'potencial premium', 'erro rtdb':'por que RTDB dá erro PERMISSION_DENIED?'};
-  document.getElementById('aiInput').value=map[type]||type;
-  sendAI();
-};
-function generateAiResponse(q){
-  q=q.toLowerCase();
-  let resp='🤔 ';
-  const total=allUsersCache.length;
-  const premium=allUsersCache.filter(u=>u.premium).length;
-  if(q.includes('erro')||q.includes('permission')||q.includes('rtdb')){
-    resp=`❓ Erro RTDB PERMISSION_DENIED no admin:\n\nCausa: sua regra atual bloqueia leitura de vidaplus/users.\n\nSolução 1 (teste rápido):\n{\n  "rules": {\n    ".read": true,\n    ".write": true\n  }\n}\n\nSolução 2 (segura com seu email):\n{\n  "rules": {\n    "vidaplus": {\n      "users": {\n        "$uid": {\n          ".read": "$uid === auth.uid || auth.token.email == 'wesleystudio@gmail.com'",\n          ".write": "$uid === auth.uid || auth.token.email == 'wesleystudio@gmail.com'"\n        }\n      }\n    },\n    "admin": {\n      ".read": "auth.token.email == 'wesleystudio@gmail.com'",\n      ".write": "auth.token.email == 'wesleystudio@gmail.com'"\n    }\n  }\n}\n\nGaranta que está logado no admin.html com exatamente ${ADMIN_EMAIL}. Verifique em topbar "Logado".\nSe estiver no celular, use login por e-mail/senha (Google popup pode falhar no celular, agora tem fallback redirect).`;
-  } else if(q.includes('resumo')){
-    resp=`📊 Resumo: Total ${total} usuários, Premium ${premium}, Free ${total-premium}. Se RTDB erro, é Rules. Use regra temporária true para testar, depois segura.`;
-  } else if(q.includes('inativo')){
-    resp=`😴 Inativos: analise lastLogin em vidaplus/users/{uid}/profile/lastLogin. Sugestão: banner "Volte e ganhe 50 XP"`;
-  } else {
-    resp=`Entendi: "${q}"\n\nSou assistente admin. Pergunte sobre erro RTDB, resumo, inativos, premium, temas, níveis. Para RTDB erro, diga "erro rtdb".`;
-  }
-  addAiMsg('ai', resp);
-}
-function initAiChat(){
-  const chat=document.getElementById('aiChat'); if(!chat) return;
-  chat.innerHTML='';
-  addAiMsg('ai','Olá Wesley! Admin mobile otimizado 🤖\n\nSe RTDB der erro PERMISSION_DENIED, é sua Rule. Clique em "❓ Erro RTDB" abaixo que explico.\n\nEstou no celular também - layout agora 100% responsivo, 1 coluna, botões grandes.');
-}
-window.clearAllLocal=()=>{ if(!confirm('Limpar localStorage?')) return; localStorage.clear(); toast('Limpo','⚠️'); setTimeout(()=>location.reload(),500); };
-
-refreshAll();
 </script>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Vida+ AI — Home</title>
+<title>Vida+ AI — Evolução Diária</title>
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link rel="stylesheet" href="css/style.css">
 <link rel="manifest" href="manifest.json">
@@ -23,7 +23,7 @@
 <body>
 <div class="app">
   <aside class="sidebar">
-    <div class="brand"><div class="logo has-img"><img src="assets/logo.png" alt="" onerror="this.style.display='none'"><span>V+</span></div><div class="brand-text"><b>Vida+ AI</b><i>Home</i></div></div>
+    <div class="brand"><div class="logo has-img"><img src="assets/logo.png" alt="Logo" onerror="this.style.display='none'"><span>V+</span></div><div class="brand-text"><b>Vida+ AI</b><i>Painel</i></div></div>
     <nav class="nav" id="nav">
       <button class="active" data-page="home" onclick="appLoadPage('home')"><span class="ico">⌂</span> Home</button>
       <button data-page="dashboard" onclick="appLoadPage('dashboard')"><span class="ico">◧</span> Dashboard</button>
@@ -31,70 +31,67 @@
       <button data-page="habitos" onclick="appLoadPage('habitos')"><span class="ico">◍</span> Hábitos</button>
       <button data-page="humor" onclick="appLoadPage('humor')"><span class="ico">☺</span> Humor</button>
       <button data-page="metas" onclick="appLoadPage('metas')"><span class="ico">◎</span> Metas</button>
-      <button data-page="relatorios" onclick="appLoadPage('relatorios')"><span class="ico">✦</span> IA</button>
+      <button data-page="relatorios" onclick="appLoadPage('relatorios')"><span class="ico">✦</span> IA & Insights</button>
       <button data-page="conquistas" onclick="appLoadPage('conquistas')"><span class="ico">★</span> Conquistas</button>
       <button data-page="perfil" onclick="appLoadPage('perfil')"><span class="ico">👤</span> Perfil</button>
     </nav>
     <div class="sidebar-foot">
-      <span class="premium-tag" id="premiumTag">Vida+ AI</span>
+      <span class="premium-tag" id="premiumTag">Free</span>
       <h4 id="sidebarName">Bem-vindo</h4>
       <p id="userEmailChip" style="font-size:11px;opacity:.9;word-break:break-all">Visitante • Faça login</p>
       <div id="syncStatus" style="font-size:10px;margin-top:8px;opacity:.8">● Pronto</div>
-      <button class="btn btn-white btn-sm" style="margin-top:10px;width:100%" id="btnMainAction" onclick="appOpenLogin()">Entrar / Criar conta</button>
+      <button class="btn btn-white btn-sm" style="margin-top:10px;width:100%" id="btnMainAction" onclick="appOpenAuthModal()">Entrar / Criar conta</button>
       <button class="btn btn-ghost btn-sm" style="margin-top:6px;background:rgba(255,255,255,.12);border:none;color:white;width:100%;display:none" id="btnLogout" onclick="appHandleLogout()">Sair</button>
     </div>
   </aside>
 
   <main class="main">
     <div class="topbar">
-      <div class="search-wrap"><span class="sico">⌕</span><input id="globalSearch" placeholder="Buscar... (só funciona logado)" onkeydown="if(event.key==='Enter'){ appLoadPage('financeiro'); }"></div>
+      <div class="search-wrap"><span class="sico">⌕</span><input id="globalSearch" placeholder="Buscar... (Ex: transações, hábitos)" onkeydown="if(event.key==='Enter'){ appLoadPage('financeiro'); }"></div>
       <div class="top-actions">
         <span class="chip"><span class="dot"></span> <span id="streakLabel">Visitante</span></span>
         <button class="btn btn-ghost btn-sm" onclick="appToggleTheme()">◐</button>
-        <div class="avatar" id="avatar" onclick="appOpenLogin()">?</div>
-        <button class="btn btn-primary btn-sm" id="topLoginBtn" onclick="appOpenLogin()">Entrar</button>
+        <div class="avatar" id="avatar" onclick="appOpenAuthModal()">?</div>
+        <button class="btn btn-primary btn-sm" id="topLoginBtn" onclick="appOpenAuthModal()">Entrar</button>
       </div>
     </div>
 
-    <!-- HOME ESSENCIAL - BOAS VINDAS VIRAL SEM FIREBASE PESADO -->
+    <!-- VIEWS CONTAINER -->
     <div id="homeView"></div>
-
-    <!-- CONTAINER PAGES - SÓ CARREGA DEPOIS DO LOGIN, HERDA CSS/JS DO INDEX -->
     <div id="pageContainer" style="display:none"></div>
   </main>
 </div>
 
-<!-- LOGIN SÓ QUANDO CLICAR EM ACESSAR -->
+<!-- MODALS -->
 <div class="overlay" id="overlayAuth" style="z-index:150;display:none">
   <div class="modal" style="max-width:400px">
     <div style="padding:22px 22px 0;text-align:center">
-      <img src="assets/logo.png" style="width:56px;height:56px;border-radius:14px;margin:0 auto 10px;display:block;object-fit:cover" onerror="this.style.display='none'">
       <h2 id="authTitle" style="font-size:22px">Entrar no Vida+ AI</h2>
-      <p style="color:var(--muted);font-size:12px;margin-top:6px">Login pedido agora porque clicou em Acessar</p>
+      <p style="color:var(--muted);font-size:12px;margin-top:6px">Seus dados salvos e sincronizados com segurança.</p>
       <div class="auth-tabs">
         <button class="active" id="tabLogin" onclick="appSwitchAuthMode('login')">Entrar</button>
         <button id="tabSignup" onclick="appSwitchAuthMode('signup')">Criar conta</button>
       </div>
     </div>
     <div style="padding:16px 20px;display:grid;gap:10px">
-      <div id="loginView" style="display:grid;gap:10px">
-        <button class="google-btn" id="btnGoogle" onclick="appHandleGoogleLogin()"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px"> Continuar com Google</button>
+      <div id="authLoginView" style="display:grid;gap:10px">
+        <button class="google-btn" id="authBtnGoogle" onclick="appHandleGoogleLogin()"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px"> Continuar com Google</button>
         <div class="divider">OU E-MAIL</div>
-        <input id="email" class="input" type="email" placeholder="seu@email.com">
-        <input id="pass" class="input" type="password" placeholder="Sua senha">
-        <button class="btn btn-primary" id="btnLogin" onclick="appHandleLogin()" style="height:44px">Entrar</button>
+        <input id="authEmail" class="input" type="email" placeholder="seu@email.com">
+        <input id="authPass" class="input" type="password" placeholder="Sua senha">
+        <button class="btn btn-primary" id="authBtnLogin" onclick="appHandleLogin()" style="height:44px">Entrar</button>
         <span class="link" style="text-align:center;display:block;font-size:12px" onclick="appHandleReset()">Esqueci senha</span>
       </div>
-      <div id="signupView" style="display:none;gap:10px">
+      <div id="authSignupView" style="display:none;gap:10px">
         <button class="google-btn" onclick="appHandleGoogleLogin()"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px"> Cadastrar com Google</button>
         <div class="divider">OU</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input id="firstName" class="input" placeholder="Nome"><input id="lastName" class="input" placeholder="Sobrenome"></div>
-        <input id="emailSignup" class="input" type="email" placeholder="seu@email.com">
-        <input id="passSignup" class="input" type="password" placeholder="Senha mín 6">
-        <button class="btn btn-primary" id="btnSignup" onclick="appHandleSignup()" style="height:44px">Criar conta</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input id="authFirstName" class="input" placeholder="Nome"><input id="authLastName" class="input" placeholder="Sobrenome"></div>
+        <input id="authEmailSignup" class="input" type="email" placeholder="seu@email.com">
+        <input id="authPassSignup" class="input" type="password" placeholder="Senha mín 6">
+        <button class="btn btn-primary" id="authBtnSignup" onclick="appHandleSignup()" style="height:44px">Criar conta</button>
       </div>
       <div id="authError" style="display:none;padding:10px;border-radius:10px;background:#FEF2F2;border:1px solid #FECACA;color:#991B1B;font-size:12px"></div>
-      <button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayAuth')" style="width:100%">Continuar sem login (ver Home)</button>
+      <button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayAuth')" style="width:100%">Fechar</button>
     </div>
   </div>
 </div>
@@ -110,248 +107,12 @@
   </div>
 </div>
 
-<!-- MODAIS ESSENCIAIS NO INDEX, PAGES PUXAM DELE -->
-<div class="overlay" id="overlayTx" style="display:none"><div class="modal"><div class="modal-head"><h3>Nova transação</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayTx')">✕</button></div><div class="modal-body"><div class="pills"><button class="pill active" data-type="expense" onclick="appSetTxType('expense',this)">Despesa</button><button class="pill" data-type="income" onclick="appSetTxType('income',this)">Receita</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input id="txAmount" class="input" type="number" placeholder="Valor"><input id="txDate" class="input" type="date"></div><div><div class="pills" id="txCategories"></div><input id="txCategoryCustom" class="input" placeholder="Categoria" style="margin-top:6px"></div><input id="txDesc" class="input" placeholder="Descrição"></div><div class="modal-foot"><button class="btn btn-ghost" onclick="appCloseModal('overlayTx')">Cancelar</button><button class="btn btn-primary" onclick="appSaveTx()">Salvar</button></div></div></div>
-<div class="overlay" id="overlayHabit" style="display:none"><div class="modal"><div class="modal-head"><h3>Novo hábito</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayHabit')">✕</button></div><div class="modal-body"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input id="habitName" class="input" placeholder="Nome"><input id="habitIcon" class="input" placeholder="💧"></div></div><div class="modal-foot"><button class="btn btn-primary" onclick="appSaveHabit()">Criar</button></div></div></div>
-<div class="overlay" id="overlayMood" style="display:none"><div class="modal"><div class="modal-head"><h3>Humor</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayMood')">✕</button></div><div class="modal-body"><div class="mood-grid"><button class="mood-opt" onclick="appPickMood(1)"><span class="em">😞</span><b>Muito Ruim</b></button><button class="mood-opt" onclick="appPickMood(2)"><span class="em">😐</span><b>Ruim</b></button><button class="mood-opt" onclick="appPickMood(3)"><span class="em">🙂</span><b>Normal</b></button><button class="mood-opt" onclick="appPickMood(4)"><span class="em">😁</span><b>Bom</b></button><button class="mood-opt" onclick="appPickMood(5)"><span class="em">🤩</span><b>Excelente</b></button></div></div><div class="modal-foot"><button class="btn btn-primary" onclick="appConfirmMood()">Salvar</button></div></div></div>
-<div class="overlay" id="overlayGoal" style="display:none"><div class="modal"><div class="modal-head"><h3>Nova meta</h3></div><div class="modal-body"><input id="goalTitle" class="input" placeholder="Título"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><select id="goalType" class="input"><option value="financeira">Financeira</option><option value="habito">Hábito</option></select><input id="goalTarget" class="input" type="number" placeholder="5000"></div><input id="goalDeadline" class="input" type="date"></div><div class="modal-foot"><button class="btn btn-primary" onclick="appSaveGoal()">Criar</button></div></div></div>
-<div class="overlay" id="overlayPremium" style="display:none"><div class="modal" style="max-width:480px"><div class="modal-head"><h3>Premium</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayPremium')">✕</button></div><div class="modal-body"><p style="font-size:13px;color:var(--muted)">10 temas + IA total + 50 níveis</p><button class="btn btn-primary" onclick="appActivatePremium()">Virar Premium</button></div></div></div>
-<div class="overlay" id="overlayQuick" style="display:none"><div class="modal"><div class="modal-head"><h3>Ação rápida</h3></div><div class="modal-body"><div class="grid grid-2"><button class="card" onclick="appCloseModal('overlayQuick');appOpenTxModal()"><b>💸 Despesa</b></button><button class="card" onclick="appCloseModal('overlayQuick');appOpenMoodModal()"><b>🙂 Humor</b></button></div></div></div></div>
+<div class="overlay" id="overlayTx" style="display:none"><div class="modal"><div class="modal-head"><h3>Nova transação</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayTx')">✕</button></div><div class="modal-body"><div class="pills"><button class="pill active" data-type="expense" onclick="appSetTxType('expense',this)">Despesa</button><button class="pill" data-type="income" onclick="appSetTxType('income',this)">Receita</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input id="txAmount" class="input" type="number" placeholder="Valor"><input id="txDate" class="input" type="date"></div><div><input id="txCategoryCustom" class="input" placeholder="Categoria" style="margin-top:6px"></div><input id="txDesc" class="input" placeholder="Descrição"></div><div class="modal-foot"><button class="btn btn-ghost" onclick="appCloseModal('overlayTx')">Cancelar</button><button class="btn btn-primary" onclick="appSaveTx()">Salvar</button></div></div></div>
+<div class="overlay" id="overlayPremium" style="display:none"><div class="modal" style="max-width:480px"><div class="modal-head"><h3>Premium</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayPremium')">✕</button></div><div class="modal-body"><p style="font-size:13px;color:var(--muted)">10 temas exclusivos + Análise avançada por IA + 50 níveis épicos.</p><button class="btn btn-primary" onclick="appCloseModal('overlayPremium')">Desbloquear agora</button></div></div></div>
 
 <div class="toast-stack" id="toasts"></div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, sendPasswordResetEmail, updateProfile, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getDatabase, ref, set, get, update, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyB3PEDD9LwVeqSVYFkYvfl7GiXARJgLV6Q",
-  authDomain: "vidamaisai.firebaseapp.com",
-  databaseURL: "https://vidamaisai-default-rtdb.firebaseio.com",
-  projectId: "vidamaisai",
-  storageBucket: "vidamaisai.firebasestorage.app",
-  messagingSenderId: "685977764265",
-  appId: "1:685977764265:web:aab35e2d621856a3e6c4b8"
-};
-const ADMIN_EMAIL = "wesleystudio@gmail.com";
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getDatabase(app);
-setPersistence(auth, browserLocalPersistence).catch(()=>{});
-const provider = new GoogleAuthProvider();
-provider.setCustomParameters({prompt:'select_account'});
-
-const $ = id=>document.getElementById(id);
-function toast(msg,ico='✦'){
-  const s=$('toasts'); if(!s) return;
-  const el=document.createElement('div'); el.className='toast'; el.innerHTML=`<div class="t-ico">${ico}</div><div>${msg}</div>`;
-  s.appendChild(el); setTimeout(()=>{ el.style.opacity='0'; setTimeout(()=>el.remove(),300); },4000);
-}
-function showErr(m){ const e=$('authError'); if(!e) return; if(!m){ e.style.display='none'; return; } e.style.display='block'; e.textContent=m; }
-
-let currentUser=null;
-let currentPage='home';
-
-// Carrega home de boas vindas SEM precisar de login e SEM Firebase pesado
-async function loadHome(){
-  const homeView=$('homeView');
-  const pageContainer=$('pageContainer');
-  homeView.style.display='block';
-  pageContainer.style.display='none';
-  document.querySelectorAll('.nav button').forEach(b=>{ b.classList.toggle('active', b.dataset.page==='home'); });
-  try{ history.pushState({},'', '?page=home'); }catch{}
-  try{
-    const res=await fetch('pages/home.html?embedded=1&_='+Date.now(), {cache:'no-store'});
-    if(res.ok){
-      let html=await res.text();
-      const m=html.match(/<body[^>]*>([\s\S]*?)<\/body>/i); if(m) html=m[1];
-      html=html.replace(/<script[^>]*>[\s\S]*?location\.replace[\s\S]*?<\/script>/gi,'');
-      homeView.innerHTML=html;
-    }
-  }catch(e){ console.warn('home load', e.message); }
-}
-
-// Verifica redirect Google
-getRedirectResult(auth).then(r=>{ if(r&&r.user) toast('Google OK: '+r.user.email,'✓'); }).catch(e=>{ console.warn(e); });
-
-onAuthStateChanged(auth, async (user)=>{
-  currentUser=user;
-  if(user){
-    console.log('Logado', user.email);
-    $('overlayAuth').style.display='none';
-    $('overlayAuth').classList.remove('open');
-    $('userEmailChip').textContent=user.email;
-    $('sidebarName').textContent='Olá, '+(user.displayName?.split(' ')[0]||user.email.split('@')[0]);
-    $('avatar').textContent=(user.displayName||user.email||'U').charAt(0).toUpperCase();
-    $('btnLogout').style.display='block';
-    $('topLoginBtn').textContent='Sair';
-    $('topLoginBtn').onclick=()=>doLogout();
-    // Garante RTDB sem travar
-    try{
-      const snap=await get(ref(db, `vidaplus/users/${user.uid}`));
-      if(!snap.exists()){
-        const isAdmin=user.email.toLowerCase()===ADMIN_EMAIL.toLowerCase();
-        const fullName=user.displayName||user.email.split('@')[0];
-        const parts=fullName.split(' ');
-        await set(ref(db, `vidaplus/users/${user.uid}`), {
-          profile:{name:fullName, firstName:parts[0]||fullName, lastName:parts.slice(1).join(' ')||'', email:user.email, photo:user.photoURL||'', currency:'BRL', premium:isAdmin, isAdmin:isAdmin, createdAt:new Date().toISOString()},
-          user:{name:fullName, xp:0, level:1, joined:new Date().toISOString(), premium:isAdmin},
-          app:{streak:0,premium:isAdmin,theme:'light',uid:user.uid},
-          settings:{theme:'light',currency:'BRL'},
-          transactions:[], habits:[], moods:[], goals:[]
-        });
-      }
-    }catch(e){ console.warn('RTDB', e.code, e.message); if(e.code==='PERMISSION_DENIED') toast('RTDB bloqueado, verifique Rules','⚠️'); }
-  }else{
-    console.log('Deslogado - mostra home sem login');
-    $('userEmailChip').textContent='Visitante • Faça login';
-    $('sidebarName').textContent='Bem-vindo';
-    $('avatar').textContent='?';
-    $('btnLogout').style.display='none';
-    $('topLoginBtn').textContent='Entrar';
-    $('topLoginBtn').onclick=()=>openLogin();
-    // Não abre login automático, só quando clica Acessar
-  }
-});
-
-window.navigate=(page)=>{
-  let n=(page||'home').replace('.html','').toLowerCase();
-  const publicPages=['home'];
-  const protectedPages=['dashboard','financeiro','habitos','humor','metas','relatorios','conquistas','perfil'];
-  if(![...publicPages,...protectedPages].includes(n)) n='home';
-  document.querySelectorAll('.nav button').forEach(b=>{ b.classList.toggle('active', b.dataset.page===n); });
-  try{ const u=new URL(location.href); u.searchParams.set('page', n); history.pushState({},'',u); }catch{}
-
-  if(publicPages.includes(n)){
-    loadHomePage(n);
-  }else{
-    // Protegida: precisa login
-    if(!currentUser){
-      openLogin();
-      toast('Faça login para acessar '+n,'🔒');
-      return;
-    }
-    loadProtectedPage(n);
-  }
-};
-
-async function loadHomePage(name){
-  const homeView=$('homeView');
-  const pageContainer=$('pageContainer');
-  homeView.style.display='block';
-  pageContainer.style.display='none';
-  if(name!=='home'){
-    // se pediu home mas quer outra? já tratado acima
-  }
-  try{
-    const res=await fetch(`pages/${name}.html?embedded=1&_=${Date.now()}`, {cache:'no-store'});
-    if(res.ok){
-      let html=await res.text();
-      const m=html.match(/<body[^>]*>([\s\S]*?)<\/body>/i); if(m) html=m[1];
-      html=html.replace(/<script[^>]*>[\s\S]*?location\.replace[\s\S]*?<\/script>/gi,'');
-      homeView.innerHTML=html;
-    }
-  }catch(e){ console.warn(e); }
-}
-
-async function loadProtectedPage(name){
-  const homeView=$('homeView');
-  const pageContainer=$('pageContainer');
-  homeView.style.display='none';
-  pageContainer.style.display='block';
-  pageContainer.innerHTML=`<div class="page-loader"><div style="font-size:28px">◍</div><b>Carregando ${name}...</b><p style="font-size:11px;color:var(--muted)">Só recarrega Pages, .js já está no Index</p></div>`;
-  try{
-    const res=await fetch(`pages/${name}.html?embedded=1&_=${Date.now()}`, {cache:'no-store'});
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    let html=await res.text();
-    const m=html.match(/<body[^>]*>([\s\S]*?)<\/body>/i); if(m) html=m[1];
-    html=html.replace(/<script[^>]*>[\s\S]*?location\.replace[\s\S]*?<\/script>/gi,'');
-    pageContainer.innerHTML=html;
-    // Depois de injetar, chama render que está no Index (puxa CSS/JS do Index)
-    setTimeout(()=>{ try{ window.dispatchEvent(new CustomEvent('vidaplus:render', {detail:{page:name}})); }catch{} },100);
-  }catch(e){
-    pageContainer.innerHTML=`<div class="card" style="text-align:center;padding:20px"><h3>Erro ao carregar ${name}</h3><p style="font-size:12px;color:var(--muted)">${e.message}</p><button class="btn btn-primary btn-sm" onclick="navigate('${name}')">Tentar</button></div>`;
-  }
-}
-
-window.openLogin=()=>{ $('overlayAuth').style.display='grid'; $('overlayAuth').classList.add('open'); };
-window.closeModal=(id)=>{ const el=document.getElementById(id); if(el){ el.style.display='none'; el.classList.remove('open'); } };
-window.switchAuth=(mode)=>{
-  const lv=$('loginView'), sv=$('signupView'), tl=$('tabLogin'), ts=$('tabSignup');
-  if(mode==='signup'){ lv.style.display='none'; sv.style.display='grid'; tl.classList.remove('active'); ts.classList.add('active'); }
-  else{ lv.style.display='grid'; sv.style.display='none'; tl.classList.add('active'); ts.classList.remove('active'); }
-  showErr('');
-};
-
-let busy=false;
-window.loginEmail=async()=>{
-  if(busy) return; busy=true;
-  const email=$('email').value.trim(); const pass=$('pass').value;
-  const btn=$('btnLogin');
-  if(!email||!pass){ showErr('Digite e-mail e senha'); busy=false; return; }
-  const orig=btn.textContent;
-  try{ btn.textContent='Entrando...'; btn.disabled=true; showErr(''); await signInWithEmailAndPassword(auth, email, pass); $('overlayAuth').style.display='none'; }
-  catch(e){ let m=e.message; if(e.code==='auth/invalid-credential') m='E-mail ou senha incorretos'; if(e.code==='auth/unauthorized-domain') m=`Domínio ${location.hostname} não autorizado`; showErr(m+' ('+e.code+')'); }
-  finally{ busy=false; btn.textContent=orig; btn.disabled=false; }
-};
-window.signupEmail=async()=>{
-  if(busy) return; busy=true;
-  const fn=$('firstName').value.trim(); const ln=$('lastName').value.trim();
-  const email=$('emailSignup').value.trim(); const pass=$('passSignup').value;
-  const btn=$('btnSignup');
-  if(!fn){ showErr('Nome obrigatório'); busy=false; return; }
-  if(!email){ showErr('E-mail obrigatório'); busy=false; return; }
-  if(!pass||pass.length<6){ showErr('Senha mín 6'); busy=false; return; }
-  const orig=btn.textContent;
-  try{ btn.textContent='Criando...'; btn.disabled=true; showErr(''); const cred=await createUserWithEmailAndPassword(auth, email, pass); const fullName=`${fn} ${ln}`.trim(); if(fullName){ try{ await updateProfile(cred.user, {displayName:fullName}); }catch{} } }
-  catch(e){ let m=e.message; if(e.code==='auth/email-already-in-use') m='E-mail já existe'; showErr(m+' ('+e.code+')'); }
-  finally{ busy=false; btn.textContent=orig; btn.disabled=false; }
-};
-window.loginGoogle=async()=>{
-  if(busy) return; busy=true;
-  const btn=$('btnGoogle');
-  const orig=btn.textContent;
-  try{ btn.textContent='Conectando...'; btn.disabled=true; showErr(''); try{ await signInWithPopup(auth, provider); }catch(e){ if(e.code==='auth/popup-blocked' || /mobile|android|iphone/i.test(navigator.userAgent)){ await signInWithRedirect(auth, provider); return; } throw e; } }
-  catch(e){ let m=e.message; if(e.code==='auth/unauthorized-domain') m=`Domínio não autorizado: ${location.hostname}`; showErr(m+' ('+e.code+')'); }
-  finally{ busy=false; btn.textContent=orig; btn.disabled=false; }
-};
-window.resetPass=async()=>{
-  const email=$('email').value.trim()||$('emailSignup').value.trim();
-  if(!email){ showErr('Digite e-mail'); return; }
-  try{ await sendPasswordResetEmail(auth, email); showErr('E-mail enviado para '+email); }catch(e){ showErr(e.message); }
-};
-window.doLogout=async()=>{ if(!confirm('Sair?')) return; try{ await signOut(auth); localStorage.clear(); location.href='index.html?page=home'; }catch{ localStorage.clear(); location.reload(); } };
-window.toggleTheme=()=>{ const cur=document.documentElement.getAttribute('data-theme')||'light'; const next=cur==='light'?'dark':'light'; document.documentElement.setAttribute('data-theme', next); localStorage.setItem('vidaplus_theme', next); };
-
-// Escuta resize iframe (pages enviam altura)
-window.addEventListener('message', (e)=>{
-  if(e.data && e.data.type==='resize' && e.data.height){
-    const frame=document.getElementById('pageFrame');
-    if(frame) frame.style.height=(e.data.height+40)+'px';
-  }
-  if(e.data && e.data.type==='navigate'){ navigate(e.data.page); }
-  if(e.data && e.data.type==='openLogin'){ openLogin(); }
-});
-
-// Inicial: home de boas vindas sem precisar login, sem Firebase pesado
-(function(){
-  const p=new URLSearchParams(location.search).get('page')||'home';
-  if(p==='home'){
-    loadHomePage('home');
-  }else{
-    // Se tentou acessar direto página protegida sem login, mostra home primeiro e pede login
-    if(!currentUser){
-      loadHomePage('home');
-      // Não abre login automático, espera clicar Acessar - mas se URL já tem page protegida, abre login
-      if(p!=='home'){
-        setTimeout(()=>{ openLogin(); toast('Faça login para acessar '+p,'🔒'); },800);
-      }
-    }else{
-      navigate(p);
-    }
-  }
-})();
-</script>
+<!-- Lógica central de negócio -->
+<script type="module" src="js/app.js"></script>
 </body>
 </html>
