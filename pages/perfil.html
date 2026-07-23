@@ -1,46 +1,22 @@
-<div class="top-actions" style="margin-bottom: 20px;">
-  <h2>Configurações do Perfil</h2>
-  <p style="color:var(--muted); font-size: 13px;">Atualize seus dados, personalize o design e gerencie a segurança da conta.</p>
-</div>
-
-<div class="grid grid-2">
-  <div class="card">
-    <b style="font-size:16px;">Dados do Cliente</b>
-    <div style="display:grid;gap:12px;margin-top:16px">
-      <div class="row">
-        <input id="profileFirstName" class="input" placeholder="Nome">
-        <input id="profileLastName" class="input" placeholder="Sobrenome">
+<script>if(window.top===window.self){ location.replace('../index.html?page=perfil'); }</script>
+<div id="page-perfil-fragment">
+  <h2 style="font-size:24px">Meu Perfil</h2><p style="font-size:12px;color:var(--muted);margin-bottom:12px">Editável em pages/perfil.html • Usa regras do Index, não precisa puxar .js/.css</p>
+  <div class="grid grid-2">
+    <div class="card">
+      <b>Dados</b>
+      <div style="display:grid;gap:8px;margin-top:12px">
+        <div class="row"><input id="profileFirstName" class="input" placeholder="Nome"><input id="profileLastName" class="input" placeholder="Sobrenome"></div>
+        <input id="profilePhone" class="input" placeholder="Celular">
+        <input id="profileEmail" class="input" disabled>
+        <div class="row"><select id="profileCurrency" class="input"><option value="BRL">BRL</option><option value="USD">USD</option><option value="EUR">EUR</option></select><select id="profileTheme" class="input"><option value="light">Claro</option><option value="dark">Escuro</option><option value="midnight">Midnight</option></select></div>
+        <button class="btn btn-primary btn-sm" onclick="appSaveProfile()">Salvar perfil</button>
       </div>
-      
-      <input id="profileEmail" class="input" disabled title="O e-mail não pode ser alterado">
-      <input id="profilePhone" class="input" placeholder="Celular (WhatsApp)">
-      <input id="profileAddress" class="input" placeholder="Endereço Completo (Rua, Número, Cidade)">
-      
-      <div class="divider">PERSONALIZAÇÃO & AVATAR</div>
-      <input id="profileAvatarUrl" class="input" placeholder="Link da foto do Avatar (URL da imagem)">
-      
-      <div class="row">
-        <select id="profileTheme" class="input">
-          <option value="light">☀️ Modo Claro</option>
-          <option value="dark">🌙 Modo Escuro</option>
-          <option value="dracula">🧛 Dracula (Premium)</option>
-          <option value="cyberpunk">🦾 Cyberpunk (Premium)</option>
-          <option value="lofi">☕ Lo-Fi</option>
-          <option value="aurora">🌌 Aurora Gradient (Premium)</option>
-        </select>
-      </div>
-
-      <div class="divider">SEGURANÇA</div>
-      <input id="profileNewPassword" class="input" type="password" placeholder="Nova Senha (deixe vazio para não alterar)">
-      
-      <button class="btn btn-primary" onclick="appSaveProfile()" style="margin-top:10px;">Salvar Alterações</button>
     </div>
-  </div>
-
-  <div class="card" style="background:linear-gradient(135deg,var(--primary),var(--violet));color:white;border:none; height:fit-content;">
-    <b style="font-size:16px;">Plano Vida+ AI</b>
-    <div style="font-size:24px;font-weight:800;margin-top:12px">Status: Free</div>
-    <p style="margin-top:8px; font-size:13px; opacity:0.9;">Com o plano Premium você desbloqueia novos temas (Cyberpunk, Aurora, Dracula), relatórios avançados de IA e o Avatar animado.</p>
-    <button class="btn btn-white" style="margin-top:16px;width:100%">Evoluir para Premium</button>
+    <div class="card" style="background:linear-gradient(135deg,var(--primary),var(--violet));color:white;border:none">
+      <b>Premium & XP</b>
+      <div style="font-size:22px;font-weight:800;margin-top:8px" id="perfilLevel">Nv 1</div>
+      <div class="progress" style="background:rgba(255,255,255,.2);margin-top:8px"><i id="perfilBar" style="background:white"></i></div>
+      <button class="btn btn-white btn-sm" style="margin-top:12px;width:100%" onclick="appOpenPremium()">Virar Premium</button>
+    </div>
   </div>
 </div>
