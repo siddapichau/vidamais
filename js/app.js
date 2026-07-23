@@ -139,8 +139,9 @@ window.addEventListener('vidaplus:auth', async (e)=>{
     if(authOverlay) authOverlay.classList.remove('open');
     updateHeader();
     await pullFromFirebase();
-    // verifica perfil incompleto (sem telefone ou sobrenome)
-    if(!state.profile.phone || !state.profile.lastName){
+    // Verifica perfil incompleto SÓ se faltar nome/sobrenome (não trava se faltar celular)
+    const missingName = !state.profile.firstName || !state.profile.lastName;
+    if(missingName){
       const cp=document.getElementById('overlayCompleteProfile');
       if(cp){
         document.getElementById('completeFirstName').value=state.profile.firstName||'';
@@ -161,27 +162,80 @@ window.addEventListener('vidaplus:auth', async (e)=>{
 });
 
 // AUTH
-export function openAuthModal(){ const el=document.getElementById('overlayAuth'); if(el) el.classList.add('open'); }
+export function openAuthModal(){ const el=document.getElementById('overlayAuth'); if(el) el.classList.add('open'); showAuthError(''); }
+export function switchAuthMode(mode){
+  const loginView=document.getElementById('authLoginView');
+  const signupView=document.getElementById('authSignupView');
+  const tabLogin=document.getElementById('tabLogin');
+  const tabSignup=document.getElementById('tabSignup');
+  const title=document.getElementById('authTitle');
+  const sub=document.getElementById('authSubtitle');
+  if(mode==='signup'){
+    if(loginView) loginView.style.display='none';
+    if(signupView) signupView.style.display='grid';
+    if(tabLogin) tabLogin.classList.remove('active');
+    if(tabSignup) tabSignup.classList.add('active');
+    if(title) title.textContent='Criar conta no Vida+ AI';
+    if(sub) sub.textContent='Cadastro completo, mas login futuro só com Google ou e-mail/senha';
+  }else{
+    if(loginView) loginView.style.display='grid';
+    if(signupView) signupView.style.display='none';
+    if(tabLogin) tabLogin.classList.add('active');
+    if(tabSignup) tabSignup.classList.remove('active');
+    if(title) title.textContent='Entrar no Vida+ AI';
+    if(sub) sub.textContent='Use Google ou e-mail e senha • 100% PT-BR';
+  }
+  showAuthError('');
+}
+function showAuthError(msg){
+  const el=document.getElementById('authError');
+  if(!el) return;
+  if(!msg){ el.style.display='none'; el.textContent=''; return; }
+  el.style.display='block';
+  el.textContent=msg;
+}
+window.switchAuthMode=switchAuthMode;
+
 export async function handleLogin(){
   const email=document.getElementById('authEmail').value.trim();
   const pass=document.getElementById('authPass').value;
-  if(!email||!pass){ toast('Preencha email e senha • 100% PT-BR','⚠️'); return; }
-  try{ document.getElementById('authBtnLogin').textContent='Entrando...'; await fbLoginEmail(email,pass); toast('Login OK!','✓'); }catch(e){ toast('Erro login: '+ e.message,'⚠️'); }finally{ document.getElementById('authBtnLogin').textContent='Entrar'; }
+  if(!email||!pass){ showAuthError('Preencha e-mail e senha'); toast('Preencha e-mail e senha','⚠️'); return; }
+  const btn=document.getElementById('authBtnLogin');
+  try{
+    if(btn) btn.textContent='Entrando...';
+    btn.disabled=true;
+    showAuthError('');
+    await fbLoginEmail(email,pass);
+    toast('Login realizado com sucesso! Bem-vindo 👋','✓');
+    // modal fecha via evento auth
+  }catch(e){
+    console.error(e);
+    let msg=e.message;
+    if(msg.includes('invalid-credential')||msg.includes('wrong-password')||msg.includes('user-not-found')) msg='E-mail ou senha incorretos. Verifique ou crie conta.';
+    if(msg.includes('too-many-requests')) msg='Muitas tentativas. Aguarde ou redefina senha.';
+    showAuthError(msg);
+    toast('Erro login: '+msg,'⚠️');
+  }finally{
+    if(btn){ btn.textContent='Entrar com e-mail'; btn.disabled=false; }
+  }
 }
 export async function handleSignup(){
-  const firstName=document.getElementById('authFirstName').value.trim();
-  const lastName=document.getElementById('authLastName').value.trim();
-  const phone=document.getElementById('authPhone').value.trim();
-  const email=document.getElementById('authEmail').value.trim();
-  const pass=document.getElementById('authPass').value;
-  const currency=document.getElementById('authCurrency').value||'BRL';
+  // pega dados do view de cadastro
+  const firstName=document.getElementById('authFirstName')?.value.trim() || '';
+  const lastName=document.getElementById('authLastName')?.value.trim() || '';
+  const phone=document.getElementById('authPhone')?.value.trim() || '';
+  const email=document.getElementById('authEmailSignup')?.value.trim() || document.getElementById('authEmail')?.value.trim() || '';
+  const pass=document.getElementById('authPassSignup')?.value || document.getElementById('authPass')?.value || '';
+  const currency=document.getElementById('authCurrency')?.value || 'BRL';
   const fullName=`${firstName} ${lastName}`.trim() || firstName || email.split('@')[0];
-  if(!firstName||!email||!pass){ toast('Nome, email e senha obrigatórios','⚠️'); return; }
-  if(pass.length<6){ toast('Senha mínimo 6 caracteres','⚠️'); return; }
+  if(!firstName){ showAuthError('Informe seu nome'); toast('Nome obrigatório','⚠️'); return; }
+  if(!email){ showAuthError('Informe e-mail'); return; }
+  if(!pass || pass.length<6){ showAuthError('Senha mínimo 6 caracteres'); return; }
+  const btn=document.getElementById('authBtnSignup');
   try{
-    document.getElementById('authBtnSignup').textContent='Criando...';
+    if(btn){ btn.textContent='Criando conta...'; btn.disabled=true; }
+    showAuthError('');
     await fbSignupEmail(email, pass, fullName, {phone, birthDate:'', currency});
-    // salva extras
     state.profile.firstName=firstName;
     state.profile.lastName=lastName;
     state.profile.phone=phone;
@@ -189,17 +243,59 @@ export async function handleSignup(){
     state.settings.currency=currency;
     saveState();
     await trySyncAll();
-    toast('Conta criada com sucesso! 🎉','🎉');
-  }catch(e){ toast('Erro cadastro: '+e.message,'⚠️'); }finally{ document.getElementById('authBtnSignup').textContent='Criar conta completa'; }
+    toast('Conta criada! Agora você pode entrar com Google ou e-mail/senha 🎉','🎉');
+    switchAuthMode('login');
+    // após criar, já está logado via auth listener, modal fechará
+  }catch(e){
+    console.error(e);
+    let msg=e.message;
+    if(msg.includes('email-already-in-use')) msg='Este e-mail já existe. Tente entrar ou use Google.';
+    if(msg.includes('invalid-email')) msg='E-mail inválido.';
+    if(msg.includes('weak-password')) msg='Senha fraca, use mínimo 6 caracteres.';
+    showAuthError(msg);
+    toast('Erro cadastro: '+msg,'⚠️');
+  }finally{
+    if(btn){ btn.textContent='Criar conta → depois login com e-mail/senha ou Google'; btn.disabled=false; }
+  }
 }
 export async function handleGoogleLogin(){
-  try{ document.getElementById('authBtnGoogle').textContent='Conectando Google...'; await fbLoginGoogle(); }catch(e){ toast('Google falhou: '+e.message,'⚠️'); }finally{ document.getElementById('authBtnGoogle').textContent='Continuar com Google'; }
+  const btn=document.getElementById('authBtnGoogle');
+  const btns=document.querySelectorAll('#authBtnGoogle');
+  try{
+    btns.forEach(b=>{ b.textContent='Conectando Google...'; b.disabled=true; });
+    showAuthError('');
+    await fbLoginGoogle();
+    toast('Login Google OK! Bem-vindo 👋','✓');
+    // modal fecha via auth listener
+  }catch(e){
+    console.error(e);
+    let msg=e.message;
+    if(msg.includes('popup-closed-by-user')) msg='Pop-up fechado. Tente novamente.';
+    if(msg.includes('unauthorized-domain')) msg='Domínio não autorizado no Firebase. Adicione seu domínio em Firebase Console → Authentication → Authorized domains.';
+    if(msg.includes('popup-blocked')) msg='Pop-up bloqueado pelo navegador. Permita pop-ups.';
+    showAuthError(msg);
+    toast('Google falhou: '+msg,'⚠️');
+  }finally{
+    btns.forEach(b=>{ b.textContent='Continuar com Google'; b.disabled=false; });
+  }
 }
 export async function handleLogout(){ if(!confirm('Sair da conta? Seu progresso está salvo no Firebase.')) return; await fbLogout(); toast('Saída realizada • Dados salvos','👋'); openAuthModal(); }
 export async function handleReset(){
-  const email=document.getElementById('authEmail').value.trim();
-  if(!email){ toast('Digite seu email para resetar senha','⚠️'); return; }
-  try{ await resetPassword(email); toast('Email de recuperação enviado! Verifique spam','📧'); }catch(e){ toast('Erro: '+e.message,'⚠️'); }
+  const emailLogin=document.getElementById('authEmail')?.value.trim() || '';
+  const emailSignup=document.getElementById('authEmailSignup')?.value.trim() || '';
+  const email = emailLogin || emailSignup;
+  if(!email){ showAuthError('Digite seu e-mail no campo para receber reset'); toast('Digite e-mail','⚠️'); return; }
+  try{
+    showAuthError('');
+    await resetPassword(email);
+    toast('E-mail de recuperação enviado! Verifique caixa e spam 📧','📧');
+    showAuthError('E-mail enviado para '+email+'. Verifique spam.');
+  }catch(e){
+    let msg=e.message;
+    if(msg.includes('user-not-found')) msg='E-mail não encontrado. Crie conta.';
+    showAuthError(msg);
+    toast('Erro: '+msg,'⚠️');
+  }
 }
 export async function saveCompleteProfile(){
   const firstName=document.getElementById('completeFirstName').value.trim();
