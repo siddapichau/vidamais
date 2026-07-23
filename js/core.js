@@ -111,12 +111,12 @@ export function clearAllLocal(){
 
 export function loadState(forceClear = false){
   try{
-    const parse=(k,fb)=>{ try{ const v=localStorage.getItem(k); return v? JSON.parse(v):fb }catch{return fb} };
-    const appTmp = parse(STORE.app, null);
-    const uid = (appTmp && appTmp.uid) || 'default_user';
-
-    // Se não houver UID real ou forçar limpeza, reseta tudo
-    if(uid === 'default_user' || forceClear) {
+    if (forceClear) {
+      // Remove todas as chaves do localStorage para garantir que não haja vestígios
+      Object.keys(localStorage).forEach(k => {
+        if (k.startsWith('vidaplus_')) localStorage.removeItem(k);
+      });
+      // Reseta o estado
       state.user = {name:'', xp:0, level:1, joined:new Date().toISOString(), premium:false};
       state.tx = [];
       state.habits = [];
@@ -127,8 +127,13 @@ export function loadState(forceClear = false){
       state.profile = {name:'', firstName:'', lastName:'', email:'', phone:'', photo:'', premium:false, birthDate:'', currency:'BRL'};
       return true;
     }
-
-    // Caso contrário, carrega normalmente
+    const parse=(k,fb)=>{ try{ const v=localStorage.getItem(k); return v? JSON.parse(v):fb }catch{return fb} };
+    const appTmp = parse(STORE.app, null);
+    const uid = (appTmp && appTmp.uid) || 'default_user';
+    // Se ainda assim não tiver uid real, reseta
+    if(uid === 'default_user') {
+      return loadState(true);
+    }
     state.user = parse(STORE.user, {name:'', xp:0, level:1, joined:new Date().toISOString(), premium:false});
     state.tx = parse(STORE.tx, []);
     state.habits = parse(STORE.habits, []);
@@ -255,7 +260,6 @@ export function seedTransactions(){ state.tx=[]; saveState(); }
 export function seedMoods(){ state.moods=[]; saveState(); }
 export function seedGoals(){ state.goals=[]; saveState(); }
 export function ensureSeed(){
-  // Só cria seed se estiver logado (uid != default_user)
   if(state.app.uid==='default_user') return;
   if(!state.habits.length) seedHabits();
 }

@@ -1,9 +1,9 @@
 // Vida+ AI - Firebase v4 BULLETPROOF - Mobile + Admin
-// Corrige travamento login, adiciona Redirect fallback para celular, mensagens detalhadas RTDB
+// Agora usa apenas Redirect para Google (mais confiável)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAnalytics, isSupported as analyticsSupported } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
 import { getDatabase, ref, set, get, push, onValue, remove, update, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut as fbSignOut, sendPasswordResetEmail, updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut as fbSignOut, sendPasswordResetEmail, updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 export const ADMIN_EMAIL = "wesleystudio@gmail.com";
 
@@ -24,7 +24,6 @@ const app = initializeApp(firebaseConfig);
 export const db = getDatabase(app);
 export const auth = getAuth(app);
 
-// Força persistência local (evita deslogar em celular)
 setPersistence(auth, browserLocalPersistence).catch(()=>{});
 
 const googleProvider = new GoogleAuthProvider();
@@ -35,19 +34,17 @@ analyticsSupported().then(s=>{ if(s){ try{ analytics=getAnalytics(app);} catch{}
 
 let _currentUser = null;
 
-// ====== IMPORTANTE: CAPTURA RESULTADO DE REDIRECT O MAIS CEDO POSSÍVEL ======
+// Captura resultado de redirect (chamado imediatamente)
 getRedirectResult(auth).then(async (result) => {
   if (result && result.user) {
     console.log("[Firebase] Redirect login OK:", result.user.email);
     await ensureUserData(result.user.uid, result.user);
-    // Dispara evento para o app
     window.dispatchEvent(new CustomEvent('vidaplus:auth', {detail:{user: result.user}}));
   }
 }).catch(e => {
   console.warn("[getRedirectResult]", e.code, e.message);
 });
 
-// ====== CRIA DADOS INICIAIS ======
 async function createInitialUserData(uid, profile){
   const isAdmin = (profile.email||'').toLowerCase() === ADMIN_EMAIL.toLowerCase();
   const fullName = profile.name || 'Usuário';
@@ -110,7 +107,6 @@ async function ensureUserData(uid, firebaseUser){
   }
 }
 
-// ====== LISTENER DE AUTENTICAÇÃO ======
 export function initAuthListener(callback){
   return onAuthStateChanged(auth, async (user)=>{
     _currentUser=user;
@@ -144,21 +140,12 @@ export async function signupEmail(email, password, name, extra={}){
   }
 }
 export async function loginGoogle(){
-  try{
-    const cred=await signInWithPopup(auth, googleProvider);
-    await ensureUserData(cred.user.uid, cred.user);
-    return cred.user;
+  try {
+    // Sempre usa redirect (mais confiável em celular e desktop)
+    await signInWithRedirect(auth, googleProvider);
+    return null; // O resultado virá via getRedirectResult
   } catch(e){
-    console.warn("[loginGoogle popup failed]", e.code, e.message);
-    if(e.code==='auth/popup-blocked' || e.code==='auth/popup-closed-by-user' || /mobile|android|iphone|ipad/i.test(navigator.userAgent)){
-      try{
-        await signInWithRedirect(auth, googleProvider);
-        return null; // redirect iniciado, aguardar volta
-      } catch(e2){
-        console.error("[loginGoogle redirect failed]", e2.code, e2.message);
-        throw e2;
-      }
-    }
+    console.error("[loginGoogle] redirect failed:", e.code, e.message);
     throw e;
   }
 }
@@ -195,7 +182,6 @@ export function getUid(){ return getCurrentUser()?.uid||'default_user'; }
 export function isAdminEmail(email){ return (email||'').toLowerCase()===ADMIN_EMAIL.toLowerCase(); }
 export function isCurrentUserAdmin(){ const u=getCurrentUser(); return u && isAdminEmail(u.email); }
 
-// ====== DATABASE ======
 export async function saveCollection(uid, collectionName, data){
   try{
     const r=ref(db, `vidaplus/users/${uid}/${collectionName}`);
@@ -234,7 +220,6 @@ export async function loadCollection(uid, collectionName){
   } catch(e){ console.warn("[loadCollection]", e.message); return null; }
 }
 
-// ====== ADMIN ======
 export async function adminListUsers(){
   try{
     const snap=await get(ref(db, `vidaplus/users`));
