@@ -356,12 +356,13 @@ function applyThemePreview(id){
 }
 export function previewCurrency(c){ const el=document.getElementById('profileCurrency'); if(el) el.value=c; }
 
-// ROUTER COM FALLBACK INLINE (não trava se pages/ não existir)
+// ROUTER COM HOME VIRAL SEM LOGIN + PROTEGIDAS COM LOGIN + FALLBACK
 export async function loadPage(pageName){
-  let name = (pageName||'dashboard').replace('.html','').toLowerCase();
-  const allowed=['dashboard','financeiro','habitos','humor','metas','relatorios','conquistas','perfil'];
-  if(!allowed.includes(name)) name='dashboard';
+  let name = (pageName||'home').replace('.html','').toLowerCase();
+  const allowed=['home','dashboard','financeiro','habitos','humor','metas','relatorios','conquistas','perfil'];
+  if(!allowed.includes(name)) name='home';
   currentPage=name;
+
   document.querySelectorAll('.nav button').forEach(b=>{ b.classList.toggle('active', b.dataset.page===name); });
   try{
     const url=new URL(window.location);
@@ -369,30 +370,69 @@ export async function loadPage(pageName){
     window.history.pushState({}, '', url);
   }catch{}
 
-  const container=document.getElementById('pageContainer');
-  if(!container) return;
-  container.innerHTML=`<div class="page-loader"><div style="font-size:28px">◍</div><b>Carregando ${name}...</b><p style="font-size:11px;color:var(--muted)">Tentando pages/${name}.html</p></div>`;
+  const homeView=document.getElementById('homeView');
+  const pageContainer=document.getElementById('pageContainer');
+  const homeEssential=document.getElementById('homeEssential');
 
-  try{
-    const res=await fetch(`pages/${name}.html?embedded=1&_=${Date.now()}`, {cache:'no-store'});
-    if(!res.ok) throw new Error(`HTTP ${res.status}`);
-    let html=await res.text();
-    const m=html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-    if(m) html=m[1];
-    html=html.replace(/<script[^>]*>[\s\S]*?location\.replace[\s\S]*?<\/script>/gi,'');
-    if(!html.trim()) throw new Error('Vazia');
-    container.innerHTML=html;
-    setTimeout(()=>{ renderCurrentPage(); },50);
-  }catch(e){
-    console.warn('[loadPage] fallback inline', e.message);
-    container.innerHTML=getFallbackPageHTML(name);
-    renderCurrentPage();
-    // aviso discreto só uma vez
-    if(!window._fallbackWarned){
-      window._fallbackWarned=true;
-      setTimeout(()=>toast(`Usando fallback inline. Se quiser páginas separadas, verifique se pasta /pages/ existe no GitHub Pages. Erro: ${e.message}`,'⚠️'),800);
-    }
+  // Home é pública, não precisa login, não puxa Firebase pesado
+  if(name==='home'){
+    if(homeView) homeView.style.display='block';
+    if(homeEssential) homeEssential.style.display='none';
+    if(pageContainer){ pageContainer.style.display='none'; pageContainer.innerHTML=''; }
+    // Carrega home.html fragment viral
+    try{
+      const res=await fetch(`pages/home.html?embedded=1&_=${Date.now()}`, {cache:'no-store'});
+      if(res.ok){
+        let html=await res.text();
+        const m=html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+        if(m) html=m[1];
+        html=html.replace(/<script[^>]*>[\s\S]*?location\.replace[\s\S]*?<\/script>/gi,'');
+        if(homeView) homeView.innerHTML=html;
+      }
+    }catch(e){ console.warn('home load', e.message); }
+    // resize
+    setTimeout(()=>{ const f=document.getElementById('pageFrame'); if(f){ try{ f.style.height='auto'; }catch{} } },100);
+    return;
   }
+
+  // Páginas protegidas: se não logado, pede login e não carrega
+  const uid=getUid();
+  if(uid==='default_user'){
+    if(homeView) homeView.style.display='none';
+    if(pageContainer){ pageContainer.style.display='none'; pageContainer.innerHTML=''; }
+    openAuthModal();
+    toast('Faça login para acessar '+name,'🔒');
+    return;
+  }
+
+  // Logado: esconde home, mostra container page
+  if(homeView) homeView.style.display='none';
+  if(homeEssential) homeEssential.style.display='none';
+  if(pageContainer) pageContainer.style.display='block';
+  if(!pageContainer) return;
+  pageContainer.innerHTML=`<div class="page-loader"><div style="font-size:28px">◍</div><b>Carregando ${name}...</b><p style="font-size:11px;color:var(--muted)">pages/${name}.html • herda CSS/JS do Index</p></div>`;
+
+  // Tenta pages/ primeiro, depois raiz, depois fallback inline
+  const tryUrls=[`pages/${name}.html`, `${name}.html`];
+  for(const tryUrl of tryUrls){
+    try{
+      const res=await fetch(`${tryUrl}?embedded=1&_=${Date.now()}`, {cache:'no-store'});
+      if(!res.ok) continue;
+      let html=await res.text();
+      if(html.includes('http-equiv="refresh"') && html.includes('index.html?page=')) continue; // pula redirect
+      const m=html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+      if(m) html=m[1];
+      html=html.replace(/<script[^>]*>[\s\S]*?location\.replace[\s\S]*?<\/script>/gi,'');
+      if(!html.trim()) continue;
+      pageContainer.innerHTML=html;
+      setTimeout(()=>{ renderCurrentPage(); },80);
+      return;
+    }catch(e){ console.warn(`[loadPage] ${tryUrl} falhou`, e.message); continue; }
+  }
+
+  // Fallback inline garantido
+  pageContainer.innerHTML=getFallbackPageHTML(name);
+  renderCurrentPage();
 }
 function getFallbackPageHTML(name){
   // Fallback mínimo para não travar nunca
