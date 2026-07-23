@@ -1,7 +1,6 @@
-// Vida+ AI - APP v6 FINAL - CORRIGIDO
-// - loadState só carrega se usuário logado, senão limpa
-// - ensureSeed só roda após login
-// - Páginas com fallback que contém os IDs necessários
+// Vida+ AI - APP v6 FINAL - BULLETPROOF MOBILE - NÃO TRAVA MAIS
+// Correção: fallback inline se /pages/ falhar + login Google redirect + erro visível + sem info admin
+// Index roteador: ?page=dashboard | Se pages/ não existir, usa fallback inline garantido
 
 import { state, themes, currencies, levelTable, defaultCategories, moodMap, fmtMoney, fmtDate, todayStr, getLevel, getNextLevel, getLevelProgress, loadState, saveState, addXP, calcStreak, calcHabitRate, calcLifeScore, generateInsights, seedHabits, ensureSeed, applyRemoteData, setUid } from './core.js';
 import { VidaFirebase, FIREBASE_DB_URL, auth } from './firebase.js';
@@ -10,7 +9,7 @@ import { initAuthListener, loginEmail as fbLoginEmail, signupEmail as fbSignupEm
 let tempMood = null;
 let currentPage = 'dashboard';
 
-// Expose globais para onclick
+// Expose globais para onclick funcionar no celular (com e sem prefixo app*)
 function expose(name, fn){ window[name]=fn; window['app'+name.charAt(0).toUpperCase()+name.slice(1)]=fn; }
 expose('toast', toast);
 expose('loadPage', loadPage);
@@ -113,66 +112,48 @@ window.addEventListener('vidaplus:save', ()=>{
   clearTimeout(window._syncTimer);
   window._syncTimer=setTimeout(()=>trySyncAll(),800);
 });
-
-// ===== EVENTO DE AUTENTICAÇÃO =====
 window.addEventListener('vidaplus:auth', async (e)=>{
-  const user = e.detail.user;
-  const authOverlay = document.getElementById('overlayAuth');
-  console.log('[APP] Evento auth recebido, user:', user?.email || 'null');
-  
-  if (user) {
-    // Usuário logado
+  const user=e.detail.user;
+  const authOverlay=document.getElementById('overlayAuth');
+  if(user){
     setUid(user.uid);
-    state.profile.email = user.email;
-    if (user.displayName && !state.profile.firstName) {
-      const p = user.displayName.split(' ');
-      state.profile.firstName = p[0];
-      state.profile.lastName = p.slice(1).join(' ');
-      state.profile.name = user.displayName;
+    state.profile.email=user.email;
+    if(user.displayName && !state.profile.firstName){
+      const p=user.displayName.split(' ');
+      state.profile.firstName=p[0];
+      state.profile.lastName=p.slice(1).join(' ');
+      state.profile.name=user.displayName;
     }
-    if (user.photoURL) state.profile.photo = user.photoURL;
-    state.user.name = state.profile.firstName || state.profile.name || user.email.split('@')[0];
+    if(user.photoURL) state.profile.photo=user.photoURL;
+    state.user.name=state.profile.firstName||state.profile.name||user.email.split('@')[0];
     saveState();
-    // Fecha modal
-    if(authOverlay){ 
-      authOverlay.classList.remove('open'); 
-      authOverlay.style.display = 'none'; 
-    }
+    if(authOverlay) authOverlay.classList.remove('open');
     updateHeader();
     await pullFromFirebase();
-    // Só abre completar perfil se faltar nome
+    // Só abre completar perfil se faltar nome mesmo
     if(!state.profile.firstName || !state.profile.lastName){
-      const cp = document.getElementById('overlayCompleteProfile');
+      const cp=document.getElementById('overlayCompleteProfile');
       if(cp){
-        document.getElementById('completeFirstName').value = state.profile.firstName || '';
-        document.getElementById('completeLastName').value = state.profile.lastName || '';
-        document.getElementById('completePhone').value = state.profile.phone || '';
+        document.getElementById('completeFirstName').value=state.profile.firstName||'';
+        document.getElementById('completeLastName').value=state.profile.lastName||'';
+        document.getElementById('completePhone').value=state.profile.phone||'';
         cp.classList.add('open');
       }
     }
-    // Chama ensureSeed para criar dados iniciais se necessário (primeiro login)
-    ensureSeed();
     renderCurrentPage();
-    toast(`Bem-vindo, ${state.profile.firstName || state.user.name}!`, '👋');
-  } else {
-    // Usuário deslogado: limpa tudo e mostra login
+    toast(`Bem-vindo, ${state.profile.firstName||state.user.name}!`,'👋');
+  }else{
     setUid('default_user');
-    loadState(true); // limpa localStorage e estado
     updateHeader();
-    renderCurrentPage();
     openAuthModal();
   }
 });
 
-// ===== AUTH =====
+// AUTH - SIMPLES E COM ERRO VISÍVEL (NÃO TRAVA)
 let _authBusy=false;
 export function openAuthModal(){
   const el=document.getElementById('overlayAuth');
-  if(el){ 
-    el.classList.add('open'); 
-    el.style.display='grid'; 
-    el.style.zIndex = '150';
-  }
+  if(el){ el.classList.add('open'); el.style.display='grid'; }
   const err=document.getElementById('authError');
   if(err) err.style.display='none';
 }
@@ -204,6 +185,7 @@ function showAuthError(msg){
   if(!msg){ el.style.display='none'; return; }
   el.style.display='block';
   el.textContent=msg;
+  // também toast pra celular vibrar
   toast(msg,'⚠️');
 }
 
@@ -219,6 +201,7 @@ export async function handleLogin(){
     if(btn){ btn.textContent='Entrando...'; btn.disabled=true; }
     showAuthError('');
     await fbLoginEmail(email, pass);
+    // fecha via evento auth
   }catch(e){
     console.error(e);
     let msg=e.message||'Erro login';
@@ -282,6 +265,7 @@ export async function handleGoogleLogin(){
     if(user){
       toast('Google OK!','✓');
     }else{
+      // redirect iniciado - página vai recarregar
       toast('Redirecionando para Google... aguarde voltar','↗️');
     }
   }catch(e){
@@ -336,7 +320,7 @@ export async function saveCompleteProfile(){
   }catch(e){ toast('Erro: '+e.message,'⚠️'); }
 }
 
-// RESTO: perfil, moeda, tema
+// RESTO: perfil, moeda, tema, etc (simplificado para não travar)
 export async function saveProfile(){
   const fn=document.getElementById('profileFirstName')?.value.trim()||'';
   const ln=document.getElementById('profileLastName')?.value.trim()||'';
@@ -370,16 +354,9 @@ function applyThemePreview(id){
   document.documentElement.setAttribute('data-theme', id);
   state.settings.theme=id; state.app.theme=id; saveState(); trySyncAll();
 }
-export function toggleTheme(){
-  const themeList = ['light','dark','midnight','forest','sunset','aurora','ocean','neon','gold','sakura'];
-  const current = state.settings.theme || 'light';
-  const idx = themeList.indexOf(current);
-  const next = themeList[(idx + 1) % themeList.length];
-  applyThemePreview(next);
-}
 export function previewCurrency(c){ const el=document.getElementById('profileCurrency'); if(el) el.value=c; }
 
-// ===== ROUTER COM FALLBACK INLINE MELHORADO =====
+// ROUTER COM FALLBACK INLINE (não trava se pages/ não existir)
 export async function loadPage(pageName){
   let name = (pageName||'dashboard').replace('.html','').toLowerCase();
   const allowed=['dashboard','financeiro','habitos','humor','metas','relatorios','conquistas','perfil'];
@@ -392,20 +369,8 @@ export async function loadPage(pageName){
     window.history.pushState({}, '', url);
   }catch{}
 
-  const homeView = document.getElementById('homeView');
-  const container = document.getElementById('pageContainer');
-  if (!homeView || !container) return;
-
-  if (name === 'dashboard') {
-    homeView.style.display = 'block';
-    container.style.display = 'none';
-    renderCurrentPage();
-    return;
-  } else {
-    homeView.style.display = 'none';
-    container.style.display = 'block';
-  }
-
+  const container=document.getElementById('pageContainer');
+  if(!container) return;
   container.innerHTML=`<div class="page-loader"><div style="font-size:28px">◍</div><b>Carregando ${name}...</b><p style="font-size:11px;color:var(--muted)">Tentando pages/${name}.html</p></div>`;
 
   try{
@@ -422,121 +387,28 @@ export async function loadPage(pageName){
     console.warn('[loadPage] fallback inline', e.message);
     container.innerHTML=getFallbackPageHTML(name);
     renderCurrentPage();
+    // aviso discreto só uma vez
     if(!window._fallbackWarned){
       window._fallbackWarned=true;
       setTimeout(()=>toast(`Usando fallback inline. Se quiser páginas separadas, verifique se pasta /pages/ existe no GitHub Pages. Erro: ${e.message}`,'⚠️'),800);
     }
   }
 }
-
 function getFallbackPageHTML(name){
-  // Fallback com os IDs necessários para cada página
-  const commonFooter = `<p style="font-size:11px;color:var(--muted);margin-top:20px;text-align:center">Modo fallback inline - funciona mesmo sem /pages/. Para versão modular completa, upa pasta /pages/ no GitHub.</p>`;
-  if(name === 'financeiro'){
-    return `
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px">
-        <div><h2 style="font-size:24px">Financeiro</h2><p style="font-size:12px;color:var(--muted)">Fallback inline</p></div>
-        <div style="display:flex;gap:8px">
-          <select id="currencySelect" class="input" style="height:36px;width:110px" onchange="appChangeCurrency(this.value)"><option value="BRL">R$ BRL</option><option value="USD">US$ USD</option><option value="EUR">€ EUR</option></select>
-          <button class="btn btn-primary btn-sm" onclick="appOpenTxModal()">+ Transação</button>
-        </div>
-      </div>
-      <div class="grid grid-3">
-        <div class="card"><span class="kpi-label">Receitas</span><div class="kpi-value" id="incomeMonth" style="color:var(--emerald)">R$ 0</div></div>
-        <div class="card"><span class="kpi-label">Despesas</span><div class="kpi-value" id="expenseMonth" style="color:var(--rose)">R$ 0</div></div>
-        <div class="card"><span class="kpi-label">Economia</span><div class="kpi-value" id="savingMonth">R$ 0</div><div class="kpi-sub"><span id="savingPct">0%</span></div></div>
-      </div>
-      <div class="grid grid-2" style="margin-top:14px">
-        <div class="card"><b>Transações</b><div style="display:flex;gap:6px;margin:10px 0;flex-wrap:wrap"><button class="pill active" data-filter="all" onclick="appFilterTx('all',this)">Tudo</button><button class="pill" data-filter="income" onclick="appFilterTx('income',this)">Receitas</button><button class="pill" data-filter="expense" onclick="appFilterTx('expense',this)">Despesas</button><input id="txSearch" class="input" placeholder="Buscar..." style="height:34px;flex:1" oninput="appFilterTx('all',document.querySelector('[data-filter=all]'))"></div><div id="txList" style="max-height:480px;overflow:auto"></div></div>
-        <div style="display:grid;gap:12px"><div class="card"><b>Gastos por categoria</b><div class="chart-box" style="margin-top:10px"><canvas id="finCategory"></canvas></div></div><div class="card"><b>Saldo 30 dias</b><div class="chart-box" style="margin-top:10px"><canvas id="finLine"></canvas></div></div></div>
-      </div>
-      ${commonFooter}
-    `;
+  // Fallback mínimo para não travar nunca
+  const common=`<p style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center">Modo fallback inline - funciona mesmo sem /pages/. Para versão modular completa, upa pasta /pages/ no GitHub.</p>`;
+  if(name==='dashboard'){
+    return `<div class="grid grid-4"><div class="card kpi"><div class="kpi-head"><span class="kpi-label">Saldo</span><span class="kpi-icon" style="background:#E0F2FE">💰</span></div><div class="kpi-value" id="balanceValue">R$ 0</div><div class="kpi-sub"><span class="badge badge-up" id="balanceTrend">+0%</span> <span id="balanceSub">0 transações</span></div><div style="height:44px"><canvas id="miniBalance"></canvas></div></div>
+    <div class="card kpi"><div class="kpi-head"><span class="kpi-label">XP</span><span class="kpi-icon" style="background:#FEF3C7">⚡</span></div><div class="kpi-value"><span id="levelLabel">Nv 1</span> <small id="xpLabel">0 XP</small></div><div class="lvl-bar"><i id="xpBar" style="width:0%"></i></div><div class="kpi-sub">Falta <b id="xpNext">500 XP</b></div></div>
+    <div class="card kpi"><div class="kpi-head"><span class="kpi-label">Hábitos</span><span class="kpi-icon" style="background:#DCFCE7">✅</span></div><div class="kpi-value"><span id="habitsDone">0</span>/<span id="habitsTotal">0</span></div><div class="progress"><i id="habitsProgress"></i></div><div class="kpi-sub" id="habitsMotivation">Comece!</div></div>
+    <div class="card kpi"><div class="kpi-head"><span class="kpi-label">Humor</span><span class="kpi-icon" id="moodIcon">🙂</span></div><div class="kpi-value" id="moodLabel">--</div><div class="kpi-sub" id="moodSub">--</div><div id="moodWeekDots" style="display:flex;gap:6px;margin-top:8px"></div></div></div>
+    <div class="grid grid-2" style="margin-top:16px"><div class="card"><b>Hábitos hoje</b><div id="todayHabits" style="display:grid;gap:10px;margin-top:12px"></div></div><div class="card"><b>Insights IA</b><div id="aiInsights" style="display:grid;gap:10px;margin-top:12px"></div></div></div>
+    <div class="grid grid-2" style="margin-top:16px"><div class="card"><b>Fluxo</b><div class="chart-box"><canvas id="weeklyFlow"></canvas></div></div><div class="card"><b>Gastos</b><div class="chart-box"><canvas id="categoryDonut"></canvas></div></div></div>${common}`;
   }
-  if(name === 'habitos'){
-    return `
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div><h2 style="font-size:24px">Hábitos</h2><p style="font-size:12px;color:var(--muted)">Fallback inline</p></div><button class="btn btn-primary btn-sm" onclick="appOpenHabitModal()">+ Novo hábito</button></div>
-      <div class="grid grid-4" id="habitStats"></div>
-      <div class="grid grid-2" style="margin-top:14px">
-        <div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><b>Biblioteca</b><span class="link" onclick="appLoadPage('dashboard')">Voltar</span></div><div id="habitsLibrary" style="display:grid;gap:8px"></div></div>
-        <div class="card"><b>Heatmap</b><div id="habitHeatmap" style="display:grid;gap:8px;margin-top:10px"></div></div>
-      </div>
-      ${commonFooter}
-    `;
-  }
-  if(name === 'humor'){
-    return `
-      <h2 style="font-size:24px">Humor Diário</h2><p style="font-size:12px;color:var(--muted);margin-bottom:12px">Fallback inline</p>
-      <div class="mood-grid" style="margin:12px 0">
-        <button class="mood-opt" data-mood="1" onclick="appQuickMood(1)"><span class="em">😞</span><b>Muito Ruim</b></button>
-        <button class="mood-opt" data-mood="2" onclick="appQuickMood(2)"><span class="em">😐</span><b>Ruim</b></button>
-        <button class="mood-opt" data-mood="3" onclick="appQuickMood(3)"><span class="em">🙂</span><b>Normal</b></button>
-        <button class="mood-opt" data-mood="4" onclick="appQuickMood(4)"><span class="em">😁</span><b>Bom</b></button>
-        <button class="mood-opt" data-mood="5" onclick="appQuickMood(5)"><span class="em">🤩</span><b>Excelente</b></button>
-      </div>
-      <div class="grid grid-2">
-        <div class="card"><b>Calendário</b><div class="cal" id="moodCalendar" style="margin-top:10px"></div></div>
-        <div class="card"><b>Curva 14 dias</b><div class="chart-box"><canvas id="moodChart"></canvas></div></div>
-      </div>
-      ${commonFooter}
-    `;
-  }
-  if(name === 'metas'){
-    return `
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div><h2 style="font-size:24px">Metas</h2><p style="font-size:12px;color:var(--muted)">Fallback inline</p></div><button class="btn btn-primary btn-sm" onclick="appOpenGoalModal()">+ Nova meta</button></div>
-      <div class="grid grid-3" id="goalsGrid"></div>
-      ${commonFooter}
-    `;
-  }
-  if(name === 'relatorios'){
-    return `
-      <h2 style="font-size:24px">Relatórios IA</h2><p style="font-size:12px;color:var(--muted);margin-bottom:12px">Free 3 insights, Premium 7 • Fallback inline</p>
-      <div class="grid grid-3">
-        <div class="card" style="background:linear-gradient(135deg,var(--primary),var(--violet));color:white;border:none"><span class="kpi-label" style="color:rgba(255,255,255,.7)">Score</span><div class="kpi-value" style="font-size:36px" id="lifeScore">0</div><div class="progress" style="background:rgba(255,255,255,.2);margin-top:10px"><i id="lifeScoreBar" style="background:white;width:0%"></i></div></div>
-        <div class="card"><b>Financeiro IA</b><div id="reportFinance" style="display:grid;gap:8px;margin-top:10px"></div></div>
-        <div class="card"><b>Comportamento</b><div id="reportBehavior" style="display:grid;gap:8px;margin-top:10px"></div></div>
-      </div>
-      <div id="correlations" style="display:grid;gap:8px;margin-top:14px"></div>
-      ${commonFooter}
-    `;
-  }
-  if(name === 'conquistas'){
-    return `
-      <h2 style="font-size:24px">Conquistas • 50 Níveis • 1 Ano</h2><p style="font-size:12px;color:var(--muted);margin-bottom:12px">Fallback inline</p>
-      <div class="grid grid-2">
-        <div class="card"><b>Nível atual</b><div style="font-size:24px;font-weight:800;margin-top:8px" id="achLevel">Nv 1</div><div class="lvl-bar" style="margin-top:10px"><i id="achBar"></i></div><div id="achStreak" style="margin-top:8px;font-size:12px"></div></div>
-        <div class="card"><b>Medalhas</b><div id="achList" style="display:grid;gap:8px;margin-top:10px"></div></div>
-      </div>
-      ${commonFooter}
-    `;
-  }
-  if(name === 'perfil'){
-    return `
-      <h2 style="font-size:24px">Meu Perfil</h2><p style="font-size:12px;color:var(--muted);margin-bottom:12px">Fallback inline</p>
-      <div class="grid grid-2">
-        <div class="card"><b>Dados</b><div style="display:grid;gap:8px;margin-top:12px"><div class="row"><input id="profileFirstName" class="input" placeholder="Nome"><input id="profileLastName" class="input" placeholder="Sobrenome"></div><input id="profilePhone" class="input" placeholder="Celular"><input id="profileEmail" class="input" disabled><div class="row"><select id="profileCurrency" class="input"><option value="BRL">BRL</option><option value="USD">USD</option><option value="EUR">EUR</option></select><select id="profileTheme" class="input"><option value="light">Claro</option><option value="dark">Escuro</option><option value="midnight">Midnight</option></select></div><button class="btn btn-primary btn-sm" onclick="appSaveProfile()">Salvar perfil</button></div></div>
-        <div class="card" style="background:linear-gradient(135deg,var(--primary),var(--violet));color:white;border:none"><b>Premium & XP</b><div style="font-size:22px;font-weight:800;margin-top:8px" id="perfilLevel">Nv 1</div><div class="progress" style="background:rgba(255,255,255,.2);margin-top:8px"><i id="perfilBar" style="background:white"></i></div><button class="btn btn-white btn-sm" style="margin-top:12px;width:100%" onclick="appOpenPremium()">Virar Premium</button></div>
-      </div>
-      ${commonFooter}
-    `;
-  }
-  // Fallback genérico para qualquer outra página
-  return `<div class="card" style="text-align:center;padding:20px"><h3>${name}</h3><p style="font-size:12px;color:var(--muted);margin-top:8px">Página ${name} - fallback inline ativo.<br>Se quiser versão completa separada, verifique se <code>pages/${name}.html</code> existe no GitHub Pages.</p><button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="appLoadPage('dashboard')">Dashboard</button></div>${commonFooter}`;
+  return `<div class="card" style="text-align:center;padding:20px"><h3>${name}</h3><p style="font-size:12px;color:var(--muted);margin-top:8px">Página ${name} - fallback inline ativo.<br>Se quiser versão completa separada, verifique se <code>pages/${name}.html</code> existe no GitHub Pages.</p><button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="appLoadPage('dashboard')">Dashboard</button></div>${common}`;
 }
 
-// ===== RENDERIZAÇÃO =====
-function renderCurrentPage(){ 
-  updateHeader(); 
-  updateXPUI(); 
-  try{ renderDashboard(); }catch(e){} 
-  try{ renderTx(); }catch(e){} 
-  try{ renderHabits(); }catch(e){} 
-  try{ renderMood(); }catch(e){} 
-  try{ renderGoals(); }catch(e){} 
-  try{ renderReports(); }catch(e){} 
-  try{ renderAchievements(); }catch(e){} 
-  try{ renderPerfil(); }catch(e){} 
-}
+function renderCurrentPage(){ updateHeader(); updateXPUI(); try{renderDashboard();}catch(e){} try{renderTx();}catch(e){} try{renderHabits();}catch(e){} try{renderMood();}catch(e){} try{renderGoals();}catch(e){} try{renderReports();}catch(e){} try{renderAchievements();}catch(e){} try{renderPerfil();}catch(e){} }
 
 function renderPerfil(){
   const gv=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=v||''; };
@@ -603,7 +475,7 @@ function drawCategoryDonut(){
   const exp=state.tx.filter(t=>t.type==='expense').reduce((a,t)=>{a[t.category]=(a[t.category]||0)+t.amount;return a},{}); const entries=Object.entries(exp).slice(0,5); if(!entries.length) return; const total=entries.reduce((s,e)=>s+e[1],0); let ang=-Math.PI/2; const colors=['#123C7A','#6366F1','#06B6D4','#10B981','#F59E0B']; entries.forEach(([k,v],i)=>{ const slice=(v/total)*Math.PI*2; ctx.beginPath(); ctx.moveTo(r.width/2,r.height/2); ctx.arc(r.width/2,r.height/2,Math.min(r.width,r.height)/2-10,ang,ang+slice); ctx.closePath(); ctx.fillStyle=colors[i%5]; ctx.fill(); ang+=slice; });
 }
 
-// ===== DEMAIS RENDERS =====
+// Demais renders simplificados para não travar
 export function renderTx(){
   const cont=document.getElementById('txList'); if(!cont) return;
   let filtered=[...state.tx].sort((a,b)=> new Date(b.date)-new Date(a.date));
@@ -631,7 +503,6 @@ export function renderAchievements(){
   const list=document.getElementById('achList'); if(!list) return; list.innerHTML='<p style="font-size:12px;color:var(--muted)">50 níveis = 78k XP = 1 ano</p>';
 }
 
-// ===== MODAIS E AÇÕES =====
 export function setTxType(t, el){ state.app.txType=t; document.querySelectorAll('#overlayTx .pill').forEach(b=>b.classList.remove('active')); el.classList.add('active'); }
 export function filterTx(t, el){ state.app.txFilter=t; document.querySelectorAll('[data-filter]').forEach(b=>b.classList.remove('active')); if(el) el.classList.add('active'); renderTx(); }
 export function openTxModal(){ const d=document.getElementById('txDate'); if(d) d.value=todayStr(); document.getElementById('overlayTx')?.classList.add('open'); }
@@ -685,53 +556,18 @@ export function openPremium(){ document.getElementById('overlayPremium')?.classL
 export function activatePremium(){ state.app.premium=true; state.user.premium=true; state.profile.premium=true; saveState(); trySyncAll(); closeModal('overlayPremium'); toast('Premium ativado','★'); renderCurrentPage(); }
 export function regenerateAI(){ toast('IA reanalisando...','✦'); setTimeout(()=>renderCurrentPage(),600); }
 
-// ===== INICIALIZAÇÃO =====
 export function initApp(){
-  console.log('[APP] initApp iniciado');
-  
-  // Verifica se já há usuário logado
-  const user = auth.currentUser;
-  if (user) {
-    console.log('[APP] Usuário já logado:', user.email);
-    loadState(); // carrega dados do localStorage
-  } else {
-    console.log('[APP] Nenhum usuário logado, limpando estado');
-    loadState(true); // limpa tudo
-  }
-  
-  // Não chama ensureSeed aqui – será chamado após login
-
-  // Inicializa listener de autenticação
-  initAuthListener(() => {});
-  
-  // Configura fechamento de overlays
-  document.querySelectorAll('.overlay').forEach(el => {
-    el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
-  });
-  
-  // Carrega página inicial
-  const params = new URLSearchParams(location.search);
-  const page = params.get('page') || params.get('id') || 'dashboard';
+  loadState(); ensureSeed();
+  const params=new URLSearchParams(location.search);
+  const page=params.get('page')||params.get('id')||'dashboard';
+  initAuthListener(()=>{});
+  document.querySelectorAll('.overlay').forEach(el=>{ el.addEventListener('click',e=>{ if(e.target===el) el.classList.remove('open'); }); });
   loadPage(page);
-  
-  // Aplica tema
-  const forced = localStorage.getItem('vidaplus_forced_theme');
-  document.documentElement.setAttribute('data-theme', forced || state.settings.theme || 'light');
-  
-  // Se não houver usuário, abre modal de login
-  if (!user) {
-    openAuthModal();
-  }
-  
-  console.log('[APP] initApp concluído');
+  const forced=localStorage.getItem('vidaplus_forced_theme');
+  document.documentElement.setAttribute('data-theme', forced||state.settings.theme||'light');
+  console.log('[Vida+ AI v6 FINAL] Mobile bulletproof - domínio precisa estar em Firebase Auth Authorized domains');
 }
-
-// Inicialização automática se não houver duplicidade
-if (typeof window !== 'undefined' && !window.__vidaplus_inited) {
-  window.__vidaplus_inited = true;
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initApp);
-  } else {
-    initApp();
-  }
+if(typeof window!=='undefined'){
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', initApp);
+  else initApp();
 }

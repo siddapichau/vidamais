@@ -24,6 +24,7 @@ const app = initializeApp(firebaseConfig);
 export const db = getDatabase(app);
 export const auth = getAuth(app);
 
+// Força persistência local (evita deslogar em celular)
 setPersistence(auth, browserLocalPersistence).catch(()=>{});
 
 const googleProvider = new GoogleAuthProvider();
@@ -91,6 +92,7 @@ async function ensureUserData(uid, firebaseUser){
     }
   }catch(e){
     console.warn("[ensureUserData] RTDB error:", e.code, e.message);
+    // Se for permission_denied, mostra regra
     if(e.message.includes('permission_denied') || e.code==='PERMISSION_DENIED'){
       console.error("⚠️ REGRA RTDB BLOQUEANDO! Use regra com admin email: ", ADMIN_EMAIL);
     }
@@ -104,15 +106,12 @@ export function initAuthListener(callback){
     if(result && result.user){
       console.log("[Firebase] Redirect login OK:", result.user.email);
       await ensureUserData(result.user.uid, result.user);
-      // Dispara evento para o app
-      window.dispatchEvent(new CustomEvent('vidaplus:auth', {detail:{user: result.user}}));
     }
   }).catch(e=>{
     console.warn("[getRedirectResult]", e.message);
   });
 
   return onAuthStateChanged(auth, async (user)=>{
-    console.log("[Firebase] onAuthStateChanged:", user?.email || 'null');
     _currentUser=user;
     if(user){
       try{ await ensureUserData(user.uid, user); }catch(e){ console.warn(e); }
@@ -151,9 +150,11 @@ export async function loginGoogle(){
     return cred.user;
   }catch(e){
     console.warn("[loginGoogle popup failed]", e.code, e.message);
+    // Se falhar por popup blocked ou em celular, tenta redirect
     if(e.code==='auth/popup-blocked' || e.code==='auth/popup-closed-by-user' || /mobile|android|iphone|ipad/i.test(navigator.userAgent)){
       try{
         await signInWithRedirect(auth, googleProvider);
+        // Não retorna user imediato, vai recarregar página e getRedirectResult pega
         return null;
       }catch(e2){
         console.error("[loginGoogle redirect failed]", e2.code, e2.message);
@@ -163,7 +164,18 @@ export async function loginGoogle(){
     throw e;
   }
 }
-export async function logout(){ await fbSignOut(auth); _currentUser=null; }
+export async function logout(){
+  try{ await fbSignOut(auth); }catch{}
+  _currentUser=null;
+  try{
+    // Limpa tudo local para não mostrar dados do usuário anterior quando deslogado (correção do bug "mesmo sem logar tudo com meu nome")
+    Object.keys(localStorage).forEach(k=>{
+      if(k.startsWith('vidaplus_')) localStorage.removeItem(k);
+    });
+    // Recarrega estado limpo
+    location.reload();
+  }catch(e){ location.reload(); }
+}
 export async function resetPassword(email){ await sendPasswordResetEmail(auth, email); }
 
 export async function updateUserProfileData(uid, profileUpdates){
