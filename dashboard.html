@@ -1,1 +1,75 @@
-<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=index.html?page=dashboard"></head><body><script>location.replace('index.html?page=dashboard')</script>Redirecionando para Index...</body></html>
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard - Vida+ AI</title>
+<link rel="stylesheet" href="../css/style.css">
+<script>
+// Se acessado direto, redireciona para Index roteador
+if(window.top === window.self){
+  const url = new URL(location.href);
+  if(!url.searchParams.has('embedded')){
+    location.replace('../index.html?page=dashboard');
+  }
+}
+// Verifica login via Firebase - se não logado, volta pro index
+</script>
+</head><body>
+<div class="page-dashboard">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px">
+    <div>
+      <h1 class="display" style="font-size:38px;line-height:.9;letter-spacing:-.04em">Bom dia, <span id="userName">Usuário</span> 👋</h1>
+      <p style="color:var(--muted);margin-top:8px;font-size:14px">Você completou <b id="todayProgressPct">0%</b> do seu dia ideal • <span id="todayDate"></span> • <span style="font-size:11px;background:var(--bg-2);padding:3px 8px;border-radius:100px;border:1px solid var(--border)" id="currencyBadge">BRL</span></p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" onclick="switchView('relatorios')">IA Insights</button>
+      <button class="btn btn-primary btn-sm" onclick="openMoodModal()">Registrar humor</button>
+    </div>
+  </div>
+
+  <div class="grid grid-4">
+    <div class="card kpi">
+      <div class="kpi-head"><span class="kpi-label">Saldo Atual</span><span class="kpi-icon" style="background:#E0F2FE">💰</span></div>
+      <div class="kpi-value" id="balanceValue">R$ 0,00</div>
+      <div class="kpi-sub"><span class="badge badge-up" id="balanceTrend">+0%</span> <span id="balanceSub">0 transações</span></div>
+      <div style="height:44px;margin-top:6px"><canvas id="miniBalance"></canvas></div>
+    </div>
+    <div class="card kpi">
+      <div class="kpi-head"><span class="kpi-label">XP & Nível (50 níveis)</span><span class="kpi-icon" style="background:#FEF3C7">⚡</span></div>
+      <div class="kpi-value"><span id="levelLabel">Nv 1</span> <small id="xpLabel">0 XP</small></div>
+      <div class="lvl-bar"><i id="xpBar" style="width:0%"></i></div>
+      <div class="lvl-nodes"><span id="xpFrom">0 XP</span><span id="xpTo">500 XP</span></div>
+      <div class="kpi-sub">Falta <b id="xpNext">500 XP</b> • <span id="levelReward" style="font-size:11px">Próxima: +1 slot</span></div>
+    </div>
+    <div class="card kpi">
+      <div class="kpi-head"><span class="kpi-label">Hábitos Hoje</span><span class="kpi-icon" style="background:#DCFCE7">✅</span></div>
+      <div class="kpi-value"><span id="habitsDone">0</span>/<span id="habitsTotal">0</span></div>
+      <div class="progress"><i id="habitsProgress" style="width:0%"></i></div>
+      <div class="kpi-sub" id="habitsMotivation">Comece o dia!</div>
+    </div>
+    <div class="card kpi">
+      <div class="kpi-head"><span class="kpi-label">Humor Atual</span><span class="kpi-icon" style="background:#F3E8FF" id="moodIcon">🙂</span></div>
+      <div class="kpi-value" id="moodLabel" style="font-size:22px">--</div>
+      <div class="kpi-sub" id="moodSub">Nenhum registro</div>
+      <div style="margin-top:8px;display:flex;gap:6px" id="moodWeekDots"></div>
+    </div>
+  </div>
+
+  <div class="section"><div><h2>Seu dia em foco</h2><p>30 segundos • Firebase RTDB</p></div><span class="link" onclick="loadPage('habitos')">Gerenciar →</span></div>
+  <div class="grid grid-2">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><b>Hábitos de hoje</b><span style="font-size:12px;color:var(--muted)" id="habitsDate"></span></div>
+      <div id="todayHabits" style="display:grid;gap:10px"></div>
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><b>Insights IA</b><span class="badge" style="background:#EEF2FF;color:#4338CA" id="aiBadge">FREE 3/7</span></div>
+      <div id="aiInsights" style="display:grid;gap:10px"></div>
+      <button class="btn btn-ghost" style="width:100%;margin-top:12px" onclick="loadPage('relatorios')">Abrir relatório completo</button>
+    </div>
+  </div>
+
+  <div class="section"><div><h2>Resumo financeiro</h2><p>7 dias + categoria</p></div><span class="link" onclick="loadPage('financeiro')">Ver detalhes →</span></div>
+  <div class="grid grid-2">
+    <div class="card"><b style="font-size:14px">Fluxo semanal</b><div class="chart-box" style="margin-top:12px"><canvas id="weeklyFlow"></canvas></div></div>
+    <div class="card"><b style="font-size:14px">Distribuição gastos</b><div class="chart-box" style="margin-top:12px"><canvas id="categoryDonut"></canvas></div></div>
+  </div>
+</div>
+</body></html>
