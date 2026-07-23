@@ -109,40 +109,42 @@ export function clearAllLocal(){
   };
 }
 
-export function loadState(){
+export function loadState(forceClear = false){
   try{
     const parse=(k,fb)=>{ try{ const v=localStorage.getItem(k); return v? JSON.parse(v):fb }catch{return fb} };
-    const user=parse(STORE.user, null);
-    // Se não tem usuário logado (uid default_user), NÃO carrega dados antigos com nome Wesley - começa limpo
-    const appTmp=parse(STORE.app, null);
-    const isDefault = !appTmp || !appTmp.uid || appTmp.uid==='default_user';
-    if(isDefault){
-      // Não carrega tx/habits etc se for visitante sem login para não mostrar dados pré-carregados
-      state.user = user && user.name ? user : {name:'', xp:0, level:1, joined:new Date().toISOString(), premium:false};
-      // Se tiver tx antigo com nome Wesley, limpa
-      if(state.user.name==='Wesley' || state.user.name==='wesleystudio@gmail.com'){
-        state.user.name='';
-      }
-      state.tx=[]; state.habits=[]; state.moods=[]; state.goals=[];
-      state.app={streak:0,maxStreak:0,lastActive:null,premium:false,theme:'light',txType:'expense',selectedMood:null,txFilter:'all',uid:'default_user'};
-      state.settings=parse(STORE.settings, {theme:'light', currency:'BRL', notifications:true, language:'pt-BR'});
-      state.profile=parse(STORE.profile, {name:'', firstName:'', lastName:'', email:'', phone:'', photo:'', premium:false, birthDate:'', currency:'BRL'});
+    const appTmp = parse(STORE.app, null);
+    const uid = (appTmp && appTmp.uid) || 'default_user';
+
+    // Se não houver UID real ou forçar limpeza, reseta tudo
+    if(uid === 'default_user' || forceClear) {
+      state.user = {name:'', xp:0, level:1, joined:new Date().toISOString(), premium:false};
+      state.tx = [];
+      state.habits = [];
+      state.moods = [];
+      state.goals = [];
+      state.app = {streak:0,maxStreak:0,lastActive:null,premium:false,theme:'light',txType:'expense',selectedMood:null,txFilter:'all',uid:'default_user'};
+      state.settings = {theme:'light', currency:'BRL', notifications:true, language:'pt-BR'};
+      state.profile = {name:'', firstName:'', lastName:'', email:'', phone:'', photo:'', premium:false, birthDate:'', currency:'BRL'};
       return true;
     }
-    // Se tem UID real, carrega tudo
-    state.user=parse(STORE.user, {name:'', xp:0, level:1, joined:new Date().toISOString(), premium:false});
-    state.tx=parse(STORE.tx, []);
-    state.habits=parse(STORE.habits, []);
-    state.moods=parse(STORE.moods, []);
-    state.goals=parse(STORE.goals, []);
-    state.app={...state.app, ...parse(STORE.app, {})};
-    state.settings={...state.settings, ...parse(STORE.settings, {})};
-    state.profile={...state.profile, ...parse(STORE.profile, {})};
-    state.settings.currency=state.settings.currency||state.profile.currency||'BRL';
-    state.profile.currency=state.settings.currency;
-    state.app.theme=state.settings.theme||'light';
+
+    // Caso contrário, carrega normalmente
+    state.user = parse(STORE.user, {name:'', xp:0, level:1, joined:new Date().toISOString(), premium:false});
+    state.tx = parse(STORE.tx, []);
+    state.habits = parse(STORE.habits, []);
+    state.moods = parse(STORE.moods, []);
+    state.goals = parse(STORE.goals, []);
+    state.app = { ...state.app, ...parse(STORE.app, {}) };
+    state.settings = { ...state.settings, ...parse(STORE.settings, {}) };
+    state.profile = { ...state.profile, ...parse(STORE.profile, {}) };
+    state.settings.currency = state.settings.currency || state.profile.currency || 'BRL';
+    state.profile.currency = state.settings.currency;
+    state.app.theme = state.settings.theme || 'light';
     return true;
-  }catch(e){ console.error(e); return false; }
+  } catch(e) {
+    console.error(e);
+    return false;
+  }
 }
 
 export function saveState(){
@@ -157,14 +159,14 @@ export function saveState(){
     localStorage.setItem(STORE.profile, JSON.stringify(state.profile));
     window.dispatchEvent(new CustomEvent('vidaplus:save',{detail:{state}}));
     return true;
-  }catch(e){ return false; }
+  } catch(e) { return false; }
 }
 
 export function applyRemoteData(remote){
   if(!remote) return false;
   let changed=false;
   try{
-    if(remote.user){ state.user={...state.user,...remote.user}; if(state.user.name==='Wesley') state.user.name=remote.profile?.name||''; changed=true; }
+    if(remote.user){ state.user={...state.user,...remote.user}; changed=true; }
     if(remote.profile){
       state.profile={...state.profile,...remote.profile};
       if(remote.profile.name && !remote.profile.firstName){
@@ -182,7 +184,7 @@ export function applyRemoteData(remote){
     if(remote.settings){ state.settings={...state.settings,...remote.settings}; state.profile.currency=remote.settings.currency||state.profile.currency; changed=true; }
     if(changed) saveState();
     return changed;
-  }catch(e){ return false; }
+  } catch(e) { return false; }
 }
 
 export function setUid(uid){ state.app.uid=uid; saveState(); }
@@ -269,5 +271,5 @@ export function importAll(data){
     if(data.app) state.app={...state.app,...data.app};
     if(data.settings) state.settings={...state.settings,...data.settings};
     saveState(); return true;
-  }catch(e){ return false; }
+  } catch(e){ return false; }
 }

@@ -84,10 +84,10 @@ async function trySyncAll(){
     ]);
     const el=document.getElementById('syncStatus');
     if(el) el.textContent=`● Sincronizado ✔ • ${state.settings.currency}`;
-  }catch(e){
+  } catch(e){
     const el=document.getElementById('syncStatus');
     if(el) el.textContent='● Offline: '+e.message.slice(0,40);
-  }finally{_syncing=false;}
+  } finally {_syncing=false;}
 }
 async function pullFromFirebase(){
   const uid=getUid();
@@ -98,7 +98,7 @@ async function pullFromFirebase(){
       const changed=applyRemoteData(remote);
       if(changed){ toast('Nuvem puxada ☁️','☁️'); renderCurrentPage(); }
     }
-  }catch(e){ console.warn(e); }
+  } catch(e){ console.warn(e); }
 }
 
 window.addEventListener('vidaplus:xp', (e)=>{
@@ -127,9 +127,13 @@ window.addEventListener('vidaplus:auth', async (e)=>{
     if(user.photoURL) state.profile.photo=user.photoURL;
     state.user.name=state.profile.firstName||state.profile.name||user.email.split('@')[0];
     saveState();
-    if(authOverlay) authOverlay.classList.remove('open');
+    if(authOverlay) {
+      authOverlay.classList.remove('open');
+      authOverlay.style.display = 'none';
+    }
     updateHeader();
-    await pullFromFirebase();
+    await pullFromFirebase();       // aguarda dados remotos
+    renderCurrentPage();            // renderiza com dados atualizados
     // Só abre completar perfil se faltar nome mesmo
     if(!state.profile.firstName || !state.profile.lastName){
       const cp=document.getElementById('overlayCompleteProfile');
@@ -140,20 +144,25 @@ window.addEventListener('vidaplus:auth', async (e)=>{
         cp.classList.add('open');
       }
     }
-    renderCurrentPage();
     toast(`Bem-vindo, ${state.profile.firstName||state.user.name}!`,'👋');
-  }else{
+  } else {
     setUid('default_user');
+    // Limpa estado local para não mostrar dados antigos
+    loadState(true);
     updateHeader();
+    renderCurrentPage();
     openAuthModal();
   }
 });
 
-// AUTH - SIMPLES E COM ERRO VISÍVEL (NÃO TRAVA)
+// ====== AUTH - SIMPLES E COM ERRO VISÍVEL ======
 let _authBusy=false;
 export function openAuthModal(){
   const el=document.getElementById('overlayAuth');
-  if(el){ el.classList.add('open'); el.style.display='grid'; }
+  if(el){
+    el.classList.add('open');
+    el.style.display = 'grid';
+  }
   const err=document.getElementById('authError');
   if(err) err.style.display='none';
 }
@@ -165,11 +174,11 @@ export function switchAuthMode(mode){
   const title=document.getElementById('authTitle');
   if(mode==='signup'){
     if(lv) lv.style.display='none';
-    if(sv) { sv.style.display='grid'; }
+    if(sv) sv.style.display='grid';
     if(tl) tl.classList.remove('active');
     if(ts) ts.classList.add('active');
     if(title) title.textContent='Criar conta';
-  }else{
+  } else {
     if(lv) lv.style.display='grid';
     if(sv) sv.style.display='none';
     if(tl) tl.classList.add('active');
@@ -185,7 +194,6 @@ function showAuthError(msg){
   if(!msg){ el.style.display='none'; return; }
   el.style.display='block';
   el.textContent=msg;
-  // também toast pra celular vibrar
   toast(msg,'⚠️');
 }
 
@@ -202,7 +210,7 @@ export async function handleLogin(){
     showAuthError('');
     await fbLoginEmail(email, pass);
     // fecha via evento auth
-  }catch(e){
+  } catch(e){
     console.error(e);
     let msg=e.message||'Erro login';
     if(e.code==='auth/invalid-credential' || e.code==='auth/wrong-password' || e.code==='auth/user-not-found') msg='E-mail ou senha incorretos';
@@ -210,7 +218,7 @@ export async function handleLogin(){
     if(e.code==='auth/unauthorized-domain') msg=`Domínio ${location.hostname} não autorizado. Adicione em Firebase > Auth > Authorized domains`;
     if(e.code==='auth/network-request-failed') msg='Sem internet ou Firebase fora. Verifique conexão';
     showAuthError(msg+' ('+e.code+')');
-  }finally{
+  } finally {
     _authBusy=false;
     if(btn){ btn.textContent=original||'Entrar'; btn.disabled=false; }
   }
@@ -241,14 +249,14 @@ export async function handleSignup(){
     state.settings.currency=curr;
     saveState();
     toast('Conta criada! Logado automaticamente 🎉','🎉');
-  }catch(e){
+  } catch(e){
     console.error(e);
     let msg=e.message;
     if(e.code==='auth/email-already-in-use') msg='E-mail já existe, tente Entrar';
     if(e.code==='auth/weak-password') msg='Senha fraca, mínimo 6';
     if(e.code==='auth/unauthorized-domain') msg=`Domínio ${location.hostname} não autorizado`;
     showAuthError(msg+' ('+e.code+')');
-  }finally{
+  } finally {
     _authBusy=false;
     if(btn){ btn.textContent=orig||'Criar conta'; btn.disabled=false; }
   }
@@ -264,25 +272,24 @@ export async function handleGoogleLogin(){
     const user=await fbLoginGoogle();
     if(user){
       toast('Google OK!','✓');
-    }else{
-      // redirect iniciado - página vai recarregar
+    } else {
       toast('Redirecionando para Google... aguarde voltar','↗️');
     }
-  }catch(e){
+  } catch(e){
     console.error(e);
     let msg=e.message;
     if(e.code==='auth/popup-closed-by-user') msg='Popup fechado, tente novamente ou use Redirect';
     if(e.code==='auth/popup-blocked') msg='Popup bloqueado. Clique em "Google Redirect" ou permita popups. No celular use Redirect.';
     if(e.code==='auth/unauthorized-domain') msg=`Domínio ${location.hostname} não autorizado. Adicione em Firebase > Auth > Authorized domains`;
     showAuthError(msg+' ('+e.code+')');
-  }finally{
+  } finally {
     _authBusy=false;
     btns.forEach((b,i)=>{ b.textContent=origTexts[i]||'Continuar com Google'; b.disabled=false; });
   }
 }
 export async function handleLogout(){
   if(!confirm('Sair? Progresso salvo no Firebase.')) return;
-  try{ await fbLogout(); toast('Saiu','👋'); openAuthModal(); }catch(e){ toast('Erro sair: '+e.message,'⚠️'); }
+  try{ await fbLogout(); toast('Saiu','👋'); openAuthModal(); } catch(e){ toast('Erro sair: '+e.message,'⚠️'); }
 }
 export async function handleReset(){
   const email=document.getElementById('authEmail')?.value.trim() || document.getElementById('authEmailSignup')?.value.trim() || '';
@@ -292,7 +299,7 @@ export async function handleReset(){
     await resetPassword(email);
     showAuthError('E-mail de recuperação enviado para '+email+' - verifique spam');
     toast('E-mail enviado 📧','📧');
-  }catch(e){ showAuthError(e.message+' ('+e.code+')'); }
+  } catch(e){ showAuthError(e.message+' ('+e.code+')'); }
 }
 export async function saveCompleteProfile(){
   const fn=document.getElementById('completeFirstName')?.value.trim()||'';
@@ -317,10 +324,10 @@ export async function saveCompleteProfile(){
     toast('Perfil salvo!','✓');
     closeModal('overlayCompleteProfile');
     updateHeader();
-  }catch(e){ toast('Erro: '+e.message,'⚠️'); }
+  } catch(e){ toast('Erro: '+e.message,'⚠️'); }
 }
 
-// RESTO: perfil, moeda, tema, etc (simplificado para não travar)
+// ====== RESTO: perfil, moeda, tema, etc ======
 export async function saveProfile(){
   const fn=document.getElementById('profileFirstName')?.value.trim()||'';
   const ln=document.getElementById('profileLastName')?.value.trim()||'';
@@ -348,7 +355,7 @@ function applyThemePreview(id){
   if(!id) return;
   const t=themes[id];
   if(t?.premium && !state.app.premium){
-    const isAdmin = (()=>{ try{ return VidaFirebase?.isCurrentUserAdmin?.(); }catch{return false;} })();
+    const isAdmin = (()=>{ try{ return VidaFirebase?.isCurrentUserAdmin?.(); } catch{return false; } })();
     if(!isAdmin){ openPremium(); return; }
   }
   document.documentElement.setAttribute('data-theme', id);
@@ -356,7 +363,7 @@ function applyThemePreview(id){
 }
 export function previewCurrency(c){ const el=document.getElementById('profileCurrency'); if(el) el.value=c; }
 
-// ROUTER COM FALLBACK INLINE (não trava se pages/ não existir)
+// ====== ROUTER COM FALLBACK INLINE ======
 export async function loadPage(pageName){
   let name = (pageName||'dashboard').replace('.html','').toLowerCase();
   const allowed=['dashboard','financeiro','habitos','humor','metas','relatorios','conquistas','perfil'];
@@ -367,7 +374,7 @@ export async function loadPage(pageName){
     const url=new URL(window.location);
     url.searchParams.set('page', name);
     window.history.pushState({}, '', url);
-  }catch{}
+  } catch{}
 
   const container=document.getElementById('pageContainer');
   if(!container) return;
@@ -383,11 +390,10 @@ export async function loadPage(pageName){
     if(!html.trim()) throw new Error('Vazia');
     container.innerHTML=html;
     setTimeout(()=>{ renderCurrentPage(); },50);
-  }catch(e){
+  } catch(e){
     console.warn('[loadPage] fallback inline', e.message);
     container.innerHTML=getFallbackPageHTML(name);
     renderCurrentPage();
-    // aviso discreto só uma vez
     if(!window._fallbackWarned){
       window._fallbackWarned=true;
       setTimeout(()=>toast(`Usando fallback inline. Se quiser páginas separadas, verifique se pasta /pages/ existe no GitHub Pages. Erro: ${e.message}`,'⚠️'),800);
@@ -395,7 +401,6 @@ export async function loadPage(pageName){
   }
 }
 function getFallbackPageHTML(name){
-  // Fallback mínimo para não travar nunca
   const common=`<p style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center">Modo fallback inline - funciona mesmo sem /pages/. Para versão modular completa, upa pasta /pages/ no GitHub.</p>`;
   if(name==='dashboard'){
     return `<div class="grid grid-4"><div class="card kpi"><div class="kpi-head"><span class="kpi-label">Saldo</span><span class="kpi-icon" style="background:#E0F2FE">💰</span></div><div class="kpi-value" id="balanceValue">R$ 0</div><div class="kpi-sub"><span class="badge badge-up" id="balanceTrend">+0%</span> <span id="balanceSub">0 transações</span></div><div style="height:44px"><canvas id="miniBalance"></canvas></div></div>
@@ -408,7 +413,7 @@ function getFallbackPageHTML(name){
   return `<div class="card" style="text-align:center;padding:20px"><h3>${name}</h3><p style="font-size:12px;color:var(--muted);margin-top:8px">Página ${name} - fallback inline ativo.<br>Se quiser versão completa separada, verifique se <code>pages/${name}.html</code> existe no GitHub Pages.</p><button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="appLoadPage('dashboard')">Dashboard</button></div>${common}`;
 }
 
-function renderCurrentPage(){ updateHeader(); updateXPUI(); try{renderDashboard();}catch(e){} try{renderTx();}catch(e){} try{renderHabits();}catch(e){} try{renderMood();}catch(e){} try{renderGoals();}catch(e){} try{renderReports();}catch(e){} try{renderAchievements();}catch(e){} try{renderPerfil();}catch(e){} }
+function renderCurrentPage(){ updateHeader(); updateXPUI(); try{renderDashboard();} catch(e){} try{renderTx();} catch(e){} try{renderHabits();} catch(e){} try{renderMood();} catch(e){} try{renderGoals();} catch(e){} try{renderReports();} catch(e){} try{renderAchievements();} catch(e){} try{renderPerfil();} catch(e){} }
 
 function renderPerfil(){
   const gv=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=v||''; };
@@ -458,7 +463,7 @@ export function renderDashboard(){
   const dots=document.getElementById('moodWeekDots'); if(dots){ dots.innerHTML=''; for(let i=6;i>=0;i--){ const d=new Date(Date.now()-i*86400000).toISOString().slice(0,10); const m=state.moods.find(x=>x.date===d); const dot=document.createElement('div'); dot.style.cssText=`width:22px;height:22px;border-radius:7px;display:grid;place-items:center;font-size:12px;background:${m?moodMap[m.level].color:'var(--bg-2)'};color:${m?'white':'var(--muted-2)'}`; dot.textContent=m?moodMap[m.level].emoji:'·'; dots.appendChild(dot); } }
   const list=document.getElementById('todayHabits'); if(list){ list.innerHTML=''; state.habits.slice(0,4).forEach(h=>{ const isDone=!!(h.history && h.history[today]); const el=document.createElement('div'); el.className='habit'; el.innerHTML=`<div class="habit-check ${isDone?'done':''}" onclick="appToggleHabit('${h.id}')">${isDone?'✓':h.icon}</div><div class="habit-meta"><b>${h.name}</b><span>${h.streak}d streak</span></div>`; list.appendChild(el); }); }
   const ai=document.getElementById('aiInsights'); if(ai){ ai.innerHTML=''; generateInsights(state.app.premium).slice(0,3).forEach(ins=>{ const d=document.createElement('div'); d.className='insight'; d.innerHTML=`<div class="i-ico" style="background:${ins.color}">${ins.ico}</div><div><b>${ins.title}</b><p>${ins.text}</p></div>`; ai.appendChild(d); }); }
-  try{ drawMiniBalance(); drawWeeklyFlow(); drawCategoryDonut(); }catch{}
+  try{ drawMiniBalance(); drawWeeklyFlow(); drawCategoryDonut(); } catch{}
 }
 function drawMiniBalance(){
   const c=document.getElementById('miniBalance'); if(!c) return; const ctx=c.getContext('2d'); const r=c.getBoundingClientRect(); c.width=r.width*(window.devicePixelRatio||1); c.height=r.height*(window.devicePixelRatio||1); ctx.scale(window.devicePixelRatio||1, window.devicePixelRatio||1); ctx.clearRect(0,0,r.width,r.height);
@@ -475,7 +480,7 @@ function drawCategoryDonut(){
   const exp=state.tx.filter(t=>t.type==='expense').reduce((a,t)=>{a[t.category]=(a[t.category]||0)+t.amount;return a},{}); const entries=Object.entries(exp).slice(0,5); if(!entries.length) return; const total=entries.reduce((s,e)=>s+e[1],0); let ang=-Math.PI/2; const colors=['#123C7A','#6366F1','#06B6D4','#10B981','#F59E0B']; entries.forEach(([k,v],i)=>{ const slice=(v/total)*Math.PI*2; ctx.beginPath(); ctx.moveTo(r.width/2,r.height/2); ctx.arc(r.width/2,r.height/2,Math.min(r.width,r.height)/2-10,ang,ang+slice); ctx.closePath(); ctx.fillStyle=colors[i%5]; ctx.fill(); ang+=slice; });
 }
 
-// Demais renders simplificados para não travar
+// ====== DEMAIS RENDERS SIMPLIFICADOS ======
 export function renderTx(){
   const cont=document.getElementById('txList'); if(!cont) return;
   let filtered=[...state.tx].sort((a,b)=> new Date(b.date)-new Date(a.date));
@@ -526,7 +531,7 @@ export function saveHabit(){
 export function toggleHabit(id){
   const h=state.habits.find(x=>x.id===id); if(!h) return;
   const today=todayStr(); if(!h.history) h.history={};
-  if(h.history[today]){ delete h.history[today]; h.streak=Math.max(0,h.streak-1); }else{ h.history[today]=true; h.streak++; addXP(20,'Hábito'); }
+  if(h.history[today]){ delete h.history[today]; h.streak=Math.max(0,h.streak-1); } else { h.history[today]=true; h.streak++; addXP(20,'Hábito'); }
   saveState(); renderCurrentPage(); trySyncAll();
 }
 export function editHabit(id){ const h=state.habits.find(x=>x.id===id); if(!h) return; const n=prompt('Novo nome',h.name); if(n){ h.name=n; saveState(); renderHabits(); } }
@@ -557,7 +562,16 @@ export function activatePremium(){ state.app.premium=true; state.user.premium=tr
 export function regenerateAI(){ toast('IA reanalisando...','✦'); setTimeout(()=>renderCurrentPage(),600); }
 
 export function initApp(){
-  loadState(); ensureSeed();
+  // Verifica se já há usuário logado no Firebase para decidir se carrega estado
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    // Sem login: limpa dados locais para não mostrar resquícios
+    loadState(true);
+  } else {
+    loadState();
+  }
+  ensureSeed(); // só criará seed se estiver logado (UID != default_user)
+
   const params=new URLSearchParams(location.search);
   const page=params.get('page')||params.get('id')||'dashboard';
   initAuthListener(()=>{});
