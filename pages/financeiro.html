@@ -1,33 +1,14 @@
-<script>if(window.top===window.self){ location.replace('../index.html?page=financeiro'); }</script>
-<div id="page-financeiro-fragment">
-  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px">
-    <div><h2 style="font-size:24px">Financeiro</h2><p style="font-size:12px;color:var(--muted)">Editável em pages/financeiro.html • Usa CSS/JS do Index</p></div>
-    <div style="display:flex;gap:8px">
-      <select id="currencySelect" class="input" style="height:36px;width:110px" onchange="appChangeCurrency(this.value)"><option value="BRL">R$ BRL</option><option value="USD">US$ USD</option><option value="EUR">€ EUR</option></select>
-      <button class="btn btn-primary btn-sm" onclick="appOpenTxModal()">+ Transação</button>
-    </div>
+<div class="top-actions" style="margin-bottom: 20px;">
+  <h2>Histórico Financeiro</h2>
+  <p style="color:var(--muted); font-size: 13px;">Todos os seus registros de receitas e despesas organizados.</p>
+</div>
+<div class="card">
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <b style="font-size:16px;">Extrato de Movimentações</b>
+    <button class="btn btn-primary btn-sm">+ Lançar Valor</button>
   </div>
-
-  <div class="grid grid-3">
-    <div class="card"><span class="kpi-label">Receitas</span><div class="kpi-value" id="incomeMonth" style="color:var(--emerald)">R$ 0</div></div>
-    <div class="card"><span class="kpi-label">Despesas</span><div class="kpi-value" id="expenseMonth" style="color:var(--rose)">R$ 0</div></div>
-    <div class="card"><span class="kpi-label">Economia</span><div class="kpi-value" id="savingMonth">R$ 0</div><div class="kpi-sub"><span id="savingPct">0%</span></div></div>
-  </div>
-
-  <div class="grid grid-2" style="margin-top:14px">
-    <div class="card">
-      <b>Transações</b>
-      <div style="display:flex;gap:6px;margin:10px 0;flex-wrap:wrap">
-        <button class="pill active" data-filter="all" onclick="appFilterTx('all',this)">Tudo</button>
-        <button class="pill" data-filter="income" onclick="appFilterTx('income',this)">Receitas</button>
-        <button class="pill" data-filter="expense" onclick="appFilterTx('expense',this)">Despesas</button>
-        <input id="txSearch" class="input" placeholder="Buscar..." style="height:34px;flex:1" oninput="appFilterTx('all',document.querySelector('[data-filter=all]'))">
-      </div>
-      <div id="txList" style="max-height:480px;overflow:auto"></div>
-    </div>
-    <div style="display:grid;gap:12px">
-      <div class="card"><b>Gastos por categoria</b><div class="chart-box" style="margin-top:10px"><canvas id="finCategory"></canvas></div></div>
-      <div class="card"><b>Saldo 30 dias</b><div class="chart-box" style="margin-top:10px"><canvas id="finLine"></canvas></div></div>
-    </div>
+  <div style="margin-top:20px; padding:40px; text-align:center; background:var(--bg-2); border-radius:12px;">
+    <span style="font-size:24px;">📊</span>
+    <p style="margin-top:8px; color:var(--muted); font-size:13px;">Tudo pronto para usar. O painel completo de filtros será renderizado aqui.</p>
   </div>
 </div>
