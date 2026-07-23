@@ -20,7 +20,9 @@
       <div class="brand-text"><b>Vida+ AI</b></div>
     </div>
     <nav class="nav" id="nav">
-      <button class="active" data-page="home" onclick="appLoadPage('home')"><span class="ico">⌂</span> Home</button>
+      <!-- Botão com ID adicionado para sumir pós-login -->
+      <button id="navHomeBtn" class="active" data-page="home" onclick="appLoadPage('home')"><span class="ico">⌂</span> Home</button>
+      
       <button data-page="dashboard" onclick="appLoadPage('dashboard')"><span class="ico">◧</span> Dashboard</button>
       <button data-page="financeiro" onclick="appLoadPage('financeiro')"><span class="ico">₿</span> Financeiro</button>
       <button data-page="habitos" onclick="appLoadPage('habitos')"><span class="ico">◍</span> Hábitos</button>
@@ -43,18 +45,8 @@
       </div>
     </div>
 
-    <!-- HOME ISOLADA (Fim do conflito de injeção dupla) -->
-    <div id="homeView" style="display: block;">
-      <div id="home-welcome" style="max-width:900px;margin:0 auto;text-align:center;padding:20px 10px">
-        <div style="width:80px;height:80px;margin:0 auto 16px;border-radius:20px;background:conic-gradient(from 210deg at 50% 50%, #123C7A, #6366F1, #06B6D4, #10B981, #123C7A);display:grid;place-items:center;box-shadow:0 12px 30px rgba(18,60,122,.25)"><span style="font-size:32px; font-weight:800; color:white;">V+</span></div>
-        <h1 class="display" style="font-size:42px;line-height:1;letter-spacing:-.04em">Evolução diária<br>inteligente.</h1>
-        <p style="color:var(--muted);font-size:15px;margin-top:14px;line-height:1.5;max-width:600px;margin-left:auto;margin-right:auto">Una finanças, hábitos e metas. Uma plataforma que ajuda você a tomar decisões melhores, encontrar padrões invisíveis e subir de nível na vida real.</p>
-        <div style="display:flex;gap:10px;justify-content:center;margin-top:24px">
-          <button class="btn btn-primary" style="height:50px;padding:0 28px;font-size:15px" onclick="appOpenAuthModal()">🚀 Acessar o App Gratuitamente</button>
-        </div>
-      </div>
-    </div>
-
+    <!-- Containers vazios: O JS vai injetar os arquivos aqui dentro dinamicamente -->
+    <div id="homeView"></div>
     <div id="pageContainer" style="display:none"></div>
   </main>
 </div>
