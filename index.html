@@ -1,238 +1,78 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Vida+ AI — Evolution OS - Home</title>
-<link rel="icon" type="image/png" href="assets/favicon.png">
-<link rel="apple-touch-icon" href="assets/logo.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,700;9..144,800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css">
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#123C7A">
-<style>
-.auth-modal .modal{max-width:400px}
-.google-btn{background:white;border:1px solid var(--border);color:var(--text);height:46px;border-radius:12px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;transition:.2s;width:100%}
-.google-btn:hover{background:var(--bg-2)}
-.google-btn:disabled{opacity:.6;cursor:not-allowed}
-.divider{display:flex;align-items:center;gap:12px;color:var(--muted-2);font-size:11px;font-weight:700;letter-spacing:.12em;margin:8px 0}
-.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--border)}
-.auth-tabs{display:flex;gap:6px;background:var(--bg-2);padding:4px;border-radius:12px;margin-top:12px}
-.auth-tabs button{flex:1;height:36px;border-radius:9px;border:none;background:transparent;font-weight:700;font-size:13px;cursor:pointer;transition:.2s;color:var(--muted)}
-.auth-tabs button.active{background:var(--card);color:var(--text);box-shadow:0 2px 8px rgba(15,23,42,.08);border:1px solid var(--border)}
-#pageContainer{animation:fade .25s ease}
-#homeView .grid{animation:fade .35s ease}
-.page-loader{padding:50px 20px;text-align:center;color:var(--muted)}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Vida+ AI — Evolution OS</title>
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+  <link rel="apple-touch-icon" href="assets/logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Fraunces:opsz,wght@9..144,700;9..144,800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#123C7A">
+  <style>
+    /* ... estilos já existentes */
+  </style>
 </head>
 <body>
 <div class="app">
-  <!-- MENU SEMPRE VISÍVEL -->
-  <aside class="sidebar">
-    <div class="brand">
-      <div class="logo has-img"><img id="logoImg" src="assets/logo.png" alt="Vida+ AI"><span style="display:none">V+</span></div>
-      <div class="brand-text"><b>Vida+ AI</b><i>Evolution OS</i></div>
-    </div>
-    <nav class="nav" id="nav">
-      <button class="active" data-page="dashboard" onclick="appLoadPage('dashboard')"><span class="ico">◧</span> Dashboard</button>
-      <button data-page="financeiro" onclick="appLoadPage('financeiro')"><span class="ico">₿</span> Financeiro</button>
-      <button data-page="habitos" onclick="appLoadPage('habitos')"><span class="ico">◍</span> Hábitos</button>
-      <button data-page="humor" onclick="appLoadPage('humor')"><span class="ico">☺</span> Humor</button>
-      <button data-page="metas" onclick="appLoadPage('metas')"><span class="ico">◎</span> Metas</button>
-      <button data-page="relatorios" onclick="appLoadPage('relatorios')"><span class="ico">✦</span> IA</button>
-      <button data-page="conquistas" onclick="appLoadPage('conquistas')"><span class="ico">★</span> Conquistas</button>
-      <button data-page="perfil" onclick="appLoadPage('perfil')"><span class="ico">👤</span> Perfil</button>
-    </nav>
-    <div class="sidebar-foot">
-      <span class="premium-tag" id="premiumTag">Vida+ AI</span>
-      <h4 id="sidebarName">Sua evolução</h4>
-      <p id="userEmailChip" style="word-break:break-all;font-size:11px;opacity:.9">carregando...</p>
-      <div id="syncStatus" style="margin-top:8px;font-size:10px;opacity:.85">● Conectando...</div>
-      <button class="btn btn-white btn-sm" style="margin-top:10px;width:100%" onclick="appOpenPremium()">Premium</button>
-      <button class="btn btn-ghost btn-sm" style="margin-top:6px;background:rgba(255,255,255,.12);border:none;color:white;width:100%" onclick="appHandleLogout()">Sair</button>
-    </div>
-  </aside>
-
-  <main class="main">
-    <div class="topbar">
-      <div class="search-wrap">
-        <span class="sico">⌕</span>
-        <input id="globalSearch" placeholder="Buscar..." />
-      </div>
-      <div class="top-actions">
-        <span class="chip" id="currencyChip"><span class="dot"></span> <span id="currencyLabelTop">BRL</span></span>
-        <span class="chip"><span class="dot"></span> <span id="streakLabel">Streak 0d</span></span>
-        <button class="btn btn-ghost btn-sm" onclick="appToggleTheme()">◐</button>
-        <div class="avatar" id="avatar" onclick="appLoadPage('perfil')">W</div>
-        <button class="btn btn-primary btn-sm" onclick="appOpenQuickAdd()">＋</button>
-      </div>
-    </div>
-
-    <!-- HOME VIEW - INDEX SÓ CARREGA ESSENCIAL (DASHBOARD) -->
-    <div id="homeView">
-      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px">
-        <div>
-          <h1 class="display" style="font-size:36px;line-height:.9">Bom dia, <span id="userName">Usuário</span> 👋</h1>
-          <p style="color:var(--muted);margin-top:8px;font-size:13px">Você completou <b id="todayProgressPct">0%</b> • <span id="todayDate"></span> • <span style="font-size:10px;background:var(--bg-2);padding:3px 8px;border-radius:100px;border:1px solid var(--border)" id="currencyBadge">BRL</span></p>
-        </div>
-        <div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" onclick="appLoadPage('relatorios')">IA</button><button class="btn btn-primary btn-sm" onclick="appOpenMoodModal()">Humor</button></div>
-      </div>
-
-      <div class="grid grid-4">
-        <div class="card kpi"><div class="kpi-head"><span class="kpi-label">Saldo</span><span class="kpi-icon" style="background:#E0F2FE">💰</span></div><div class="kpi-value" id="balanceValue">R$ 0,00</div><div class="kpi-sub"><span class="badge badge-up" id="balanceTrend">+0%</span> <span id="balanceSub">0 transações</span></div><div style="height:44px;margin-top:6px"><canvas id="miniBalance"></canvas></div></div>
-        <div class="card kpi"><div class="kpi-head"><span class="kpi-label">XP & Nível</span><span class="kpi-icon" style="background:#FEF3C7">⚡</span></div><div class="kpi-value"><span id="levelLabel">Nv 1</span> <small id="xpLabel">0 XP</small></div><div class="lvl-bar"><i id="xpBar" style="width:0%"></i></div><div class="lvl-nodes"><span id="xpFrom">0</span><span id="xpTo">500</span></div><div class="kpi-sub">Falta <b id="xpNext">500 XP</b> • <span id="levelReward" style="font-size:10px">+1 slot</span></div></div>
-        <div class="card kpi"><div class="kpi-head"><span class="kpi-label">Hábitos</span><span class="kpi-icon" style="background:#DCFCE7">✅</span></div><div class="kpi-value"><span id="habitsDone">0</span>/<span id="habitsTotal">0</span></div><div class="progress"><i id="habitsProgress" style="width:0%"></i></div><div class="kpi-sub" id="habitsMotivation">Comece!</div></div>
-        <div class="card kpi"><div class="kpi-head"><span class="kpi-label">Humor</span><span class="kpi-icon" id="moodIcon">🙂</span></div><div class="kpi-value" id="moodLabel" style="font-size:20px">--</div><div class="kpi-sub" id="moodSub">--</div><div style="display:flex;gap:6px;margin-top:8px" id="moodWeekDots"></div></div>
-      </div>
-
-      <div class="section"><div><h2>Seu dia em foco</h2><p>30s • Firebase vidamaisai</p></div><span class="link" onclick="appLoadPage('habitos')">Gerenciar →</span></div>
-      <div class="grid grid-2">
-        <div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:12px"><b>Hábitos hoje</b><span style="font-size:11px;color:var(--muted)" id="habitsDate"></span></div><div id="todayHabits" style="display:grid;gap:10px"></div></div>
-        <div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:12px"><b>Insights IA</b><span class="badge" style="background:#EEF2FF;color:#4338CA" id="aiBadge">FREE</span></div><div id="aiInsights" style="display:grid;gap:10px"></div><button class="btn btn-ghost" style="width:100%;margin-top:12px" onclick="appLoadPage('relatorios')">Relatório completo</button></div>
-      </div>
-
-      <div class="section"><div><h2>Resumo financeiro</h2><p>7 dias + categorias</p></div><span class="link" onclick="appLoadPage('financeiro')">Ver →</span></div>
-      <div class="grid grid-2">
-        <div class="card"><b>Fluxo semanal</b><div class="chart-box" style="margin-top:12px"><canvas id="weeklyFlow"></canvas></div></div>
-        <div class="card"><b>Gastos</b><div class="chart-box" style="margin-top:12px"><canvas id="categoryDonut"></canvas></div></div>
-      </div>
-    </div>
-
-    <!-- CONTAINER PARA PAGES -->
-    <div id="pageContainer" style="display:none"></div>
-
-  </main>
+  <!-- Sidebar, topbar, home view, modais... (mantenha o mesmo HTML) -->
 </div>
 
-<!-- AUTH - SEM INFO ADMIN, SÓ GOOGLE OU EMAIL/SENHA -->
-<div class="overlay open" id="overlayAuth" style="z-index:150">
-  <div class="modal auth-modal" style="max-width:400px">
-    <div style="padding:22px 22px 0;text-align:center">
-      <img src="assets/logo.png" style="width:60px;height:60px;border-radius:14px;margin:0 auto 10px;display:block;object-fit:cover" onerror="this.style.display='none'">
-      <h2 id="authTitle" style="font-size:24px;line-height:1">Entrar no Vida+ AI</h2>
-      <p style="color:var(--muted);font-size:12px;margin-top:6px">Acesse sua evolução diária</p>
-      <div class="auth-tabs">
-        <button class="active" id="tabLogin" onclick="appSwitchAuthMode('login')">Entrar</button>
-        <button id="tabSignup" onclick="appSwitchAuthMode('signup')">Criar conta</button>
-      </div>
-    </div>
-    <div class="modal-body">
-      <div id="authLoginView" style="display:grid;gap:10px">
-        <button class="google-btn" id="authBtnGoogle" type="button" onclick="appHandleGoogleLogin()"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px"> Continuar com Google</button>
-        <div class="divider">OU E-MAIL</div>
-        <input id="authEmail" class="input" type="email" placeholder="seu@email.com" autocomplete="email">
-        <input id="authPass" class="input" type="password" placeholder="Sua senha" autocomplete="current-password">
-        <button class="btn btn-primary" id="authBtnLogin" type="button" onclick="appHandleLogin()" style="height:46px">Entrar</button>
-        <span class="link" style="text-align:center;display:block" onclick="appHandleReset()">Esqueci minha senha</span>
-      </div>
-      <div id="authSignupView" style="display:none;gap:10px">
-        <button class="google-btn" type="button" onclick="appHandleGoogleLogin()"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px"> Cadastrar com Google</button>
-        <div class="divider">OU</div>
-        <div class="row"><input id="authFirstName" class="input" placeholder="Nome"><input id="authLastName" class="input" placeholder="Sobrenome"></div>
-        <input id="authEmailSignup" class="input" type="email" placeholder="seu@email.com">
-        <input id="authPassSignup" class="input" type="password" placeholder="Crie senha (mín 6)">
-        <select id="authCurrency" class="input"><option value="BRL">R$ Real</option><option value="USD">US$ Dólar</option><option value="EUR">€ Euro</option></select>
-        <button class="btn btn-primary" id="authBtnSignup" type="button" onclick="appHandleSignup()" style="height:46px">Criar conta</button>
-      </div>
-      <div id="authError" style="display:none;padding:10px 12px;border-radius:10px;background:#FEF2F2;border:1px solid #FECACA;color:#991B1B;font-size:12px"></div>
-    </div>
-  </div>
-</div>
-
-<!-- COMPLETAR PERFIL OPCIONAL -->
-<div class="overlay" id="overlayCompleteProfile" style="z-index:160">
-  <div class="modal" style="max-width:400px">
-    <div class="modal-head"><h3>Completar perfil (opcional)</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayCompleteProfile')">Pular</button></div>
-    <div class="modal-body">
-      <div class="row"><input id="completeFirstName" class="input" placeholder="Nome"><input id="completeLastName" class="input" placeholder="Sobrenome"></div>
-      <input id="completePhone" class="input" placeholder="Celular">
-      <select id="completeCurrency" class="input"><option value="BRL">R$ Real</option><option value="USD">US$ Dólar</option></select>
-    </div>
-    <div class="modal-foot"><button class="btn btn-ghost" onclick="appCloseModal('overlayCompleteProfile')">Pular</button><button class="btn btn-primary" onclick="appSaveCompleteProfile()">Salvar</button></div>
-  </div>
-</div>
-
-<!-- MODAIS ESSENCIAIS -->
-<div class="overlay" id="overlayTx"><div class="modal"><div class="modal-head"><h3>Nova transação</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayTx')">✕</button></div><div class="modal-body"><div class="pills"><button class="pill active" data-type="expense" onclick="appSetTxType('expense',this)">Despesa</button><button class="pill" data-type="income" onclick="appSetTxType('income',this)">Receita</button></div><div class="row"><div><input id="txAmount" class="input" type="number" placeholder="Valor"></div><div><input id="txDate" class="input" type="date"></div></div><div><div class="pills" id="txCategories"></div><input id="txCategoryCustom" class="input" placeholder="Categoria" style="margin-top:6px"></div><input id="txDesc" class="input" placeholder="Descrição"></div><div class="modal-foot"><button class="btn btn-ghost" onclick="appCloseModal('overlayTx')">Cancelar</button><button class="btn btn-primary" onclick="appSaveTx()">Salvar</button></div></div></div>
-<div class="overlay" id="overlayHabit"><div class="modal"><div class="modal-head"><h3>Novo hábito</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayHabit')">✕</button></div><div class="modal-body"><div class="row"><input id="habitName" class="input" placeholder="Nome"><input id="habitIcon" class="input" placeholder="💧"></div><div class="row"><input id="habitGoal" class="input" type="number" placeholder="1"><select id="habitColor" class="input"><option value="#10B981">Verde</option><option value="#6366F1">Violeta</option></select></div></div><div class="modal-foot"><button class="btn btn-ghost" onclick="appCloseModal('overlayHabit')">Cancelar</button><button class="btn btn-primary" onclick="appSaveHabit()">Criar</button></div></div></div>
-<div class="overlay" id="overlayMood"><div class="modal"><div class="modal-head"><h3>Como está?</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayMood')">✕</button></div><div class="modal-body"><div class="mood-grid"><button class="mood-opt" onclick="appPickMood(1)"><span class="em">😞</span><b>Muito Ruim</b></button><button class="mood-opt" onclick="appPickMood(2)"><span class="em">😐</span><b>Ruim</b></button><button class="mood-opt" onclick="appPickMood(3)"><span class="em">🙂</span><b>Normal</b></button><button class="mood-opt" onclick="appPickMood(4)"><span class="em">😁</span><b>Bom</b></button><button class="mood-opt" onclick="appPickMood(5)"><span class="em">🤩</span><b>Excelente</b></button></div><textarea id="moodNoteModal" class="input" placeholder="O que influenciou?"></textarea></div><div class="modal-foot"><button class="btn btn-primary" onclick="appConfirmMood()">Salvar</button></div></div></div>
-<div class="overlay" id="overlayGoal"><div class="modal"><div class="modal-head"><h3>Nova meta</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayGoal')">✕</button></div><div class="modal-body"><input id="goalTitle" class="input" placeholder="Título"><div class="row"><select id="goalType" class="input"><option value="financeira">Financeira</option><option value="habito">Hábito</option><option value="pessoal">Pessoal</option></select><input id="goalTarget" class="input" type="number" placeholder="5000"></div><input id="goalDeadline" class="input" type="date"></div><div class="modal-foot"><button class="btn btn-primary" onclick="appSaveGoal()">Criar</button></div></div></div>
-<div class="overlay" id="overlayQuick"><div class="modal"><div class="modal-head"><h3>Ação rápida</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayQuick')">✕</button></div><div class="modal-body"><div class="grid grid-2"><button class="card" onclick="appCloseModal('overlayQuick');appOpenTxModal()"><b>💸 Despesa</b></button><button class="card" onclick="appCloseModal('overlayQuick');appOpenMoodModal()"><b>🙂 Humor</b></button><button class="card" onclick="appCloseModal('overlayQuick');appLoadPage('habitos')"><b>✅ Hábitos</b></button><button class="card" onclick="appCloseModal('overlayQuick');appOpenGoalModal()"><b>◎ Meta</b></button></div></div></div></div>
-<div class="overlay" id="overlayPremium"><div class="modal" style="max-width:520px"><div class="modal-head"><h3>Premium</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayPremium')">✕</button></div><div class="modal-body"><p style="font-size:13px;color:var(--muted)">10 temas + IA total + 50 níveis</p><button class="btn btn-primary" style="height:44px" onclick="appActivatePremium()">Virar Premium</button></div></div></div>
-
-<div class="toast-stack" id="toasts"></div>
+<!-- Script de fallback para garantir limpeza -->
+<script>
+  (function(){
+    // Se houver dados locais e o uid for default_user, limpa
+    try {
+      const app = JSON.parse(localStorage.getItem('vidaplus_app_v5') || '{}');
+      if (!app.uid || app.uid === 'default_user') {
+        Object.keys(localStorage).forEach(k => {
+          if (k.startsWith('vidaplus_')) localStorage.removeItem(k);
+        });
+        console.log('[Fallback] Dados locais limpos porque uid é default_user');
+      }
+    } catch(e) {}
+  })();
+</script>
 
 <script type="module">
-import { initApp, loadPage, toggleTheme, openQuickAdd, openPremium, closeModal, openTxModal, openHabitModal, openMoodModal, openGoalModal, saveTx, saveHabit, saveGoal, toggleHabit, editHabit, deleteHabit, filterTx, setTxType, quickMood, pickMood, confirmMood, saveMoodNote, addGoalProgress, deleteGoal, saveProfile, saveCompleteProfile, changeCurrency, handleLogin, handleSignup, handleGoogleLogin, handleLogout, handleReset, switchAuthMode } from './js/app.js';
+  import { initApp, loadPage, toggleTheme, openQuickAdd, openPremium, closeModal, openTxModal, openHabitModal, openMoodModal, openGoalModal, saveTx, saveHabit, saveGoal, toggleHabit, editHabit, deleteHabit, filterTx, setTxType, quickMood, pickMood, confirmMood, saveMoodNote, addGoalProgress, deleteGoal, saveProfile, saveCompleteProfile, changeCurrency, handleLogin, handleSignup, handleGoogleLogin, handleLogout, handleReset, switchAuthMode } from './js/app.js';
 
-window.appLoadPage = loadPage;
-window.appToggleTheme = toggleTheme;
-window.appOpenQuickAdd = openQuickAdd;
-window.appOpenPremium = openPremium;
-window.appCloseModal = closeModal;
-window.appOpenTxModal = openTxModal;
-window.appOpenHabitModal = openHabitModal;
-window.appOpenMoodModal = openMoodModal;
-window.appOpenGoalModal = openGoalModal;
-window.appSaveTx = saveTx;
-window.appSaveHabit = saveHabit;
-window.appSaveGoal = saveGoal;
-window.appToggleHabit = toggleHabit;
-window.appEditHabit = editHabit;
-window.appDeleteHabit = deleteHabit;
-window.appFilterTx = filterTx;
-window.appSetTxType = setTxType;
-window.appQuickMood = quickMood;
-window.appPickMood = pickMood;
-window.appConfirmMood = confirmMood;
-window.appSaveMoodNote = saveMoodNote;
-window.appAddGoalProgress = addGoalProgress;
-window.appDeleteGoal = deleteGoal;
-window.appSaveProfile = saveProfile;
-window.appSaveCompleteProfile = saveCompleteProfile;
-window.appChangeCurrency = changeCurrency;
-window.appHandleLogin = handleLogin;
-window.appHandleSignup = handleSignup;
-window.appHandleGoogleLogin = handleGoogleLogin;
-window.appHandleLogout = handleLogout;
-window.appHandleReset = handleReset;
-window.appSwitchAuthMode = switchAuthMode;
+  // Expor funções globais para onclick
+  window.appLoadPage = loadPage;
+  window.appToggleTheme = toggleTheme;
+  window.appOpenQuickAdd = openQuickAdd;
+  window.appOpenPremium = openPremium;
+  window.appCloseModal = closeModal;
+  window.appOpenTxModal = openTxModal;
+  window.appOpenHabitModal = openHabitModal;
+  window.appOpenMoodModal = openMoodModal;
+  window.appOpenGoalModal = openGoalModal;
+  window.appSaveTx = saveTx;
+  window.appSaveHabit = saveHabit;
+  window.appSaveGoal = saveGoal;
+  window.appToggleHabit = toggleHabit;
+  window.appEditHabit = editHabit;
+  window.appDeleteHabit = deleteHabit;
+  window.appFilterTx = filterTx;
+  window.appSetTxType = setTxType;
+  window.appQuickMood = quickMood;
+  window.appPickMood = pickMood;
+  window.appConfirmMood = confirmMood;
+  window.appSaveMoodNote = saveMoodNote;
+  window.appAddGoalProgress = addGoalProgress;
+  window.appDeleteGoal = deleteGoal;
+  window.appSaveProfile = saveProfile;
+  window.appSaveCompleteProfile = saveCompleteProfile;
+  window.appChangeCurrency = changeCurrency;
+  window.appHandleLogin = handleLogin;
+  window.appHandleSignup = handleSignup;
+  window.appHandleGoogleLogin = handleGoogleLogin;
+  window.appHandleLogout = handleLogout;
+  window.appHandleReset = handleReset;
+  window.appSwitchAuthMode = switchAuthMode;
 
-// compat
-window.loadPage = loadPage;
-window.toggleTheme = toggleTheme;
-window.openQuickAdd = openQuickAdd;
-window.openPremium = openPremium;
-window.closeModal = closeModal;
-window.openTxModal = openTxModal;
-window.openHabitModal = openHabitModal;
-window.openMoodModal = openMoodModal;
-window.openGoalModal = openGoalModal;
-window.saveTx = saveTx;
-window.saveHabit = saveHabit;
-window.saveGoal = saveGoal;
-window.toggleHabit = toggleHabit;
-window.editHabit = editHabit;
-window.deleteHabit = deleteHabit;
-window.filterTx = filterTx;
-window.setTxType = setTxType;
-window.quickMood = quickMood;
-window.pickMood = pickMood;
-window.confirmMood = confirmMood;
-window.saveMoodNote = saveMoodNote;
-window.addGoalProgress = addGoalProgress;
-window.deleteGoal = deleteGoal;
-window.handleLogin = handleLogin;
-window.handleSignup = handleSignup;
-window.handleGoogleLogin = handleGoogleLogin;
-window.handleLogout = handleLogout;
-window.handleReset = handleReset;
-window.switchAuthMode = switchAuthMode;
-window.saveCompleteProfile = saveCompleteProfile;
-
-initApp();
+  initApp();
 </script>
 </body>
 </html>
