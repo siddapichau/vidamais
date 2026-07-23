@@ -2,135 +2,75 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Admin • Vida+ AI • Protegido</title>
-<link rel="icon" type="image/png" href="assets/favicon.png">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin • Controle Total</title>
 <link rel="stylesheet" href="css/style.css">
 <style>
-.admin{max-width:1280px;margin:0 auto;padding:16px 12px 100px}
-.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
-.apanel{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:14px;box-shadow:var(--shadow-sm)}
-.apanel h3{font-size:16px;margin-bottom:2px;line-height:1.1}
-.apanel small{color:var(--muted);font-size:11px;line-height:1.3;display:block}
-.kv{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;gap:8px}
-.kv:last-child{border:none}
-.code{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--bg-2);padding:10px 12px;border-radius:10px;border:1px solid var(--border);overflow:auto;word-break:break-all;white-space:pre-wrap;line-height:1.4}
-.user-row{display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid var(--border);border-radius:14px;background:var(--card);gap:8px}
-.ai-chat{height:300px;overflow:auto;display:grid;gap:8px;padding:10px;background:var(--bg-2);border-radius:12px;border:1px solid var(--border)}
-.msg{padding:10px 12px;border-radius:12px;font-size:12px;line-height:1.4;max-width:90%;word-break:break-word}
-.msg.user{background:var(--text);color:white;justify-self:end;border-bottom-right-radius:4px}
-.msg.ai{background:var(--card);border:1px solid var(--border);justify-self:start;border-bottom-left-radius:4px}
-.topbar-admin{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:16px;padding:12px 14px;background:var(--card);border:1px solid var(--border);border-radius:16px;position:sticky;top:10px;z-index:10;backdrop-filter:blur(12px)}
+.admin{max-width:1200px;margin:0 auto;padding:20px;}
+.user-card{background:var(--bg-2); padding:16px; border-radius:12px; margin-bottom:12px; border:1px solid var(--border);}
+.user-info{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;}
 </style>
 </head>
-<body>
+<body style="background:var(--card)">
 <div class="admin">
-  <div id="authGuard"></div>
-  <div class="topbar-admin">
-    <div style="display:flex;align-items:center;gap:10px;min-width:0">
-      <div style="min-width:0"><h1 style="font-size:18px;line-height:.95;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Admin Dashboard</h1><p id="adminEmailStatus" style="font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></p></div>
-    </div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0"><button class="btn btn-ghost btn-sm" onclick="location.href='index.html'">Voltar ao App</button><button class="btn btn-primary btn-sm" onclick="handleLogoutAdmin()">Sair</button></div>
+  <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+    <h2>Painel de Controle Admin</h2>
+    <button class="btn btn-ghost" onclick="location.href='index.html'">Voltar para o App</button>
   </div>
 
-  <div id="adminBlocked" style="display:none; border-color:#F43F5E; background:#FEF2F2; text-align:center; padding:24px" class="card">
-    <div style="font-size:40px">🔒</div><h2 style="color:#991B1B;margin-top:10px;font-size:18px">Acesso negado</h2><p style="color:#991B1B;font-size:12px;margin-top:8px;line-height:1.4">Painel exclusivo para administradores.</p><button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="location.href='index.html'">Voltar</button>
-  </div>
-
-  <div id="adminContent" style="display:none">
-    <div class="tiles">
-      <div class="apanel">
-        <h3>Sistema de Usuários</h3><small>Listagem geral do banco de dados</small>
-        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap"><button class="btn btn-ghost btn-sm" onclick="loadUsers()">↻ Carregar Usuários</button></div>
-        <div id="usersList" style="margin-top:10px;max-height:460px;overflow:auto;display:grid;gap:8px"></div>
-        <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><span id="userCount" style="font-size:10px;color:var(--muted);align-self:center">0 usuários</span></div>
+  <div class="grid grid-2">
+    <div class="card">
+      <h3 style="margin-bottom:10px;">Gestão de Temas do Sistema</h3>
+      <p style="font-size:12px; color:var(--muted); margin-bottom:16px;">Selecione quais temas são liberados para contas Free vs Premium (Aplica direto no banco de dados do App).</p>
+      
+      <div style="display:grid; gap:8px;">
+        <label><input type="checkbox" checked disabled> Light / Dark (Padrão)</label>
+        <label><input type="checkbox" checked> Dracula (Requer Premium)</label>
+        <label><input type="checkbox" checked> Cyberpunk (Requer Premium)</label>
+        <label><input type="checkbox" checked> Aurora (Requer Premium)</label>
       </div>
-      <div class="apanel">
-        <h3>Assistente IA Admin</h3><small>Controle e relatórios</small>
-        <div id="aiChat" class="ai-chat" style="margin-top:10px"></div>
-        <div style="display:flex;gap:6px;margin-top:8px"><input id="aiInput" class="input" placeholder="Pergunte..." style="height:38px" onkeydown="if(event.key==='Enter') sendAI()"><button class="btn btn-primary btn-sm" onclick="sendAI()">Enviar</button></div>
+      <button class="btn btn-primary btn-sm" style="margin-top:16px;" onclick="alert('Políticas de temas salvas no Servidor.')">Salvar Políticas de Temas</button>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-bottom:10px;">Gestão de Clientes (Usuários)</h3>
+      <button class="btn btn-primary btn-sm" onclick="loadAllClients()">↻ Recarregar Clientes do Banco</button>
+      
+      <div id="clientList" style="margin-top:16px; max-height:400px; overflow-y:auto;">
+        <p style="font-size:12px; color:var(--muted)">Clique em recarregar para listar a base.</p>
       </div>
     </div>
   </div>
 </div>
 
-<div class="toast-stack" id="toasts"></div>
-
 <script type="module">
-import { auth, db, FIREBASE_DB_URL, firebaseConfig, ADMIN_EMAIL } from './js/firebase.js';
 import { VidaFirebase } from './js/firebase.js';
-import { onAuthStateChanged, signOut as fbSignOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-window.toast=(msg,ico='✦')=>{ const s=document.getElementById('toasts'); const el=document.createElement('div'); el.className='toast'; el.innerHTML=`<div class="t-ico">${ico}</div><div>${msg}</div>`; s.appendChild(el); setTimeout(()=>el.remove(),3500); };
-
-let allUsersCache = [];
-
-onAuthStateChanged(auth, async (user)=>{
-  const blocked=document.getElementById('adminBlocked');
-  const content=document.getElementById('adminContent');
-  const status=document.getElementById('adminEmailStatus');
-  if(!user || user.email.toLowerCase()!==ADMIN_EMAIL.toLowerCase()){
-    blocked.style.display='block';
-    content.style.display='none';
-    if(status) status.textContent='Acesso não autorizado.';
-    return;
+window.loadAllClients = async () => {
+  const container = document.getElementById('clientList');
+  container.innerHTML = '<p>Buscando no Firebase...</p>';
+  try {
+    const list = await VidaFirebase.adminListUsers();
+    container.innerHTML = '';
+    list.forEach(u => {
+      container.innerHTML += `
+        <div class="user-card">
+          <div class="user-info">
+            <div>
+              <b>${u.name || 'Sem nome cadastrado'}</b> ${u.premium ? '💎 (Premium)' : ''}<br>
+              <small style="color:var(--muted)">Email: ${u.email}</small><br>
+              <small style="color:var(--muted)">Telefone: ${u.phone || 'N/A'}</small>
+            </div>
+            <div>
+              <button class="btn btn-ghost btn-sm" onclick="alert('Função em desenvolvimento. ID: ${u.uid}')">Tornar Premium</button>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+  } catch(e) {
+    container.innerHTML = `<p style="color:red">Erro: Você não está logado como admin ou a regra do banco bloqueou.</p>`;
   }
-  blocked.style.display='none';
-  content.style.display='block';
-  if(status) status.textContent=`✓ Logado como admin: ${user.email}`;
-  initAiChat();
-});
-
-window.loadUsers=async()=>{
-  const cont=document.getElementById('usersList');
-  if(cont) cont.innerHTML='<p style="font-size:11px;color:var(--muted)">Carregando...</p>';
-  try{
-    const list=await VidaFirebase.adminListUsers();
-    allUsersCache=list;
-    renderUsersFiltered(list);
-    const countEl=document.getElementById('userCount');
-    if(countEl) countEl.textContent=`${list.length} usuários`;
-  }catch(e){
-    console.error(e);
-    toast('Erro: '+e.message,'⚠️');
-  }
-};
-
-function renderUsersFiltered(list){
-  const cont=document.getElementById('usersList'); if(!cont) return;
-  cont.innerHTML='';
-  list.forEach(u=>{
-    const div=document.createElement('div'); div.className='user-row';
-    div.innerHTML=`<div style="flex:1;min-width:0"><b style="font-size:12px">${u.name||'Sem nome'}</b><br><small style="color:var(--muted);font-size:10px;word-break:break-all">${u.email||''} • ${u.xp||0} XP</small></div><div style="display:flex;flex-direction:column;gap:6px"><button class="btn btn-ghost btn-sm" style="font-size:11px" onclick="toggleRemotePremium('${u.uid}', ${!u.premium})">${u.premium?'Remover Premium':'Ativar Premium'}</button></div>`;
-    cont.appendChild(div);
-  });
-}
-
-window.toggleRemotePremium=async(uid,val)=>{
-  try{ const ok=await VidaFirebase.adminSetPremium(uid,val); toast(ok?(val?'Premium ON':'Premium OFF'):'Falha','★'); if(ok) loadUsers(); }catch(e){ toast('Erro: '+e.message,'⚠️'); }
-};
-
-window.handleLogoutAdmin=async()=>{ await fbSignOut(auth); toast('Deslogado','👋'); setTimeout(()=>location.href='index.html',600); };
-
-function initAiChat(){
-  const chat=document.getElementById('aiChat'); if(!chat) return;
-  chat.innerHTML='';
-  addAiMsg('ai','Painel IA carregado com sucesso. Selecione os usuários no painel lateral ou gere relatórios gerenciais.');
-}
-
-function addAiMsg(who,text){
-  const chat=document.getElementById('aiChat'); if(!chat) return;
-  const div=document.createElement('div'); div.className='msg '+who; div.textContent=text; chat.appendChild(div); chat.scrollTop=chat.scrollHeight;
-}
-
-window.sendAI=()=>{
-  const input=document.getElementById('aiInput'); if(!input) return;
-  const q=input.value.trim(); if(!q) return;
-  addAiMsg('user', q); input.value='';
-  setTimeout(()=>{
-    addAiMsg('ai', 'Recebido: "'+q+'". Função em desenvolvimento para análise de dados do RTDB.');
-  }, 500);
 };
 </script>
 </body>
