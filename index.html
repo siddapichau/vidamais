@@ -1,22 +1,35 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Vida+ AI — Evolution OS</title>
-  <link rel="icon" type="image/png" href="assets/favicon.png">
-  <link rel="apple-touch-icon" href="assets/logo.png">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Fraunces:opsz,wght@9..144,700;9..144,800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#123C7A">
-  <style>
-    /* Seus estilos atuais... */
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Vida+ AI — Evolution OS - Home</title>
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,700;9..144,800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#123C7A">
+<style>
+.auth-modal .modal{max-width:400px}
+.google-btn{background:white;border:1px solid var(--border);color:var(--text);height:46px;border-radius:12px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;transition:.2s;width:100%}
+.google-btn:hover{background:var(--bg-2)}
+.google-btn:disabled{opacity:.6;cursor:not-allowed}
+.divider{display:flex;align-items:center;gap:12px;color:var(--muted-2);font-size:11px;font-weight:700;letter-spacing:.12em;margin:8px 0}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--border)}
+.auth-tabs{display:flex;gap:6px;background:var(--bg-2);padding:4px;border-radius:12px;margin-top:12px}
+.auth-tabs button{flex:1;height:36px;border-radius:9px;border:none;background:transparent;font-weight:700;font-size:13px;cursor:pointer;transition:.2s;color:var(--muted)}
+.auth-tabs button.active{background:var(--card);color:var(--text);box-shadow:0 2px 8px rgba(15,23,42,.08);border:1px solid var(--border)}
+#pageContainer{animation:fade .25s ease}
+#homeView .grid{animation:fade .35s ease}
+.page-loader{padding:50px 20px;text-align:center;color:var(--muted)}
+</style>
 </head>
 <body>
 <div class="app">
-  <!-- Sidebar (igual) -->
+  <!-- MENU -->
   <aside class="sidebar">
     <div class="brand">
       <div class="logo has-img"><img id="logoImg" src="assets/logo.png" alt="Vida+ AI"><span style="display:none">V+</span></div>
@@ -87,54 +100,138 @@
       </div>
     </div>
 
-    <!-- CONTAINER PARA PAGES (inicialmente oculto) -->
+    <!-- CONTAINER PARA PAGES -->
     <div id="pageContainer" style="display:none"></div>
 
   </main>
 </div>
 
-<!-- MODAIS (mantidos os mesmos) -->
+<!-- AUTH - SEM OPEN POR PADRÃO -->
+<div class="overlay" id="overlayAuth" style="z-index:150; display:none;">
+  <div class="modal auth-modal" style="max-width:400px">
+    <div style="padding:22px 22px 0;text-align:center">
+      <img src="assets/logo.png" style="width:60px;height:60px;border-radius:14px;margin:0 auto 10px;display:block;object-fit:cover" onerror="this.style.display='none'">
+      <h2 id="authTitle" style="font-size:24px;line-height:1">Entrar no Vida+ AI</h2>
+      <p style="color:var(--muted);font-size:12px;margin-top:6px">Acesse sua evolução diária</p>
+      <div class="auth-tabs">
+        <button class="active" id="tabLogin" onclick="appSwitchAuthMode('login')">Entrar</button>
+        <button id="tabSignup" onclick="appSwitchAuthMode('signup')">Criar conta</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div id="authLoginView" style="display:grid;gap:10px">
+        <button class="google-btn" id="authBtnGoogle" type="button" onclick="appHandleGoogleLogin()"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px"> Continuar com Google</button>
+        <div class="divider">OU E-MAIL</div>
+        <input id="authEmail" class="input" type="email" placeholder="seu@email.com" autocomplete="email">
+        <input id="authPass" class="input" type="password" placeholder="Sua senha" autocomplete="current-password">
+        <button class="btn btn-primary" id="authBtnLogin" type="button" onclick="appHandleLogin()" style="height:46px">Entrar</button>
+        <span class="link" style="text-align:center;display:block" onclick="appHandleReset()">Esqueci minha senha</span>
+      </div>
+      <div id="authSignupView" style="display:none;gap:10px">
+        <button class="google-btn" type="button" onclick="appHandleGoogleLogin()"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px"> Cadastrar com Google</button>
+        <div class="divider">OU</div>
+        <div class="row"><input id="authFirstName" class="input" placeholder="Nome"><input id="authLastName" class="input" placeholder="Sobrenome"></div>
+        <input id="authEmailSignup" class="input" type="email" placeholder="seu@email.com">
+        <input id="authPassSignup" class="input" type="password" placeholder="Crie senha (mín 6)">
+        <select id="authCurrency" class="input"><option value="BRL">R$ Real</option><option value="USD">US$ Dólar</option><option value="EUR">€ Euro</option></select>
+        <button class="btn btn-primary" id="authBtnSignup" type="button" onclick="appHandleSignup()" style="height:46px">Criar conta</button>
+      </div>
+      <div id="authError" style="display:none;padding:10px 12px;border-radius:10px;background:#FEF2F2;border:1px solid #FECACA;color:#991B1B;font-size:12px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- COMPLETAR PERFIL -->
+<div class="overlay" id="overlayCompleteProfile" style="z-index:160">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-head"><h3>Completar perfil (opcional)</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayCompleteProfile')">Pular</button></div>
+    <div class="modal-body">
+      <div class="row"><input id="completeFirstName" class="input" placeholder="Nome"><input id="completeLastName" class="input" placeholder="Sobrenome"></div>
+      <input id="completePhone" class="input" placeholder="Celular">
+      <select id="completeCurrency" class="input"><option value="BRL">R$ Real</option><option value="USD">US$ Dólar</option></select>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="appCloseModal('overlayCompleteProfile')">Pular</button><button class="btn btn-primary" onclick="appSaveCompleteProfile()">Salvar</button></div>
+  </div>
+</div>
+
+<!-- MODAIS ESSENCIAIS -->
+<!-- ... (mantidos os mesmos) ... -->
 
 <div class="toast-stack" id="toasts"></div>
 
 <script type="module">
-  import { initApp, loadPage, toggleTheme, openQuickAdd, openPremium, closeModal, openTxModal, openHabitModal, openMoodModal, openGoalModal, saveTx, saveHabit, saveGoal, toggleHabit, editHabit, deleteHabit, filterTx, setTxType, quickMood, pickMood, confirmMood, saveMoodNote, addGoalProgress, deleteGoal, saveProfile, saveCompleteProfile, changeCurrency, handleLogin, handleSignup, handleGoogleLogin, handleLogout, handleReset, switchAuthMode } from './js/app.js';
+import { initApp, loadPage, toggleTheme, openQuickAdd, openPremium, closeModal, openTxModal, openHabitModal, openMoodModal, openGoalModal, saveTx, saveHabit, saveGoal, toggleHabit, editHabit, deleteHabit, filterTx, setTxType, quickMood, pickMood, confirmMood, saveMoodNote, addGoalProgress, deleteGoal, saveProfile, saveCompleteProfile, changeCurrency, handleLogin, handleSignup, handleGoogleLogin, handleLogout, handleReset, switchAuthMode } from './js/app.js';
 
-  window.appLoadPage = loadPage;
-  window.appToggleTheme = toggleTheme;
-  window.appOpenQuickAdd = openQuickAdd;
-  window.appOpenPremium = openPremium;
-  window.appCloseModal = closeModal;
-  window.appOpenTxModal = openTxModal;
-  window.appOpenHabitModal = openHabitModal;
-  window.appOpenMoodModal = openMoodModal;
-  window.appOpenGoalModal = openGoalModal;
-  window.appSaveTx = saveTx;
-  window.appSaveHabit = saveHabit;
-  window.appSaveGoal = saveGoal;
-  window.appToggleHabit = toggleHabit;
-  window.appEditHabit = editHabit;
-  window.appDeleteHabit = deleteHabit;
-  window.appFilterTx = filterTx;
-  window.appSetTxType = setTxType;
-  window.appQuickMood = quickMood;
-  window.appPickMood = pickMood;
-  window.appConfirmMood = confirmMood;
-  window.appSaveMoodNote = saveMoodNote;
-  window.appAddGoalProgress = addGoalProgress;
-  window.appDeleteGoal = deleteGoal;
-  window.appSaveProfile = saveProfile;
-  window.appSaveCompleteProfile = saveCompleteProfile;
-  window.appChangeCurrency = changeCurrency;
-  window.appHandleLogin = handleLogin;
-  window.appHandleSignup = handleSignup;
-  window.appHandleGoogleLogin = handleGoogleLogin;
-  window.appHandleLogout = handleLogout;
-  window.appHandleReset = handleReset;
-  window.appSwitchAuthMode = switchAuthMode;
+window.appLoadPage = loadPage;
+window.appToggleTheme = toggleTheme;
+window.appOpenQuickAdd = openQuickAdd;
+window.appOpenPremium = openPremium;
+window.appCloseModal = closeModal;
+window.appOpenTxModal = openTxModal;
+window.appOpenHabitModal = openHabitModal;
+window.appOpenMoodModal = openMoodModal;
+window.appOpenGoalModal = openGoalModal;
+window.appSaveTx = saveTx;
+window.appSaveHabit = saveHabit;
+window.appSaveGoal = saveGoal;
+window.appToggleHabit = toggleHabit;
+window.appEditHabit = editHabit;
+window.appDeleteHabit = deleteHabit;
+window.appFilterTx = filterTx;
+window.appSetTxType = setTxType;
+window.appQuickMood = quickMood;
+window.appPickMood = pickMood;
+window.appConfirmMood = confirmMood;
+window.appSaveMoodNote = saveMoodNote;
+window.appAddGoalProgress = addGoalProgress;
+window.appDeleteGoal = deleteGoal;
+window.appSaveProfile = saveProfile;
+window.appSaveCompleteProfile = saveCompleteProfile;
+window.appChangeCurrency = changeCurrency;
+window.appHandleLogin = handleLogin;
+window.appHandleSignup = handleSignup;
+window.appHandleGoogleLogin = handleGoogleLogin;
+window.appHandleLogout = handleLogout;
+window.appHandleReset = handleReset;
+window.appSwitchAuthMode = switchAuthMode;
 
-  // Inicializa
+// compat
+window.loadPage = loadPage;
+window.toggleTheme = toggleTheme;
+window.openQuickAdd = openQuickAdd;
+window.openPremium = openPremium;
+window.closeModal = closeModal;
+window.openTxModal = openTxModal;
+window.openHabitModal = openHabitModal;
+window.openMoodModal = openMoodModal;
+window.openGoalModal = openGoalModal;
+window.saveTx = saveTx;
+window.saveHabit = saveHabit;
+window.saveGoal = saveGoal;
+window.toggleHabit = toggleHabit;
+window.editHabit = editHabit;
+window.deleteHabit = deleteHabit;
+window.filterTx = filterTx;
+window.setTxType = setTxType;
+window.quickMood = quickMood;
+window.pickMood = pickMood;
+window.confirmMood = confirmMood;
+window.saveMoodNote = saveMoodNote;
+window.addGoalProgress = addGoalProgress;
+window.deleteGoal = deleteGoal;
+window.handleLogin = handleLogin;
+window.handleSignup = handleSignup;
+window.handleGoogleLogin = handleGoogleLogin;
+window.handleLogout = handleLogout;
+window.handleReset = handleReset;
+window.switchAuthMode = switchAuthMode;
+window.saveCompleteProfile = saveCompleteProfile;
+
+// Inicializa apenas uma vez
+if (!window.__vidaplus_inited) {
+  window.__vidaplus_inited = true;
   initApp();
+}
 </script>
 </body>
 </html>
