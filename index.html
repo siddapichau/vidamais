@@ -13,12 +13,14 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#123C7A">
 <style>
-/* Auth specific */
 .auth-modal .modal{max-width:420px}
 .google-btn{background:white;border:1px solid var(--border);color:var(--text);height:46px;border-radius:12px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;transition:.2s}
 .google-btn:hover{background:var(--bg-2)}
 .divider{display:flex;align-items:center;gap:12px;color:var(--muted-2);font-size:11px;font-weight:700;letter-spacing:.12em}
 .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--border)}
+#pageContainer{min-height:60vh}
+.page-loader{padding:60px 20px;text-align:center;color:var(--muted)}
+.page-loader b{display:block;font-size:16px;margin-top:12px;color:var(--text)}
 </style>
 </head>
 <body>
@@ -29,22 +31,23 @@
       <div class="brand-text"><b>Vida+ AI</b><i>Evolution OS</i></div>
     </div>
     <nav class="nav" id="nav">
-      <button class="active" data-view="dashboard"><span class="ico">◧</span> Dashboard</button>
-      <button data-view="financeiro"><span class="ico">₿</span> Financeiro</button>
-      <button data-view="habitos"><span class="ico">◍</span> Hábitos</button>
-      <button data-view="humor"><span class="ico">☺</span> Humor</button>
-      <button data-view="metas"><span class="ico">◎</span> Metas</button>
-      <button data-view="relatorios"><span class="ico">✦</span> Relatórios IA</button>
-      <button data-view="conquistas"><span class="ico">★</span> Conquistas</button>
-      <button data-view="admin" onclick="window.location.href='admin.html'" style="margin-top:8px;border-top:1px solid var(--border);padding-top:14px"><span class="ico">⚙</span> Admin</button>
+      <button class="active" data-page="dashboard" onclick="loadPage('dashboard')"><span class="ico">◧</span> Dashboard</button>
+      <button data-page="financeiro" onclick="loadPage('financeiro')"><span class="ico">₿</span> Financeiro</button>
+      <button data-page="habitos" onclick="loadPage('habitos')"><span class="ico">◍</span> Hábitos</button>
+      <button data-page="humor" onclick="loadPage('humor')"><span class="ico">☺</span> Humor</button>
+      <button data-page="metas" onclick="loadPage('metas')"><span class="ico">◎</span> Metas</button>
+      <button data-page="relatorios" onclick="loadPage('relatorios')"><span class="ico">✦</span> Relatórios IA</button>
+      <button data-page="conquistas" onclick="loadPage('conquistas')"><span class="ico">★</span> Conquistas</button>
+      <button data-page="perfil" onclick="loadPage('perfil')"><span class="ico">👤</span> Perfil</button>
+      <button data-page="admin" onclick="window.location.href='admin.html'" style="margin-top:8px;border-top:1px solid var(--border);padding-top:14px"><span class="ico">⚙</span> Admin</button>
     </nav>
     <div class="sidebar-foot">
-      <span class="premium-tag">VIDAMAISAI • Firebase</span>
-      <h4>Sincronizado em tempo real</h4>
-      <p id="userEmailChip" style="word-break:break-all">offline</p>
+      <span class="premium-tag" id="premiumTag">FREE • vidamaisai</span>
+      <h4 id="sidebarName">Sua evolução</h4>
+      <p id="userEmailChip" style="word-break:break-all">carregando...</p>
       <button class="btn btn-white btn-sm" onclick="openPremium()">Ver planos →</button>
-      <div id="syncStatus" style="margin-top:10px;font-size:10px;opacity:.9">● Conectando Firebase...</div>
-      <button class="btn btn-ghost btn-sm" style="margin-top:8px;background:rgba(255,255,255,.12);border:none;color:white;width:100%" onclick="handleLogout()">Sair da conta</button>
+      <div id="syncStatus" style="margin-top:10px;font-size:10px;opacity:.9">● Conectando...</div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:8px;background:rgba(255,255,255,.12);border:none;color:white;width:100%" onclick="handleLogout()">Sair</button>
     </div>
   </aside>
 
@@ -52,280 +55,123 @@
     <div class="topbar">
       <div class="search-wrap">
         <span class="sico">⌕</span>
-        <input id="globalSearch" placeholder="Buscar transação, hábito, insight... (⌘K)" />
+        <input id="globalSearch" placeholder="Buscar transação, hábito, insight... (⌘K) - 100% PT-BR" />
       </div>
       <div class="top-actions">
-        <span class="chip"><span class="dot"></span> <span id="streakLabel">Streak 0 dias</span></span>
+        <span class="chip" id="currencyChip"><span class="dot"></span> <span id="currencyLabelTop">BRL</span></span>
+        <span class="chip"><span class="dot"></span> <span id="streakLabel">Streak 0d</span></span>
         <button class="btn btn-ghost btn-sm" onclick="toggleTheme()">◐ Tema</button>
-        <div class="avatar" id="avatar" onclick="openAuthModal()">W</div>
-        <button class="btn btn-primary" onclick="openQuickAdd()">＋ Novo</button>
+        <div class="avatar" id="avatar" onclick="loadPage('perfil')">W</div>
+        <button class="btn btn-primary btn-sm" onclick="openQuickAdd()">＋ Novo</button>
       </div>
     </div>
 
-    <!-- DASHBOARD -->
-    <section class="view active" id="view-dashboard">
-      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px">
-        <div>
-          <h1 class="display" style="font-size:42px;line-height:.9;letter-spacing:-.04em">Bom dia, <span id="userName">Wesley</span> 👋</h1>
-          <p style="color:var(--muted);margin-top:8px;font-size:14.5px">Você completou <b id="todayProgressPct">0%</b> do seu dia ideal • <span id="todayDate"></span> • <span style="font-size:11px;background:var(--bg-2);padding:3px 8px;border-radius:100px;border:1px solid var(--border)">vidamaisai-default-rtdb.firebaseio.com</span></p>
-        </div>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-ghost" onclick="switchView('relatorios')">Ver IA Insights</button>
-          <button class="btn btn-primary" onclick="openMoodModal()">Registrar humor</button>
-        </div>
+    <div id="pageContainer">
+      <div class="page-loader">
+        <div style="font-size:42px">◧</div>
+        <b>Carregando Vida+ AI...</b>
+        <p style="font-size:13px;margin-top:6px;color:var(--muted)">Páginas modulares • Firebase vidamaisai • 100% PT-BR</p>
       </div>
-
-      <div class="grid grid-4">
-        <div class="card kpi">
-          <div class="kpi-head"><span class="kpi-label">Saldo Atual</span><span class="kpi-icon" style="background:#E0F2FE">💰</span></div>
-          <div class="kpi-value" id="balanceValue">R$ 0,00</div>
-          <div class="kpi-sub"><span class="badge badge-up" id="balanceTrend">+0%</span> vs mês passado • <span id="balanceSub">0 transações</span></div>
-          <div style="height:44px;margin-top:6px"><canvas id="miniBalance"></canvas></div>
-        </div>
-        <div class="card kpi">
-          <div class="kpi-head"><span class="kpi-label">XP & Nível</span><span class="kpi-icon" style="background:#FEF3C7">⚡</span></div>
-          <div class="kpi-value"><span id="levelLabel">Nv 1</span> <small id="xpLabel">0 XP</small></div>
-          <div class="lvl-bar"><i id="xpBar" style="width:0%"></i></div>
-          <div class="lvl-nodes"><span id="xpFrom">0 XP</span><span id="xpTo">500 XP</span></div>
-          <div class="kpi-sub">Próximo nível em <b id="xpNext">500 XP</b></div>
-        </div>
-        <div class="card kpi">
-          <div class="kpi-head"><span class="kpi-label">Hábitos Hoje</span><span class="kpi-icon" style="background:#DCFCE7">✅</span></div>
-          <div class="kpi-value"><span id="habitsDone">0</span>/<span id="habitsTotal">0</span> <small>feitos</small></div>
-          <div class="progress"><i id="habitsProgress" style="width:0%"></i></div>
-          <div class="kpi-sub" id="habitsMotivation">Comece o dia!</div>
-        </div>
-        <div class="card kpi">
-          <div class="kpi-head"><span class="kpi-label">Humor Atual</span><span class="kpi-icon" style="background:#F3E8FF" id="moodIcon">🙂</span></div>
-          <div class="kpi-value" id="moodLabel" style="font-size:24px">Normal</div>
-          <div class="kpi-sub" id="moodSub">Nenhum registro hoje</div>
-          <div style="margin-top:8px;display:flex;gap:6px" id="moodWeekDots"></div>
-        </div>
-      </div>
-
-      <div class="section"><div><h2>Seu dia em foco</h2><p>Check rápido para usar em menos de 30 segundos • Grava direto no Firebase</p></div><span class="link" onclick="switchView('habitos')">Gerenciar →</span></div>
-      <div class="grid grid-2">
-        <div class="card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><b>Hábitos de hoje</b><span style="font-size:12px;color:var(--muted)" id="habitsDate"></span></div>
-          <div id="todayHabits" style="display:grid;gap:10px"></div>
-        </div>
-        <div class="card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><b>Insights Vida+ AI</b><span class="badge" style="background:#EEF2FF;color:#4338CA">AO VIVO • Firebase</span></div>
-          <div id="aiInsights" style="display:grid;gap:10px"></div>
-          <button class="btn btn-ghost" style="width:100%;margin-top:12px" onclick="switchView('relatorios')">Abrir relatório completo</button>
-        </div>
-      </div>
-
-      <div class="section"><div><h2>Resumo financeiro</h2><p>Seus últimos 7 dias e distribuição por categoria</p></div><span class="link" onclick="switchView('financeiro')">Ver detalhes →</span></div>
-      <div class="grid grid-2">
-        <div class="card"><b style="font-size:14px">Fluxo semanal</b><div class="chart-box" style="margin-top:12px"><canvas id="weeklyFlow"></canvas></div></div>
-        <div class="card"><b style="font-size:14px">Distribuição de gastos</b><div class="chart-box" style="margin-top:12px"><canvas id="categoryDonut"></canvas></div></div>
-      </div>
-    </section>
-
-    <!-- FINANCEIRO -->
-    <section class="view" id="view-financeiro">
-      <div class="section" style="margin-top:0"><div><h2>Financeiro inteligente</h2><p>Controle simplificado • Tudo salvo em vidamaisai Realtime DB</p></div>
-        <div style="display:flex;gap:8px"><button class="btn btn-ghost" onclick="exportFin()">Exportar PDF</button><button class="btn btn-primary" onclick="openTxModal()">＋ Transação</button></div>
-      </div>
-      <div class="grid grid-3">
-        <div class="card"><span class="kpi-label">Receitas no mês</span><div class="kpi-value" id="incomeMonth" style="color:var(--emerald)">R$ 0</div><div class="kpi-sub">Total de entradas • Firebase</div></div>
-        <div class="card"><span class="kpi-label">Despesas no mês</span><div class="kpi-value" id="expenseMonth" style="color:var(--rose)">R$ 0</div><div class="kpi-sub">Total de saídas</div></div>
-        <div class="card"><span class="kpi-label">Economia</span><div class="kpi-value" id="savingMonth">R$ 0</div><div class="kpi-sub"><span id="savingPct">0%</span> da renda guardada</div></div>
-      </div>
-      <div class="grid grid-2" style="margin-top:18px">
-        <div class="card"><b>Transações (RTDB)</b>
-          <div style="display:flex;gap:8px;margin:14px 0;flex-wrap:wrap">
-            <button class="pill active" data-filter="all" onclick="filterTx('all',this)">Tudo</button>
-            <button class="pill" data-filter="income" onclick="filterTx('income',this)">Receitas</button>
-            <button class="pill" data-filter="expense" onclick="filterTx('expense',this)">Despesas</button>
-            <input id="txSearch" class="input" placeholder="Filtrar..." style="height:36px;margin-left:auto;max-width:200px" oninput="renderTx()">
-          </div>
-          <div id="txList" style="max-height:520px;overflow:auto;padding-right:4px"></div>
-        </div>
-        <div style="display:grid;gap:18px">
-          <div class="card"><b>Gastos por categoria • Mês</b><div class="chart-box" style="margin-top:14px"><canvas id="finCategory"></canvas></div></div>
-          <div class="card"><b>Evolução de saldo • 30 dias</b><div class="chart-box" style="margin-top:14px"><canvas id="finLine"></canvas></div><div class="insight" style="margin-top:14px"><div class="i-ico">✦</div><div><b id="finInsightTitle">Análise</b><p id="finInsightText">Adicione dados para ver insights.</p></div></div></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- HABITOS -->
-    <section class="view" id="view-habitos">
-      <div class="section" style="margin-top:0"><div><h2>Hábitos que transformam</h2><p>Marque em 1 toque • +20 XP • sync Firebase</p></div><button class="btn btn-primary" onclick="openHabitModal()">＋ Novo hábito</button></div>
-      <div class="grid grid-4" id="habitStats"></div>
-      <div class="grid grid-2" style="margin-top:18px">
-        <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><b>Biblioteca de hábitos</b><span class="link" onclick="seedHabits()">Restaurar padrões</span></div><div id="habitsLibrary" style="display:grid;gap:10px"></div></div>
-        <div class="card"><b>Heatmap semanal</b><p style="font-size:13px;color:var(--muted);margin:4px 0 14px">Últimos 7 dias • Firebase RTDB</p><div id="habitHeatmap" style="display:grid;gap:10px"></div><div class="insight" style="margin-top:16px"><div class="i-ico">🔥</div><div><b id="habitInsightTitle">Você está consistente</b><p id="habitInsightText">Continue assim para desbloquear Guardião.</p></div></div></div>
-      </div>
-    </section>
-
-    <!-- HUMOR -->
-    <section class="view" id="view-humor">
-      <div class="section" style="margin-top:0"><div><h2>Seu diário emocional</h2><p>Entenda como humor, hábitos e gastos se conectam</p></div><button class="btn btn-primary" onclick="openMoodModal()">＋ Como você está?</button></div>
-      <div class="grid grid-2">
-        <div class="card">
-          <b>Hoje, como você se sente?</b>
-          <div class="mood-grid" style="margin:16px 0">
-            <button class="mood-opt" data-mood="1" onclick="quickMood(1)"><span class="em">😞</span><b>Muito Ruim</b></button>
-            <button class="mood-opt" data-mood="2" onclick="quickMood(2)"><span class="em">😐</span><b>Ruim</b></button>
-            <button class="mood-opt" data-mood="3" onclick="quickMood(3)"><span class="em">🙂</span><b>Normal</b></button>
-            <button class="mood-opt" data-mood="4" onclick="quickMood(4)"><span class="em">😁</span><b>Bom</b></button>
-            <button class="mood-opt" data-mood="5" onclick="quickMood(5)"><span class="em">🤩</span><b>Excelente</b></button>
-          </div>
-          <textarea id="moodNote" class="input" placeholder="Quer anotar algo? (opcional) Ex: Dormi bem, treinei cedo..."></textarea>
-          <button class="btn btn-primary" style="width:100%;margin-top:10px" onclick="saveMoodNote()">Salvar registro • +15 XP</button>
-          <div style="margin-top:18px"><b style="font-size:13px">Calendário do mês</b><div class="cal" id="moodCalendar" style="margin-top:10px"></div></div>
-        </div>
-        <div style="display:grid;gap:18px">
-          <div class="card"><b>Curva de humor • 14 dias</b><div class="chart-box" style="margin-top:12px"><canvas id="moodChart"></canvas></div></div>
-          <div class="card"><b>Padrões detectados</b><div id="moodPatterns" style="display:grid;gap:10px;margin-top:12px"></div></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- METAS -->
-    <section class="view" id="view-metas">
-      <div class="section" style="margin-top:0"><div><h2>Metas vivas</h2><p>Transforme intenção em progresso mensurável • Firebase</p></div><button class="btn btn-primary" onclick="openGoalModal()">＋ Nova meta</button></div>
-      <div class="grid grid-3" id="goalsGrid"></div>
-    </section>
-
-    <!-- RELATORIOS -->
-    <section class="view" id="view-relatorios">
-      <div class="section" style="margin-top:0"><div><h2>Relatórios Vida+ AI</h2><p>IA que cruza finanças, hábitos e humor • dados do Firebase</p></div>
-        <div style="display:flex;gap:8px"><button class="btn btn-ghost" onclick="exportReport()">Exportar PDF</button><button class="btn btn-primary" onclick="regenerateAI()">Regenerar com IA ✦</button></div>
-      </div>
-      <div class="grid grid-3">
-        <div class="card" style="background:linear-gradient(135deg, var(--primary), var(--violet));color:white;border:none"><span class="kpi-label" style="color:rgba(255,255,255,.7)">Score Vida+ hoje</span><div class="kpi-value" style="font-size:48px" id="lifeScore">0</div><div style="font-size:13px;opacity:.8" id="lifeScoreDesc">Calibrando seus dados...</div><div class="progress" style="background:rgba(255,255,255,.2);margin-top:12px"><i id="lifeScoreBar" style="background:white;width:0%"></i></div></div>
-        <div class="card"><b>Resumo financeiro IA</b><div id="reportFinance" style="display:grid;gap:10px;margin-top:12px"></div></div>
-        <div class="card"><b>Resumo comportamental</b><div id="reportBehavior" style="display:grid;gap:10px;margin-top:12px"></div></div>
-      </div>
-      <div class="grid grid-2" style="margin-top:18px">
-        <div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><b>Relatório semanal inteligente</b><span class="badge" style="background:#EEF2FF;color:#4338CA">GPT • LOCAL + Firebase</span></div><div id="weeklyAIReport" style="margin-top:14px;display:grid;gap:12px"></div></div>
-        <div class="card"><b>Correlações poderosas</b><p style="font-size:13px;color:var(--muted);margin:4px 0 12px">Descobertas automáticas nos seus dados</p><div id="correlations" style="display:grid;gap:10px"></div><div class="card" style="background:var(--bg-2);margin-top:14px;border-style:dashed"><b style="font-size:13px">💡 Dica Premium</b><p style="font-size:13px;color:var(--muted);margin-top:4px">Usuários Premium recebem projeções de 90 dias e alertas preventivos.</p><button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="openPremium()">Desbloquear Premium</button></div></div>
-      </div>
-    </section>
-
-    <!-- CONQUISTAS -->
-    <section class="view" id="view-conquistas">
-      <div class="section" style="margin-top:0"><div><h2>Conquistas & Nível</h2><p>Gamificação que te puxa para cima todos os dias • XP salvo no Firebase</p></div></div>
-      <div class="grid grid-2">
-        <div class="card"><div style="display:flex;gap:14px;align-items:center"><div style="width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,#F59E0B,#F97316);display:grid;place-items:center;font-size:28px">⚡</div><div><div style="font-size:12px;letter-spacing:.12em;font-weight:800;color:var(--muted)">NÍVEL ATUAL</div><div style="font-size:32px;font-weight:800" id="achLevel">Nv 1 • Explorador</div><div style="font-size:13px;color:var(--muted)" id="achXp">0 XP • 500 para o próximo</div></div></div><div style="margin-top:18px"><div class="lvl-bar" style="height:12px"><i id="achBar" style="width:0%"></i></div><div class="lvl-nodes"><span>0</span><span>500</span><span>1500</span><span>3000</span><span>5000</span><span>7500+</span></div></div><div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:18px"><div class="card" style="padding:14px"><b style="font-size:12px;letter-spacing:.08em;color:var(--muted)">STREAK MÁXIMO</b><div style="font-size:22px;font-weight:800" id="achStreak">0 dias</div></div><div class="card" style="padding:14px"><b style="font-size:12px;letter-spacing:.08em;color:var(--muted)">HÁBITOS FEITOS</b><div style="font-size:22px;font-weight:800" id="achHabits">0</div></div></div></div>
-        <div class="card"><b>Medalhas</b><div id="achList" style="display:grid;gap:10px;margin-top:12px"></div></div>
-      </div>
-    </section>
+    </div>
   </main>
 </div>
 
-<!-- AUTH MODAL -->
+<!-- AUTH MODAL - Completo com nome/sobrenome/celular -->
 <div class="overlay open" id="overlayAuth" style="z-index:150">
-  <div class="modal auth-modal" style="max-width:420px">
-    <div style="padding:26px 26px 0;text-align:center">
+  <div class="modal auth-modal" style="max-width:440px">
+    <div style="padding:24px 24px 0;text-align:center">
       <img src="assets/logo.png" style="width:64px;height:64px;border-radius:16px;margin:0 auto 12px;display:block;object-fit:cover">
-      <h2 style="font-size:28px">Bem-vindo ao Vida+ AI</h2>
-      <p style="color:var(--muted);font-size:13px;margin-top:6px">Login com Email ou Google • Dados salvos em <b>vidamaisai</b> Firebase RTDB</p>
+      <h2 style="font-size:26px;line-height:1">Bem-vindo ao Vida+ AI</h2>
+      <p style="color:var(--muted);font-size:12px;margin-top:8px;line-height:1.4">Login Email ou Google • Dados salvos em <b>vidamaisai-default-rtdb</b> • Cadastro completo: nome, sobrenome, celular</p>
     </div>
     <div class="modal-body">
       <button class="google-btn" id="authBtnGoogle" onclick="handleGoogleLogin()"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px"> Continuar com Google</button>
-      <div class="divider">OU EMAIL</div>
-      <input id="authName" class="input" placeholder="Seu nome (só no cadastro)">
+      <div class="divider">OU EMAIL COMPLETO</div>
+      <div class="row"><input id="authFirstName" class="input" placeholder="Nome"><input id="authLastName" class="input" placeholder="Sobrenome"></div>
+      <input id="authPhone" class="input" placeholder="Celular (48) 9 9999-9999">
+      <input id="authName" class="input" placeholder="Nome completo (antigo, opcional)" style="display:none">
       <input id="authEmail" class="input" type="email" placeholder="seu@email.com">
-      <input id="authPass" class="input" type="password" placeholder="Senha (mín 6 caracteres)">
-      <div class="row"><button class="btn btn-primary" id="authBtnLogin" onclick="handleLogin()" style="height:46px">Entrar</button><button class="btn btn-ghost" id="authBtnSignup" onclick="handleSignup()" style="height:46px">Criar conta</button></div>
-      <span class="link" style="text-align:center;display:block" onclick="handleReset()">Esqueci minha senha → enviar email</span>
-      <div class="code" style="font-size:11px;text-align:center">Auth: vidamaisai • RTDB: vidamaisai-default-rtdb • Analytics ativo<br>Modo offline: funciona local até logar</div>
+      <input id="authPass" class="input" type="password" placeholder="Senha (mín 6)">
+      <select id="authCurrency" class="input"><option value="BRL">Moeda: R$ Real (BRL)</option><option value="USD">US$ Dólar</option><option value="EUR">€ Euro</option><option value="GBP">£ Libra</option><option value="JPY">¥ Iene</option><option value="ARS">$AR Peso Argentino</option><option value="MXN">$MX Peso Mexicano</option><option value="BTC">₿ Bitcoin</option></select>
+      <div class="row"><button class="btn btn-primary" id="authBtnLogin" onclick="handleLogin()" style="height:46px">Entrar</button><button class="btn btn-ghost" id="authBtnSignup" onclick="handleSignup()" style="height:46px">Criar conta completa</button></div>
+      <span class="link" style="text-align:center;display:block" onclick="handleReset()">Esqueci senha → email</span>
+      <div class="code" style="font-size:10px;text-align:center">100% Português • Auth vidamaisai • RTDB grava tudo • Admin protegido wesleystudio@gmail.com</div>
     </div>
   </div>
 </div>
 
-<!-- OUTROS MODALS -->
+<!-- COMPLETAR PERFIL (quando Google sem dados) -->
+<div class="overlay" id="overlayCompleteProfile" style="z-index:160">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-head"><h3>Complete seu perfil</h3></div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--muted)">Detectamos que seu cadastro Google está incompleto. Preencha para liberar tudo 100% PT-BR.</p>
+      <div class="row"><input id="completeFirstName" class="input" placeholder="Nome"><input id="completeLastName" class="input" placeholder="Sobrenome"></div>
+      <input id="completePhone" class="input" placeholder="Celular com DDD">
+      <input id="completeBirth" class="input" type="date" placeholder="Data nascimento">
+      <select id="completeCurrency" class="input"><option value="BRL">R$ Real</option><option value="USD">US$ Dólar</option><option value="EUR">€ Euro</option><option value="GBP">£ Libra</option></select>
+    </div>
+    <div class="modal-foot"><button class="btn btn-primary" onclick="saveCompleteProfile()">Salvar no Firebase →</button></div>
+  </div>
+</div>
+
+<!-- Outros modals (transação, hábito, humor, meta, premium, quick) -->
 <div class="overlay" id="overlayTx">
   <div class="modal">
     <div class="modal-head"><h3>Nova transação</h3><button class="btn btn-ghost btn-sm" onclick="closeModal('overlayTx')">✕</button></div>
     <div class="modal-body">
       <div class="pills"><button class="pill active" data-type="expense" onclick="setTxType('expense',this)">Despesa</button><button class="pill" data-type="income" onclick="setTxType('income',this)">Receita</button></div>
-      <div class="row"><div><label style="font-size:12px;font-weight:700;color:var(--muted)">VALOR (R$)</label><input id="txAmount" class="input" type="number" inputmode="decimal" placeholder="0,00"></div><div><label style="font-size:12px;font-weight:700;color:var(--muted)">DATA</label><input id="txDate" class="input" type="date"></div></div>
-      <div><label style="font-size:12px;font-weight:700;color:var(--muted)">CATEGORIA</label><div class="pills" id="txCategories" style="margin-top:8px"></div><input id="txCategoryCustom" class="input" placeholder="Ou digite categoria personalizada" style="margin-top:8px"></div>
-      <div><label style="font-size:12px;font-weight:700;color:var(--muted)">DESCRIÇÃO</label><input id="txDesc" class="input" placeholder="Ex: Mercado da semana"></div>
-      <div style="font-size:11px;color:var(--muted-2)">💾 Gravação: Firebase RTDB <code>vidaplus/users/{uid}/transactions</code> + localStorage backup</div>
+      <div class="row"><div><label style="font-size:11px;font-weight:700;color:var(--muted)">VALOR</label><input id="txAmount" class="input" type="number" inputmode="decimal" placeholder="0,00"></div><div><label style="font-size:11px;font-weight:700;color:var(--muted)">DATA</label><input id="txDate" class="input" type="date"></div></div>
+      <div><label style="font-size:11px;font-weight:700;color:var(--muted)">CATEGORIA</label><div class="pills" id="txCategories" style="margin-top:6px"></div><input id="txCategoryCustom" class="input" placeholder="Categoria personalizada" style="margin-top:6px"></div>
+      <div><label style="font-size:11px;font-weight:700;color:var(--muted)">DESCRIÇÃO</label><input id="txDesc" class="input" placeholder="Ex: Mercado"></div>
+      <div style="font-size:10px;color:var(--muted-2)">Grava em Firebase <code>vidaplus/users/{uid}/transactions</code> • Moeda: <span id="txCurrency">BRL</span></div>
     </div>
-    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('overlayTx')">Cancelar</button><button class="btn btn-primary" onclick="saveTx()">Salvar • +10 XP → Firebase</button></div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('overlayTx')">Cancelar</button><button class="btn btn-primary" onclick="saveTx()">Salvar → Firebase +10 XP</button></div>
   </div>
 </div>
-
 <div class="overlay" id="overlayHabit">
   <div class="modal">
     <div class="modal-head"><h3>Novo hábito</h3><button class="btn btn-ghost btn-sm" onclick="closeModal('overlayHabit')">✕</button></div>
     <div class="modal-body">
-      <div class="row"><div><label style="font-size:12px;font-weight:700;color:var(--muted)">NOME</label><input id="habitName" class="input" placeholder="Ex: Beber água"></div><div><label style="font-size:12px;font-weight:700;color:var(--muted)">ÍCONE</label><input id="habitIcon" class="input" placeholder="💧"></div></div>
-      <div class="row"><div><label style="font-size:12px;font-weight:700;color:var(--muted)">META DIÁRIA</label><input id="habitGoal" class="input" type="number" placeholder="1"></div><div><label style="font-size:12px;font-weight:700;color:var(--muted)">COR</label><select id="habitColor" class="input"><option value="#10B981">Verde</option><option value="#6366F1">Violeta</option><option value="#06B6D4">Ciano</option><option value="#F59E0B">Âmbar</option><option value="#F43F5E">Rosa</option><option value="#123C7A">Azul Escuro</option></select></div></div>
+      <div class="row"><div><label style="font-size:11px;font-weight:700;color:var(--muted)">NOME</label><input id="habitName" class="input" placeholder="Ex: Beber água"></div><div><label style="font-size:11px;font-weight:700;color:var(--muted)">ÍCONE</label><input id="habitIcon" class="input" placeholder="💧"></div></div>
+      <div class="row"><div><label style="font-size:11px;font-weight:700;color:var(--muted)">META/DIA</label><input id="habitGoal" class="input" type="number" placeholder="1"></div><div><label style="font-size:11px;font-weight:700;color:var(--muted)">COR</label><select id="habitColor" class="input"><option value="#10B981">Verde</option><option value="#6366F1">Violeta</option><option value="#06B6D4">Ciano</option><option value="#F59E0B">Âmbar</option><option value="#F43F5E">Rosa</option><option value="#123C7A">Azul</option></select></div></div>
     </div>
-    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('overlayHabit')">Cancelar</button><button class="btn btn-primary" onclick="saveHabit()">Criar hábito → Firebase</button></div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('overlayHabit')">Cancelar</button><button class="btn btn-primary" onclick="saveHabit()">Criar → Firebase</button></div>
   </div>
 </div>
-
 <div class="overlay" id="overlayMood">
   <div class="modal">
     <div class="modal-head"><h3>Como você está hoje?</h3><button class="btn btn-ghost btn-sm" onclick="closeModal('overlayMood')">✕</button></div>
     <div class="modal-body">
       <div class="mood-grid"><button class="mood-opt" onclick="pickMood(1)"><span class="em">😞</span><b>Muito Ruim</b></button><button class="mood-opt" onclick="pickMood(2)"><span class="em">😐</span><b>Ruim</b></button><button class="mood-opt" onclick="pickMood(3)"><span class="em">🙂</span><b>Normal</b></button><button class="mood-opt" onclick="pickMood(4)"><span class="em">😁</span><b>Bom</b></button><button class="mood-opt" onclick="pickMood(5)"><span class="em">🤩</span><b>Excelente</b></button></div>
-      <textarea id="moodNoteModal" class="input" placeholder="O que influenciou seu humor hoje?"></textarea>
+      <textarea id="moodNoteModal" class="input" placeholder="O que influenciou?"></textarea>
     </div>
     <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('overlayMood')">Depois</button><button class="btn btn-primary" onclick="confirmMood()">Registrar • +15 XP → Firebase</button></div>
   </div>
 </div>
-
 <div class="overlay" id="overlayGoal">
   <div class="modal">
     <div class="modal-head"><h3>Nova meta</h3><button class="btn btn-ghost btn-sm" onclick="closeModal('overlayGoal')">✕</button></div>
     <div class="modal-body">
-      <div><label style="font-size:12px;font-weight:700;color:var(--muted)">TÍTULO</label><input id="goalTitle" class="input" placeholder="Ex: Economizar R$ 5.000"></div>
-      <div class="row"><div><label style="font-size:12px;font-weight:700;color:var(--muted)">TIPO</label><select id="goalType" class="input"><option value="financeira">Financeira</option><option value="habito">Hábito</option><option value="pessoal">Pessoal</option></select></div><div><label style="font-size:12px;font-weight:700;color:var(--muted)">META</label><input id="goalTarget" class="input" type="number" placeholder="5000"></div></div>
-      <div><label style="font-size:12px;font-weight:700;color:var(--muted)">PRAZO</label><input id="goalDeadline" class="input" type="date"></div>
+      <div><label style="font-size:11px;font-weight:700;color:var(--muted)">TÍTULO</label><input id="goalTitle" class="input" placeholder="Ex: Economizar 5k"></div>
+      <div class="row"><div><label style="font-size:11px;font-weight:700;color:var(--muted)">TIPO</label><select id="goalType" class="input"><option value="financeira">Financeira</option><option value="habito">Hábito</option><option value="pessoal">Pessoal</option></select></div><div><label style="font-size:11px;font-weight:700;color:var(--muted)">META</label><input id="goalTarget" class="input" type="number" placeholder="5000"></div></div>
+      <div><label style="font-size:11px;font-weight:700;color:var(--muted)">PRAZO</label><input id="goalDeadline" class="input" type="date"></div>
     </div>
-    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('overlayGoal')">Cancelar</button><button class="btn btn-primary" onclick="saveGoal()">Criar meta → Firebase</button></div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('overlayGoal')">Cancelar</button><button class="btn btn-primary" onclick="saveGoal()">Criar → Firebase</button></div>
   </div>
 </div>
-
 <div class="overlay" id="overlayQuick">
-  <div class="modal">
-    <div class="modal-head"><h3>Ação rápida • 30s</h3><button class="btn btn-ghost btn-sm" onclick="closeModal('overlayQuick')">✕</button></div>
-    <div class="modal-body">
-      <div class="grid grid-2">
-        <button class="card card-hover" style="text-align:left" onclick="closeModal('overlayQuick');openTxModal()"><b>💸 Nova despesa</b><p style="font-size:13px;color:var(--muted);margin-top:4px">Registra e envia pro Firebase</p></button>
-        <button class="card card-hover" style="text-align:left" onclick="closeModal('overlayQuick');openMoodModal()"><b>🙂 Registrar humor</b><p style="font-size:13px;color:var(--muted);margin-top:4px">Como está se sentindo?</p></button>
-        <button class="card card-hover" style="text-align:left" onclick="closeModal('overlayQuick');switchView('habitos')"><b>✅ Check de hábitos</b><p style="font-size:13px;color:var(--muted);margin-top:4px">Marque os de hoje</p></button>
-        <button class="card card-hover" style="text-align:left" onclick="closeModal('overlayQuick');openGoalModal()"><b>◎ Nova meta</b><p style="font-size:13px;color:var(--muted);margin-top:4px">Defina seu próximo nível</p></button>
-      </div>
-    </div>
-  </div>
+  <div class="modal"><div class="modal-head"><h3>Ação rápida • 30s</h3><button class="btn btn-ghost btn-sm" onclick="closeModal('overlayQuick')">✕</button></div><div class="modal-body"><div class="grid grid-2"><button class="card card-hover" style="text-align:left" onclick="closeModal('overlayQuick');openTxModal()"><b>💸 Despesa</b><p style="font-size:12px;color:var(--muted);margin-top:4px">10s + Firebase</p></button><button class="card card-hover" style="text-align:left" onclick="closeModal('overlayQuick');openMoodModal()"><b>🙂 Humor</b><p style="font-size:12px;color:var(--muted);margin-top:4px">Como está?</p></button><button class="card card-hover" style="text-align:left" onclick="closeModal('overlayQuick');loadPage('habitos')"><b>✅ Hábitos</b><p style="font-size:12px;color:var(--muted);margin-top:4px">Check hoje</p></button><button class="card card-hover" style="text-align:left" onclick="closeModal('overlayQuick');openGoalModal()"><b>◎ Meta</b><p style="font-size:12px;color:var(--muted);margin-top:4px">Novo nível</p></button></div></div></div>
 </div>
-
 <div class="overlay" id="overlayPremium">
-  <div class="modal" style="max-width:720px">
-    <div style="padding:28px 28px 0;display:flex;justify-content:space-between;gap:12px">
-      <div><span class="premium-tag" style="background:var(--text);color:white">VIDA+ PREMIUM • Firebase</span><h2 style="font-size:30px;margin-top:10px;line-height:.95">Evolução sem limites.<br>Inteligência infinita.</h2><p style="color:var(--muted);margin-top:8px;font-size:14px">7 dias grátis, cancela quando quiser. Premium salvo no RTDB.</p></div><button class="btn btn-ghost btn-sm" onclick="closeModal('overlayPremium')">✕</button>
-    </div>
-    <div class="modal-body" style="grid-template-columns:1.2fr .8fr;display:grid">
-      <div style="display:grid;gap:10px">
-        <div class="insight"><div class="i-ico">✦</div><div><b>IA que prevê gastos por humor</b><p>Detectamos que você gasta 32% mais quando ansioso. Premium te alerta.</p></div></div>
-        <div class="insight"><div class="i-ico">📄</div><div><b>Exportação PDF + Excel</b><p>Relatórios profissionais com dados do Firebase.</p></div></div>
-        <div class="insight"><div class="i-ico">🎨</div><div><b>Temas exclusivos</b><p>Midnight, Forest, Sunset. Flag premium no RTDB = true.</p></div></div>
-        <button class="btn btn-primary" style="height:52px;font-size:15px" onclick="activatePremium()">Começar 7 dias grátis → Firebase</button>
-      </div>
-      <div class="card" style="background:var(--bg-2)">
-        <b style="font-size:13px;letter-spacing:.08em">O QUE GANHA HOJE</b>
-        <ul style="list-style:none;display:grid;gap:10px;margin-top:12px;font-size:13px"><li>✦ Insights ilimitados IA</li><li>📊 90 dias gráficos</li><li>🔔 Alertas inteligentes</li><li>🎨 6 temas</li><li>☁️ Firebase backup</li><li>🚫 Sem anúncios</li></ul>
-      </div>
-    </div>
-  </div>
+  <div class="modal" style="max-width:720px"><div style="padding:22px 22px 0;display:flex;justify-content:space-between;gap:12px"><div><span class="premium-tag" style="background:var(--text);color:white">PREMIUM • 50 NÍVEIS</span><h2 style="font-size:26px;margin-top:8px;line-height:.95">1 ano para nível 50.<br>Você aguenta?</h2><p style="color:var(--muted);margin-top:6px;font-size:13px">7 dias grátis • Recompensa por nível • Premium salvo RTDB</p></div><button class="btn btn-ghost btn-sm" onclick="closeModal('overlayPremium')">✕</button></div><div class="modal-body" style="grid-template-columns:1.2fr .8fr;display:grid"><div style="display:grid;gap:10px"><div class="insight"><div class="i-ico">✦</div><div><b>IA total liberada</b><p>Free vê 3 insights, Premium vê 7 + projeções 90 dias + DNA horário.</p></div></div><div class="insight"><div class="i-ico">🎨</div><div><b>10 temas gradiente</b><p>Aurora, Ocean, Neon, Gold, Sakura - só Premium.</p></div></div><button class="btn btn-primary" style="height:48px" onclick="activatePremium()">Virar Premium → Firebase</button></div><div class="card" style="background:var(--bg-2)"><b style="font-size:12px">NÍVEIS • VANTAGENS</b><ul style="list-style:none;display:grid;gap:8px;margin-top:10px;font-size:12px"><li>Nv 10: PDF básico</li><li>Nv 20: Projeção 30d</li><li>Nv 30: Gold</li><li>Nv 40: Mentoria</li><li>Nv 50: Hall fama + 100 anos Premium</li></ul></div></div></div>
 </div>
 
 <div class="toast-stack" id="toasts"></div>
 
 <script type="module">
-import { initApp } from './js/app.js';
-import { FIREBASE_DB_URL } from './js/firebase.js';
+import { initApp, loadPage } from './js/app.js';
+window.loadPage = loadPage; // expõe global para pages
 </script>
 </body>
 </html>

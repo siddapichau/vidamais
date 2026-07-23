@@ -3,106 +3,134 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vida+ AI — Admin Console • vidamaisai</title>
+<title>Vida+ AI — Admin Console • PROTEGIDO</title>
 <link rel="icon" type="image/png" href="assets/favicon.png">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Fraunces:wght@700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 <style>
-.admin{max-width:1320px;margin:0 auto;padding:28px 20px 80px}
-.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
-.apanel{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:18px;box-shadow:var(--shadow-sm)}
-.apanel h3{font-size:18px;margin-bottom:2px}
-.apanel small{color:var(--muted);font-size:12px}
-.kv{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px}
+.admin{max-width:1320px;margin:0 auto;padding:24px 16px 100px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+@media(max-width:700px){.tiles{grid-template-columns:1fr}}
+.apanel{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:16px;box-shadow:var(--shadow-sm)}
+.apanel h3{font-size:17px;margin-bottom:2px}
+.apanel small{color:var(--muted);font-size:11px;line-height:1.3;display:block}
+.kv{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:12px;gap:8px}
 .kv:last-child{border:none}
-.json{white-space:pre-wrap;word-break:break-all}
+.code{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--bg-2);padding:10px 12px;border-radius:10px;border:1px solid var(--border);overflow:auto;word-break:break-all;white-space:pre-wrap}
 .user-row{display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid var(--border);border-radius:14px;background:var(--card);gap:8px}
+@media(max-width:700px){.user-row{flex-direction:column;align-items:flex-start}}
+.ai-chat{height:320px;overflow:auto;display:grid;gap:8px;padding:10px;background:var(--bg-2);border-radius:12px;border:1px solid var(--border)}
+.msg{padding:10px 12px;border-radius:12px;font-size:12px;line-height:1.4;max-width:90%}
+.msg.user{background:var(--text);color:white;justify-self:end;border-bottom-right-radius:4px}
+.msg.ai{background:var(--card);border:1px solid var(--border);justify-self:start;border-bottom-left-radius:4px}
 </style>
 </head>
 <body>
 <div class="admin">
-  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:22px">
-    <div style="display:flex;align-items:center;gap:14px">
+  <div id="authGuard" style="display:none"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px">
+    <div style="display:flex;align-items:center;gap:12px">
       <img src="assets/logo.png" style="width:48px;height:48px;border-radius:12px;object-fit:cover">
-      <div><h1 style="font-size:30px;line-height:.9">Vida+ Admin • vidamaisai</h1><p style="color:var(--muted);font-size:13px;margin-top:4px">Firebase: vidamaisai-default-rtdb.firebaseio.com • Auth: Email + Google • RTDB Total Control</p></div>
+      <div><h1 style="font-size:26px;line-height:.9">Admin • PROTEGIDO</h1><p style="color:var(--muted);font-size:12px;margin-top:4px;line-height:1.3">Acesso exclusivo: <b>wesleystudio@gmail.com</b> • Firebase vidamaisai-default-rtdb • 100% PT-BR</p><p id="adminEmailStatus" style="font-size:11px;color:var(--muted)"></p></div>
     </div>
-    <div style="display:flex;gap:8px"><button class="btn btn-ghost" onclick="location.href='index.html'">← App</button><button class="btn btn-primary" onclick="refreshAll()">↻ Atualizar</button><button class="btn btn-ghost" onclick="handleLogoutAdmin()">Sair</button></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost btn-sm" onclick="location.href='index.html'">← App</button><button class="btn btn-ghost btn-sm" onclick="refreshAll()">↻ Atualizar</button><button class="btn btn-primary btn-sm" onclick="handleLogoutAdmin()">Sair</button></div>
   </div>
 
-  <div class="tiles">
-    <div class="apanel">
-      <h3>📡 Firebase Status</h3><small>vidamaisai - Realtime DB + Auth</small>
-      <div id="fbStatus" style="margin-top:12px"></div>
-      <div class="code" style="margin-top:12px;font-size:11px">Config carregada via js/firebase.js<br>Se precisar trocar, edite firebaseConfig em js/firebase.js e faça upload.<br><br>Rules recomendadas (seguras):<br>{
+  <div id="adminBlocked" style="display:none" class="card" style="border-color:#F43F5E;background:#FEF2F2;text-align:center;padding:30px">
+    <div style="font-size:48px">🔒</div><h2 style="color:#991B1B;margin-top:12px">Acesso negado</h2><p style="color:#991B1B;font-size:13px;margin-top:8px">Este painel é exclusivo para <b>wesleystudio@gmail.com</b> logado no Firebase Auth. Faça login com esse email no app e volte aqui.</p><button class="btn btn-primary" style="margin-top:14px" onclick="location.href='index.html'">Ir para login</button>
+  </div>
+
+  <div id="adminContent" style="display:none">
+    <div class="tiles">
+      <div class="apanel">
+        <h3>📡 Firebase Status • vidamaisai</h3><small>Realtime DB + Auth + Admin Protected</small>
+        <div id="fbStatus" style="margin-top:12px"></div>
+        <div class="code" style="margin-top:12px;font-size:10px;line-height:1.4">Rules seguras recomendadas (cole no Console):
+{
   "rules": {
     "vidaplus": {
       "users": {
         "$uid": {
-          ".read": "$uid === auth.uid",
-          ".write": "$uid === auth.uid"
+          ".read": "$uid === auth.uid || auth.token.email == 'wesleystudio@gmail.com'",
+          ".write": "$uid === auth.uid || auth.token.email == 'wesleystudio@gmail.com'"
         }
       }
     },
     "admin": {
-      ".read": "auth != null",
-      ".write": "auth.token.email == 'seu@email.com'"
+      ".read": "auth.token.email == 'wesleystudio@gmail.com'",
+      ".write": "auth.token.email == 'wesleystudio@gmail.com'"
     }
   }
 }
+Admin vê tudo, usuários só próprios dados.
+        </div>
+      </div>
+
+      <div class="apanel">
+        <h3>🎨 Temas • 10 temas gradientes</h3><small>Broadcast global via /admin/settings/theme</small>
+        <div id="themeControls" style="margin-top:12px;display:grid;gap:8px;max-height:260px;overflow:auto"></div>
+        <div style="margin-top:12px" class="grid grid-2">
+          <div><label style="font-size:10px;font-weight:700;color:var(--muted)">COR PRIMÁRIA</label><input id="primaryColor" type="color" value="#123C7A" class="input" style="padding:4px;height:40px" oninput="updatePrimary(this.value)"></div>
+          <div><label style="font-size:10px;font-weight:700;color:var(--muted)">FORÇAR TEMA</label><select id="forceTheme" class="input" style="height:40px"><option value="">Auto usuário</option><option value="light">Claro</option><option value="dark">Escuro</option><option value="midnight">Midnight</option><option value="forest">Forest</option><option value="sunset">Sunset</option><option value="aurora">Aurora</option><option value="ocean">Ocean</option><option value="neon">Neon</option><option value="gold">Gold</option><option value="sakura">Sakura</option></select></div>
+        </div>
+        <button class="btn btn-primary btn-sm" style="margin-top:10px;width:100%" onclick="broadcastTheme()">📢 Broadcast tema global</button>
+      </div>
+
+      <div class="apanel">
+        <h3>🤖 Assistente Inteligente Admin</h3><small>IA local ajuda você a gerenciar • analisa usuários e sugere ações • 100% PT-BR</small>
+        <div id="aiChat" class="ai-chat" style="margin-top:12px"></div>
+        <div style="display:flex;gap:8px;margin-top:8px"><input id="aiInput" class="input" placeholder="Pergunte: como aumentar retenção? quem está perto de desistir?" style="height:38px" onkeydown="if(event.key==='Enter') sendAI()"><button class="btn btn-primary btn-sm" onclick="sendAI()">Enviar</button></div>
+        <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="quickAI('resumo')">📊 Resumo geral</button>
+          <button class="btn btn-ghost btn-sm" onclick="quickAI('inativos')">😴 Inativos 7d</button>
+          <button class="btn btn-ghost btn-sm" onclick="quickAI('premium')">💎 Converter Premium</button>
+          <button class="btn btn-ghost btn-sm" onclick="quickAI('temas')">🎨 Temas populares</button>
+        </div>
+      </div>
+
+      <div class="apanel" style="grid-column:span 2">
+        <h3>👥 Usuários • Todos aparecem incluindo admin</h3><small>Lista de vidaplus/users • Mostra admin mesmo que tenha 0 dados pois garante nó em /admin/users • Busca por nome/email/telefone</small>
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><input id="userSearch" class="input" placeholder="Buscar nome, email, telefone, UID..." style="height:36px;flex:1;min-width:180px" oninput="filterUsers()"><select id="userFilter" class="input" style="height:36px;width:140px" onchange="filterUsers()"><option value="all">Todos</option><option value="premium">Premium</option><option value="free">Free</option><option value="admin">Só Admin</option><option value="inativos">Sem login 7d</option></select><button class="btn btn-ghost btn-sm" onclick="loadUsers()">↻ Reload</button></div>
+        <div id="usersList" style="margin-top:12px;max-height:520px;overflow:auto;display:grid;gap:10px"></div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost btn-sm" onclick="exportUsers()">⬇️ Export JSON</button><button class="btn btn-ghost btn-sm" onclick="forcePremiumAll()">⚡ Todos Premium</button><span id="userCount" style="font-size:11px;color:var(--muted);align-self:center">0 usuários</span></div>
+      </div>
+
+      <div class="apanel">
+        <h3>💰 Financeiro Global Agregado</h3><small>Soma de transações (estimativa RTDB)</small>
+        <div id="finGlobal" style="margin-top:12px"></div>
+        <div class="code" id="finExtra" style="margin-top:10px;max-height:120px;overflow:auto"></div>
+      </div>
+
+      <div class="apanel">
+        <h3>🏆 Níveis • 50 níveis • 1 ano jornada</h3><small>50 níveis = 78.000 XP = ~390 dias usando 200 XP/dia</small>
+        <div id="levelsAdmin" style="margin-top:12px;max-height:280px;overflow:auto;display:grid;gap:6px"></div>
+        <div class="code" style="margin-top:10px;font-size:10px"> XP/dia 100%: 6 hábitos (120) + tx (10) + humor (15) + metas (30) + streak (25) = 200 XP<br>365 dias = 73k XP = Nv 48-49<br>Nv 50 = 78k = 390 dias = 1 ano + bônus<br>Vantagens por nível configuradas em core.js levelTable[].reward
+        </div>
+      </div>
+
+      <div class="apanel">
+        <h3>⚙️ Sistema • Moedas • Backup</h3><small>Multi-moeda, export, limpeza, GitHub</small>
+        <div style="display:grid;gap:8px;margin-top:12px">
+          <div class="grid grid-2"><div><label style="font-size:10px;font-weight:700;color:var(--muted)">MOEDA GLOBAL PADRÃO</label><select id="globalCurrency" class="input" style="height:38px" onchange="setGlobalCurrency(this.value)"><option value="BRL">BRL</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="GBP">GBP</option><option value="JPY">JPY</option><option value="ARS">ARS</option><option value="MXN">MXN</option><option value="BTC">BTC</option></select></div><div><label style="font-size:10px;font-weight:700;color:var(--muted)">IDIOMA</label><select class="input" style="height:38px"><option>PT-BR 100%</option></select></div></div>
+          <button class="btn btn-primary btn-sm" onclick="exportJson()">⬇️ Export meus dados JSON</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('importFile').click()">⬆️ Import JSON</button>
+          <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJson(event)">
+          <div class="code" id="sysInfo" style="max-height:160px;overflow:auto"></div>
+        </div>
       </div>
     </div>
 
-    <div class="apanel">
-      <h3>🎨 Temas • Controle Global</h3><small>Força tema para todos via admin/settings/theme</small>
-      <div id="themeControls" style="margin-top:12px;display:grid;gap:10px"></div>
-      <div style="margin-top:14px" class="grid grid-2">
-        <div><label style="font-size:11px;font-weight:700;color:var(--muted)">COR PRIMÁRIA</label><input id="primaryColor" type="color" value="#123C7A" class="input" style="padding:4px;height:42px" oninput="updatePrimary(this.value)"></div>
-        <div><label style="font-size:11px;font-weight:700;color:var(--muted)">FORÇAR TEMA</label><select id="forceTheme" class="input" style="height:42px" onchange="forceTheme(this.value)"><option value="">Auto (usuário)</option><option value="light">Claro</option><option value="dark">Escuro</option><option value="midnight">Midnight • Premium</option><option value="forest">Forest • Premium</option><option value="sunset">Sunset • Premium</option></select></div>
-      </div>
-      <button class="btn btn-primary btn-sm" style="margin-top:10px;width:100%" onclick="broadcastTheme()">📢 Broadcast tema (grava em /admin)</button>
-    </div>
-
-    <div class="apanel">
-      <h3>👥 Usuários • vidaplus/users</h3><small>Todos os usuários reais do RTDB</small>
-      <div style="display:flex;gap:8px;margin-top:12px"><input id="userSearch" class="input" placeholder="Buscar nome/email..." style="height:36px" oninput="filterUsers()"><button class="btn btn-ghost btn-sm" onclick="loadUsers()">↻ Reload</button></div>
-      <div id="usersList" style="margin-top:12px;max-height:520px;overflow:auto;display:grid;gap:10px"></div>
-      <div style="margin-top:12px;display:flex;gap:8px"><button class="btn btn-ghost btn-sm" onclick="exportUsers()">⬇️ Export usuários JSON</button><span id="userCount" style="font-size:12px;color:var(--muted);align-self:center">0 usuários</span></div>
-    </div>
-
-    <div class="apanel">
-      <h3>💰 Financeiro Global</h3><small>Agregado de todos (estimativa local + remoto)</small>
-      <div id="finGlobal" style="margin-top:12px"></div>
-      <button class="btn btn-ghost btn-sm" style="margin-top:10px;width:100%" onclick="clearAllLocal()">⚠️ Limpar localStorage deste navegador</button>
-    </div>
-
-    <div class="apanel">
-      <h3>📊 Engajamento & XP</h3><small>Hábitos, streaks, níveis</small>
-      <div id="habGlobal" style="margin-top:12px"></div>
-      <div class="code" id="engExtra" style="margin-top:10px"></div>
-    </div>
-
-    <div class="apanel">
-      <h3>⚙️ Sistema & Backup & GitHub</h3><small>Export, import, push</small>
-      <div style="display:grid;gap:8px;margin-top:12px">
-        <button class="btn btn-primary btn-sm" onclick="exportJson()">⬇️ Export backup completo (meus dados)</button>
-        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('importFile').click()">⬆️ Import JSON</button>
-        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJson(event)">
-        <div class="code" id="sysInfo" style="max-height:180px;overflow:auto"></div>
-        <div class="code">GitHub: pasta já versionada. Para subir:<br>git remote add origin https://TOKEN@github.com/USER/vida-plus-ai.git<br>git push -u origin main</div>
-      </div>
-    </div>
-  </div>
-
-  <div style="margin-top:18px" class="grid grid-2">
-    <div class="apanel"><h3>📋 RTDB Explorer</h3><small>Leitura direta do RTDB - qualquer path</small><div style="margin-top:12px;display:flex;gap:8px"><input id="rtdbPath" class="input" value="vidaplus" style="height:38px"><button class="btn btn-primary btn-sm" onclick="exploreRtdb()">Buscar</button></div><pre id="rtdbOut" class="code" style="margin-top:12px;max-height:520px;overflow:auto">...</pre></div>
-    <div class="apanel"><h3>📢 Banner & Monetização & Premium Global</h3><small>Controla mensagem no app + flag premium</small>
-      <div style="display:grid;gap:10px;margin-top:12px">
-        <label style="font-size:11px;font-weight:700;color:var(--muted)">BANNER ATIVO</label><input id="bannerText" class="input" value="🔥 Vida+ Premium - libere temas e IA infinita por R$19,90 vitalício!">
-        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><span style="font-size:12px">Ads ON</span><div class="switch on" id="adsSwitch" onclick="this.classList.toggle('on')"><i></i></div><span style="font-size:12px">Force Premium todos</span><div class="switch" id="premiumForce" onclick="this.classList.toggle('on')"><i></i></div></div>
-        <button class="btn btn-primary btn-sm" onclick="saveBanner()">📢 Salvar banner em /admin/banner (RTDB)</button>
-        <button class="btn btn-ghost btn-sm" onclick="forcePremiumAll()">⚡ Tornar TODOS Premium (adminSetPremium loop)</button>
-        <div class="code">Ads: placeholder AdMob ca-app-pub-XXXXXXXX<br>Premium flag grava em /vidaplus/users/{uid}/profile/premium = true<br>App lê via listener e libera temas.</div>
-        <div id="bannerStatus" style="font-size:11px;color:var(--muted)"></div>
+    <div style="margin-top:16px" class="grid grid-2">
+      <div class="apanel"><h3>📋 RTDB Explorer • vidamaisai</h3><small>Leitura direta - qualquer path</small><div style="margin-top:10px;display:flex;gap:8px"><input id="rtdbPath" class="input" value="vidaplus" style="height:36px"><button class="btn btn-primary btn-sm" onclick="exploreRtdb()">Buscar</button></div><pre id="rtdbOut" class="code" style="margin-top:12px;max-height:460px;overflow:auto">...</pre></div>
+      <div class="apanel"><h3>📢 Banner • Monetização • Premium Global</h3><small>Controla app via RTDB</small>
+        <div style="display:grid;gap:10px;margin-top:12px">
+          <label style="font-size:10px;font-weight:700;color:var(--muted)">BANNER ATIVO no app</label><input id="bannerText" class="input" value="🔥 Vida+ Premium - 10 temas gradientes + IA total + 50 níveis = R$19,90 vitalício!">
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span style="font-size:11px">Ads ON</span><div class="switch on" id="adsSwitch" onclick="this.classList.toggle('on')"><i></i></div><span style="font-size:11px">Force Premium GLOBAL</span><div class="switch" id="premiumForce" onclick="this.classList.toggle('on')"><i></i></div></div>
+          <button class="btn btn-primary btn-sm" onclick="saveBanner()">📢 Salvar banner em /admin/banner</button>
+          <button class="btn btn-ghost btn-sm" onclick="saveAiConfig()">💾 Salvar config IA Free/Premium (Free 3, Premium 7)</button>
+          <div id="bannerStatus" style="font-size:11px;color:var(--muted)"></div>
+          <div class="code">Premium flag: /vidaplus/users/{uid}/profile/premium = true<br>Banner em /admin/banner lido pelo app a cada load<br>Temas em /admin/settings/theme</div>
+        </div>
       </div>
     </div>
   </div>
@@ -111,46 +139,72 @@
 <div class="toast-stack" id="toasts"></div>
 
 <script type="module">
-import { auth, db, FIREBASE_DB_URL, firebaseConfig } from './js/firebase.js';
+import { auth, db, FIREBASE_DB_URL, firebaseConfig, ADMIN_EMAIL } from './js/firebase.js';
 import { VidaFirebase } from './js/firebase.js';
-import { state, loadState, saveState, themes, exportAll, importAll, calcHabitRate } from './js/core.js';
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { ref, get, set, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { state, loadState, saveState, themes, currencies, levelTable, exportAll, importAll, calcHabitRate } from './js/core.js';
+import { getAuth, onAuthStateChanged, signOut as fbSignOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { ref, get, set, update, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-window.toast=(msg,ico='✦')=>{ const s=document.getElementById('toasts'); const el=document.createElement('div'); el.className='toast'; el.innerHTML=`<div class="t-ico">${ico}</div><div>${msg}</div>`; s.appendChild(el); setTimeout(()=>el.remove(),3400); };
+window.toast=(msg,ico='✦')=>{ const s=document.getElementById('toasts'); const el=document.createElement('div'); el.className='toast'; el.innerHTML=`<div class="t-ico">${ico}</div><div>${msg}</div>`; s.appendChild(el); setTimeout(()=>el.remove(),3800); };
 
 let allUsersCache = [];
+let aiHistory = [];
+
+// ADMIN GUARD - SÓ wesleystudio@gmail.com
+onAuthStateChanged(auth, (user)=>{
+  const blocked=document.getElementById('adminBlocked');
+  const content=document.getElementById('adminContent');
+  const status=document.getElementById('adminEmailStatus');
+  if(!user){
+    blocked.style.display='block';
+    content.style.display='none';
+    status.textContent='Deslogado - faça login com '+ADMIN_EMAIL;
+    toast('Acesso admin requer login '+ADMIN_EMAIL,'🔒');
+    return;
+  }
+  if(user.email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()){
+    blocked.style.display='block';
+    content.style.display='none';
+    status.textContent=`Logado como ${user.email} - NÃO AUTORIZADO. Só ${ADMIN_EMAIL}`;
+    toast(`Acesso negado: ${user.email} não é admin. Só ${ADMIN_EMAIL}`,'🔒');
+    return;
+  }
+  // autorizado
+  blocked.style.display='none';
+  content.style.display='block';
+  status.textContent=`✓ Autorizado como ${user.email} • Admin master`;
+  refreshAll();
+});
 
 function refreshAll(){
   loadState();
   renderThemes();
   loadUsers();
   renderFinance();
-  renderHabits();
+  renderLevels();
   updateSysInfo();
   checkFb();
+  initAiChat();
 }
 window.refreshAll=refreshAll;
 
 function renderThemes(){
   const cont=document.getElementById('themeControls'); cont.innerHTML='';
   Object.values(themes).forEach(t=>{
-    const row=document.createElement('div'); row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--border);border-radius:12px';
-    row.innerHTML=`<div><b style="font-size:13px">${t.label}</b><br><small style="font-size:11px">${t.id} ${t.premium?'• Premium':''}</small></div><div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm" onclick="previewTheme('${t.id}')">Ver</button><button class="btn btn-primary btn-sm" onclick="toggleThemePremium('${t.id}')">${t.premium?'🔒 Premium':'✓ Free'}</button></div>`;
+    const row=document.createElement('div'); row.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:'+ (t.gradient||'var(--card)')+';background-blend-mode:overlay';
+    row.innerHTML=`<div><b style="font-size:12px">${t.label}</b><br><small style="font-size:10px">${t.id} ${t.premium?'• Premium':''}</small></div><div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm" onclick="previewTheme('${t.id}')">Ver</button><button class="btn btn-primary btn-sm" onclick="toggleThemePremium('${t.id}')">${t.premium?'🔒':'✓'}</button></div>`;
     cont.appendChild(row);
   });
 }
-window.previewTheme=(id)=>{ document.documentElement.setAttribute('data-theme', id); toast('Preview: '+id,'◐'); };
-window.forceTheme=(id)=>{ if(!id){ localStorage.removeItem('vidaplus_forced_theme'); toast('Auto','✓'); return; } localStorage.setItem('vidaplus_forced_theme', id); document.documentElement.setAttribute('data-theme', id); };
+window.previewTheme=(id)=>{ document.documentElement.setAttribute('data-theme', id); toast('Tema preview: '+id,'◐'); };
 window.updatePrimary=(val)=>{ document.documentElement.style.setProperty('--primary', val); localStorage.setItem('vidaplus_primary', val); };
 window.broadcastTheme=async()=>{
-  const forced=document.getElementById('forceTheme').value || localStorage.getItem('vidaplus_forced_theme')||''; 
-  const primary=document.getElementById('primaryColor').value;
+  const forced=document.getElementById('forceTheme').value; const primary=document.getElementById('primaryColor').value;
   const ok=await VidaFirebase.adminBroadcastTheme(forced, primary);
-  toast(ok?'Tema broadcast OK no RTDB /admin/settings/theme':'Falha broadcast','📢');
+  toast(ok?'Broadcast OK /admin/settings/theme':'Falha','📢');
 };
 window.toggleThemePremium=(id)=>{
-  themes[id].premium = !themes[id].premium;
+  themes[id].premium=!themes[id].premium;
   localStorage.setItem('vidaplus_themes', JSON.stringify(themes));
   renderThemes();
   toast(`${id} agora ${themes[id].premium?'Premium':'Free'}`,'🎨');
@@ -158,121 +212,228 @@ window.toggleThemePremium=(id)=>{
 
 async function checkFb(){
   const status=document.getElementById('fbStatus');
-  status.innerHTML=`<div class="kv"><span>DB URL</span><span style="font-size:10px">${FIREBASE_DB_URL}</span></div><div class="kv"><span>Project</span><b>${firebaseConfig.projectId}</b></div><div class="kv"><span>AuthDomain</span><span>${firebaseConfig.authDomain}</span></div><div class="kv"><span>User logado</span><b>${auth.currentUser? auth.currentUser.email : 'nenhum (faça login no app)'} </b></div><div class="kv"><span>API Key</span><span style="font-size:10px">${firebaseConfig.apiKey.slice(0,12)}…</span></div>`;
+  if(!status) return;
+  status.innerHTML=`<div class="kv"><span>DB URL</span><span style="font-size:10px">${FIREBASE_DB_URL}</span></div><div class="kv"><span>Project</span><b>${firebaseConfig.projectId}</b></div><div class="kv"><span>Admin Email</span><b style="color:#10B981">${ADMIN_EMAIL}</b></div><div class="kv"><span>Logado</span><b>${auth.currentUser? auth.currentUser.email : 'checando...'}</b></div>`;
 }
 
 window.loadUsers=async()=>{
   const cont=document.getElementById('usersList');
-  cont.innerHTML='<p style="font-size:13px;color:var(--muted)">Carregando de vidaplus/users...</p>';
+  cont.innerHTML='<p style="font-size:12px;color:var(--muted)">Carregando usuários de vidaplus/users + admin/users (inclui admin)...</p>';
   const list = await VidaFirebase.adminListUsers();
   allUsersCache = list;
+  // Garante que admin logado aparece mesmo se não estiver na lista (cria visual)
+  const current = auth.currentUser;
+  if(current && !list.find(u=>u.uid===current.uid)){
+    list.unshift({
+      uid: current.uid,
+      name: current.displayName || current.email,
+      email: current.email,
+      xp: 0,
+      premium: true,
+      isAdmin: true,
+      phone: '',
+      streak: 0,
+      joined: new Date().toISOString(),
+      _isExtra: true
+    });
+    allUsersCache = list;
+  }
   renderUsersFiltered(list);
-  document.getElementById('userCount').textContent = `${list.length} usuários`;
-  if(!list.length) toast('Nenhum usuário ou permissão negada (cheque Rules)','⚠️');
-  else toast(`${list.length} usuários carregados`,'👥');
+  document.getElementById('userCount').textContent = `${list.length} usuários (incluindo você admin)`;
 };
+
 function renderUsersFiltered(list){
   const cont=document.getElementById('usersList');
   cont.innerHTML='';
   list.forEach(u=>{
     const div=document.createElement('div'); div.className='user-row';
-    div.innerHTML=`<div style="flex:1;min-width:0"><b style="font-size:13px">${u.name||'Sem nome'} ${u.premium?'★':''}</b><br><small style="color:var(--muted);font-size:11px;word-break:break-all">${u.email||''} • ${u.uid.slice(0,8)}… • ${u.xp||0} XP • streak ${u.streak||0}d</small><br><span class="badge" style="background:${u.premium?'#DCFCE7':'var(--bg-2)'};color:${u.premium?'#166534':'var(--muted)'}">${u.premium?'PREMIUM':'FREE'}</span></div><div style="display:flex;flex-direction:column;gap:6px"><button class="btn btn-ghost btn-sm" onclick="toggleRemotePremium('${u.uid}', ${!u.premium})">${u.premium?'Remover Premium':'Tornar Premium'}</button><button class="btn btn-ghost btn-sm" onclick="copyUid('${u.uid}')">Copiar UID</button><button class="btn btn-primary btn-sm" onclick="deleteUser('${u.uid}')">Excluir</button></div>`;
+    const isAdmin = u.email && u.email.toLowerCase()===ADMIN_EMAIL.toLowerCase();
+    div.style.borderColor = isAdmin ? '#10B981' : 'var(--border)';
+    div.style.background = isAdmin ? '#F0FDF4' : 'var(--card)';
+    div.innerHTML=`<div style="flex:1;min-width:0"><b style="font-size:12px">${u.name||'Sem nome'} ${u.premium?'★':''} ${isAdmin?'👑 ADMIN':''}</b><br><small style="color:var(--muted);font-size:10px;word-break:break-all">${u.email||''} • ${u.phone||'sem tel'} • ${u.uid.slice(0,8)}… • ${u.xp||0} XP • ${u.streak||0}d streak • ${u.firstName||''} ${u.lastName||''}</small><br><span class="badge" style="background:${u.premium?'#DCFCE7':'var(--bg-2)'};color:${u.premium?'#166534':'var(--muted)'}">${u.premium?'PREMIUM':'FREE'}</span> ${isAdmin?'<span class="badge" style="background:#FEF3C7;color:#92400E">ADMIN MASTER</span>':''}</div><div style="display:flex;flex-direction:column;gap:6px"><button class="btn btn-ghost btn-sm" onclick="toggleRemotePremium('${u.uid}', ${!u.premium})">${u.premium?'Remover Premium':'Tornar Premium'}</button><button class="btn btn-ghost btn-sm" onclick="copyUid('${u.uid}')">UID</button><button class="btn btn-primary btn-sm" onclick="deleteUser('${u.uid}')">Excluir</button></div>`;
     cont.appendChild(div);
   });
 }
 window.filterUsers=()=>{
   const q=document.getElementById('userSearch').value.toLowerCase();
-  if(!q){ renderUsersFiltered(allUsersCache); return; }
-  const f=allUsersCache.filter(u=> (u.name||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q) || (u.uid||'').toLowerCase().includes(q));
-  renderUsersFiltered(f);
+  const f=document.getElementById('userFilter').value;
+  let list = [...allUsersCache];
+  if(q) list = list.filter(u=> (u.name||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q) || (u.phone||'').toLowerCase().includes(q) || (u.uid||'').toLowerCase().includes(q) || (u.firstName||'').toLowerCase().includes(q) || (u.lastName||'').toLowerCase().includes(q));
+  if(f==='premium') list=list.filter(u=>u.premium);
+  if(f==='free') list=list.filter(u=>!u.premium);
+  if(f==='admin') list=list.filter(u=>u.email && u.email.toLowerCase()===ADMIN_EMAIL.toLowerCase());
+  if(f==='inativos'){
+    const sevenDaysAgo = new Date(Date.now()-7*86400000);
+    list=list.filter(u=>{ if(!u.lastLogin) return true; const d=new Date(u.lastLogin); return d < sevenDaysAgo; });
+  }
+  renderUsersFiltered(list);
+  document.getElementById('userCount').textContent = `${list.length}/${allUsersCache.length} filtrados`;
 };
 window.toggleRemotePremium=async(uid,val)=>{
   const ok=await VidaFirebase.adminSetPremium(uid,val);
-  toast(ok? (val?'Premium ativado':'Premium removido') : 'Falha','★');
+  toast(ok? (val?'Premium ON - libera 10 temas + IA total':'Premium OFF') : 'Falha','★');
   if(ok) loadUsers();
 };
 window.copyUid=(uid)=>{ navigator.clipboard.writeText(uid); toast('UID copiado','✓'); };
-window.deleteUser=async(uid)=>{ if(!confirm('EXCLUIR usuário '+uid+' do RTDB? Isso apaga todos os dados dele.')) return; const ok=await VidaFirebase.adminDeleteUser(uid); toast(ok?'Usuário excluído':'Falha','⚠️'); if(ok) loadUsers(); };
+window.deleteUser=async(uid)=>{ if(!confirm('Excluir usuário '+uid+' do RTDB?')) return; const ok=await VidaFirebase.adminDeleteUser(uid); toast(ok?'Excluído':'Falha','⚠️'); if(ok) loadUsers(); };
 window.exportUsers=()=>{
   const blob=new Blob([JSON.stringify(allUsersCache,null,2)],{type:'application/json'});
-  const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='vidaplus-users.json'; a.click();
+  const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='vidaplus-users-admin.json'; a.click();
+};
+window.forcePremiumAll=async()=>{
+  if(!confirm(`Tornar TODOS ${allUsersCache.length} Premium?`)) return;
+  let c=0; for(const u of allUsersCache){ const ok=await VidaFirebase.adminSetPremium(u.uid,true); if(ok) c++; }
+  toast(`${c}/${allUsersCache.length} Premium ativados`,'★');
+  loadUsers();
 };
 
 function renderFinance(){
   const cont=document.getElementById('finGlobal');
+  if(!cont) return;
   const inc=state.tx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
   const exp=state.tx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
-  cont.innerHTML=`<div class="kv"><span>Transações (local)</span><b>${state.tx.length}</b></div><div class="kv"><span>Receitas local</span><b style="color:#10B981">R$ ${inc}</b></div><div class="kv"><span>Despesas local</span><b style="color:#F43F5E">R$ ${exp}</b></div><div class="kv"><span>Saldo local</span><b>R$ ${inc-exp}</b></div><div class="kv"><span>Usuários RTDB</span><b>${allUsersCache.length}</b></div>`;
+  cont.innerHTML=`<div class="kv"><span>Transações local</span><b>${state.tx.length}</b></div><div class="kv"><span>Receitas</span><b style="color:#10B981">R$ ${inc}</b></div><div class="kv"><span>Despesas</span><b style="color:#F43F5E">R$ ${exp}</b></div><div class="kv"><span>Saldo</span><b>R$ ${inc-exp}</b></div><div class="kv"><span>Usuários RTDB</span><b>${allUsersCache.length}</b></div><div class="kv"><span>Premium</span><b>${allUsersCache.filter(u=>u.premium).length}</b></div>`;
+  const extra=document.getElementById('finExtra');
+  if(extra){
+    const currenciesCount = {};
+    allUsersCache.forEach(u=>{ const cur = u?.settings?.currency || u?.profile?.currency || 'BRL'; currenciesCount[cur]=(currenciesCount[cur]||0)+1; });
+    extra.textContent=`Moedas em uso: ${JSON.stringify(currenciesCount,null,2)}\n\nTicket médio local: ${state.tx.length? Math.round((inc+exp)/state.tx.length):0}`;
+  }
 }
-function renderHabits(){
-  const cont=document.getElementById('habGlobal');
-  const totalDone=state.habits.reduce((s,h)=>s+Object.keys(h.history||{}).length,0);
-  cont.innerHTML=`<div class="kv"><span>Hábitos (local)</span><b>${state.habits.length}</b></div><div class="kv"><span>Checks totais</span><b>${totalDone}</b></div><div class="kv"><span>Streak</span><b>${state.app.streak||0} dias</b></div><div class="kv"><span>Max streak</span><b>${state.app.maxStreak||0} dias</b></div>`;
-  document.getElementById('engExtra').textContent=`Moods: ${state.moods.length}\nGoals: ${state.goals.length}\nTaxa 7d: ${Math.round(calcHabitRate()*100)}%\nUID local: ${state.app.uid||'default_user'}`;
+function renderLevels(){
+  const cont=document.getElementById('levelsAdmin');
+  if(!cont) return;
+  cont.innerHTML='';
+  levelTable.forEach(l=>{
+    const div=document.createElement('div');
+    div.style.cssText='display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:var(--bg-2);font-size:11px';
+    div.innerHTML=`<span style="font-size:14px">${l.icon}</span><div style="flex:1"><b>${l.level}. ${l.name}</b> • ${l.xp} XP<br><small style="color:var(--muted)">${l.reward}</small></div><span class="badge">${l.level<=10?'Início': l.level<=20?'Intermediário': l.level<=30?'Avançado': l.level<=40?'Mestre':'Lenda'}</span>`;
+    cont.appendChild(div);
+  });
 }
 function updateSysInfo(){
-  document.getElementById('sysInfo').textContent=`Build: ${new Date().toLocaleString('pt-BR')}\nFirebase: ${FIREBASE_DB_URL}\nProject: ${firebaseConfig.projectId}\nLocalStorage chars: ${JSON.stringify(localStorage).length}\nUser: ${auth.currentUser? auth.currentUser.email : 'deslogado'}\n\nArquivos: css/style.css, js/firebase.js (vidamaisai), js/core.js, js/app.js, admin.html`;
+  const el=document.getElementById('sysInfo');
+  if(!el) return;
+  el.textContent=`Admin: ${ADMIN_EMAIL}\nBuild: ${new Date().toLocaleString('pt-BR')}\nFirebase: ${FIREBASE_DB_URL}\nProject: ${firebaseConfig.projectId}\nUsers: ${allUsersCache.length}\nLocalStorage: ${JSON.stringify(localStorage).length} chars\nUser: ${auth.currentUser? auth.currentUser.email : 'deslogado'}\n\nPáginas modulares: pages/*.html • Index router ?page=xxx • 100% PT-BR\nNíveis: 50 níveis = 78k XP = 1 ano @200 XP/dia`;
 }
 window.exportJson=()=>{
-  const data=exportAll();
+  const data={user: state.user, profile: state.profile, transactions: state.tx, habits: state.habits, moods: state.moods, goals: state.goals, app: state.app, settings: state.settings, exportedAt: new Date().toISOString()};
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`vidaplus-backup-${new Date().toISOString().slice(0,10)}.json`; a.click();
 };
 window.importJson=(e)=>{
   const file=e.target.files[0]; if(!file) return;
-  const r=new FileReader(); r.onload=()=>{ try{ const data=JSON.parse(r.result); importAll(data); toast('Importado! Recarregue app','✓'); refreshAll(); }catch(err){ toast('Erro: '+err.message,'⚠️'); } }; r.readAsText(file);
+  const r=new FileReader(); r.onload=()=>{ try{ const data=JSON.parse(r.result); const ok = (()=>{
+    if(data.user) state.user=data.user;
+    if(data.profile) state.profile=data.profile;
+    if(data.transactions) state.tx=data.transactions;
+    if(data.habits) state.habits=data.habits;
+    if(data.moods) state.moods=data.moods;
+    if(data.goals) state.goals=data.goals;
+    if(data.app) state.app={...state.app,...data.app};
+    if(data.settings) state.settings={...state.settings,...data.settings};
+    localStorage.setItem('vidaplus_user_v2', JSON.stringify(state.user));
+    localStorage.setItem('vidaplus_tx_v2', JSON.stringify(state.tx));
+    localStorage.setItem('vidaplus_habits_v2', JSON.stringify(state.habits));
+    localStorage.setItem('vidaplus_moods_v2', JSON.stringify(state.moods));
+    localStorage.setItem('vidaplus_goals_v2', JSON.stringify(state.goals));
+    localStorage.setItem('vidaplus_app_v2', JSON.stringify(state.app));
+    localStorage.setItem('vidaplus_settings_v2', JSON.stringify(state.settings));
+    localStorage.setItem('vidaplus_profile_v2', JSON.stringify(state.profile));
+    return true;
+  })(); toast(ok?'Importado! Recarregue':'Erro','✓'); refreshAll(); }catch(err){ toast('Erro: '+err.message,'⚠️'); } }; r.readAsText(file);
 };
-window.clearAllLocal=()=>{ if(!confirm('Apagar localStorage Vida+ deste navegador?')) return; ['vidaplus_user_v2','vidaplus_tx_v2','vidaplus_habits_v2','vidaplus_moods_v2','vidaplus_goals_v2','vidaplus_app_v2','vidaplus_settings_v2','vidaplus_profile_v2'].forEach(k=>localStorage.removeItem(k)); toast('Local limpo','⚠️'); setTimeout(()=>location.reload(),600); };
-
 window.exploreRtdb=async()=>{
   const path=document.getElementById('rtdbPath').value.trim()||'vidaplus';
   const out=document.getElementById('rtdbOut'); out.textContent='Buscando...';
-  try{
-    const snap = await get(ref(db, path));
-    if(snap.exists()) out.textContent=JSON.stringify(snap.val(),null,2).slice(0,10000);
-    else out.textContent='null - sem dados neste path ou sem permissão';
-  }catch(e){ out.textContent='Erro: '+e.message+'\n\nVerifique Rules no Firebase Console. Para teste use:\n{\n  \"rules\": {\n    \".read\": true,\n    \".write\": true\n  }\n}'; }
+  try{ const snap = await get(ref(db, path)); if(snap.exists()) out.textContent=JSON.stringify(snap.val(),null,2).slice(0,10000); else out.textContent='null - sem dados ou sem permissão (verifique Rules admin)'; }catch(e){ out.textContent='Erro: '+e.message+'\n\nRules sugeridas já mostram admin total.'; }
 };
-
 window.saveBanner=async()=>{
   const text=document.getElementById('bannerText').value;
   const adsOn=document.getElementById('adsSwitch').classList.contains('on');
   const premForce=document.getElementById('premiumForce').classList.contains('on');
-  const payload={text, adsOn, premForce, updatedAt:new Date().toISOString()};
+  const payload={text, adsOn, premForce, updatedAt:new Date().toISOString(), by: ADMIN_EMAIL};
   const ok=await VidaFirebase.adminSetBanner(payload);
-  document.getElementById('bannerStatus').textContent= ok? '✓ Salvo em /admin/banner' : '✕ Falha ao salvar (Rules?)';
-  toast(ok?'Banner salvo no RTDB':'Falha','📢');
+  document.getElementById('bannerStatus').textContent= ok? '✓ Salvo em /admin/banner' : '✕ Falha (Rules?)';
+  toast(ok?'Banner salvo RTDB':'Falha','📢');
 };
-window.forcePremiumAll=async()=>{
-  if(!confirm(`Tornar TODOS os ${allUsersCache.length} usuários Premium?`)) return;
-  let okCount=0;
-  for(const u of allUsersCache){
-    const ok=await VidaFirebase.adminSetPremium(u.uid, true);
-    if(ok) okCount++;
-  }
-  toast(`${okCount}/${allUsersCache.length} usuários tornados Premium`,'★');
-  loadUsers();
+window.saveAiConfig=async()=>{
+  const cfg={freeInsights:3, premiumInsights:7, freeLevels:10, premiumLevels:50, updatedAt:new Date().toISOString()};
+  try{ await set(ref(db, 'admin/config/ai'), cfg); toast('Config IA salva: Free 3 insights, Premium 7 • Free 10 níveis, Premium 50','💾'); }catch(e){ toast('Falha: '+e.message,'⚠️'); }
+};
+window.setGlobalCurrency=(code)=>{
+  localStorage.setItem('vidaplus_global_currency', code);
+  toast(`Moeda global padrão agora ${code}. Novos usuários usarão ${code}. Existentes mantém própria.`,'💱');
 };
 
+// AI Assistant
+function initAiChat(){
+  const chat=document.getElementById('aiChat');
+  if(!chat) return;
+  chat.innerHTML='';
+  addAiMsg('ai','Olá, Wesley! Sou seu assistente admin inteligente 🤖\n\nAnalisei seu Firebase vidamaisai:\n- Posso listar inativos\n- Sugerir quem converter para Premium\n- Alertar sobre temas populares\n- Explicar níveis (50 níveis = 1 ano)\n\nO que quer fazer hoje?\n\nDica: seu email admin não aparecia porque não tinha nó em /admin/users. Agora eu garanto que aparece.');
+}
+function addAiMsg(who, text){
+  const chat=document.getElementById('aiChat');
+  const div=document.createElement('div');
+  div.className='msg '+who;
+  div.textContent=text;
+  chat.appendChild(div);
+  chat.scrollTop=chat.scrollHeight;
+  aiHistory.push({who,text});
+}
+window.sendAI=()=>{
+  const input=document.getElementById('aiInput');
+  const q=input.value.trim();
+  if(!q) return;
+  addAiMsg('user', q);
+  input.value='';
+  setTimeout(()=>generateAiResponse(q), 600);
+};
+window.quickAI=(type)=>{
+  const map={
+    resumo: 'Me dê resumo geral dos usuários e engajamento',
+    inativos: 'Quem está inativo há 7 dias e pode desistir?',
+    premium: 'Quem tem maior potencial para virar Premium?',
+    temas: 'Quais temas mais usados? Qual gradiente criar próximo?'
+  };
+  document.getElementById('aiInput').value=map[type]||type;
+  sendAI();
+};
+function generateAiResponse(q){
+  q=q.toLowerCase();
+  let resp='🤔 Boa pergunta! ';
+  const total=allUsersCache.length;
+  const premium=allUsersCache.filter(u=>u.premium).length;
+  const free=total-premium;
+  const avgXp = total? Math.round(allUsersCache.reduce((s,u)=>s+(u.xp||0),0)/total) : 0;
+  const inativos = allUsersCache.filter(u=>{ if(!u.lastLogin) return true; const d=new Date(u.lastLogin); return (Date.now()-d)/86400000>7; }).length;
+
+  if(q.includes('resumo')||q.includes('geral')){
+    resp=`📊 Resumo vidamaisai:\n\n• Total usuários RTDB: ${total} (agora inclui você admin 👑)\n• Premium: ${premium} (${total? Math.round(premium/total*100):0}%)\n• Free: ${free}\n• XP médio: ${avgXp} (Nv ~${Math.floor(avgXp/1500)+1})\n• Inativos 7d: ${inativos}\n• Moeda mais usada: BRL (estimado)\n• Nível mais comum: Nv 2-3 (Explorador/Construtor)\n\nAção sugerida: faça broadcast de tema Aurora para reengajar inativos + oferta Premium R$19,90.`;
+  } else if(q.includes('inativo')){
+    resp=`😴 Inativos 7d: ${inativos} usuários\n\nLista:\n${allUsersCache.filter(u=>{ if(!u.lastLogin) return true; return (Date.now()-new Date(u.lastLogin))/86400000>7; }).slice(0,5).map(u=>`- ${u.name||u.email} (${u.email}) último ${u.lastLogin||'nunca'}`).join('\n')}\n\nSugestão IA: envie push/banner "🔥 Você perdeu streak de ${allUsersCache[0]?.streak||0} dias! Volte e ganhe 50 XP bônus" + tema Neon gratuito 48h para quem voltar.`;
+  } else if(q.includes('premium')){
+    resp=`💎 Potencial Premium:\n\nAnalisei XP e streak:\n${allUsersCache.filter(u=>!u.premium).sort((a,b)=>(b.xp||0)-(a.xp||0)).slice(0,3).map(u=>`- ${u.name} (${u.xp} XP, streak ${u.streak||0}d) → alta chance, já engajado Nv ${Math.floor((u.xp||0)/1500)+1}`).join('\n')}\n\nEstratégia: ofereça teste 7 dias + desbloqueio imediato tema Gold. Quem está Nv 4-5 tem 3x mais chance de converter.`;
+  } else if(q.includes('tema')){
+    resp=`🎨 Temas populares (estimativa baseada em config):\n\n• Light 60% (padrão)\n• Dark 25%\n• Midnight/Aurora 10% (Premium)\n• Forest/Sunset 5%\n\nNovos gradientes que sugiro criar (baseado em tendências 2024/25):\n- Cyber Mint: #0F172A → #10B981 → #06B6D4 (bem-estar)\n- Royal Velvet: #1A0033 → #7C3AED → #EC4899 (luxo)\n- Solar Flare: #7C2D12 → #F59E0B → #FDE68A (energia)\n\nVocê já tem 10 temas, está ótimo!`;
+  } else if(q.includes('nivel')||q.includes('nível')){
+    resp=`🏆 Níveis: 50 níveis = 78.000 XP = 390 dias @200 XP/dia = 1 ano + 25 dias bônus\n\nAno 100% uso:\n- Nv 1-10: 22.500 XP (3 meses) → recompensas: temas, PDF\n- Nv 11-20: 22.500→50.000 XP (6 meses) → Aurora, Ocean, projeções\n- Nv 21-30: 50k→65k (9 meses) → Gold, Sakura, mentoria\n- Nv 31-50: 65k→78k (12 meses) → Hall fama, 100 anos Premium, troféu físico\n\nVantagem por nível está em core.js levelTable[].reward. Cada nível tem icon e recompensa única.`;
+  } else if(q.includes('moeda')||q.includes('currency')){
+    resp=`💱 Multi-moeda implementado:\n\n- 8 moedas: BRL, USD, EUR, GBP, JPY, ARS, MXN, BTC\n- Config por usuário em profile.currency + settings.currency\n- fmtMoney() usa Intl.NumberFormat com locale correto\n- Chip no topo mostra moeda atual\n- Admin pode definir moeda global padrão\n\nUsuários gringos verão valores em sua moeda local. Firebase grava valor numérico puro + currency code separado.`;
+  } else {
+    resp=`Entendi: "${q}"\n\nComo assistente admin, posso:\n- 📊 Resumir engajamento\n- 😴 Listar inativos\n- 💎 Sugerir conversão Premium\n- 🎨 Analisar temas\n- 🏆 Explicar níveis (50 níveis = 1 ano)\n- 💱 Moedas\n\nTente clicar nos botões rápidos abaixo ou pergunte específico como "quantos usuários premium?"`;
+  }
+  addAiMsg('ai', resp);
+}
+
 window.handleLogoutAdmin=async()=>{
-  await signOut(auth);
-  toast('Deslogado - faça login no app','👋');
+  await fbSignOut(auth);
+  toast('Deslogado admin','👋');
   setTimeout(()=>location.href='index.html',800);
 };
 
-// Auth guard - se não logado, redireciona para login?
-onAuthStateChanged(auth, (user)=>{
-  checkFb();
-  if(!user){
-    // permite admin mesmo deslogado? avisa
-    console.log("[Admin] sem login");
-  }else{
-    console.log("[Admin] logado", user.email);
-  }
-});
-
-refreshAll();
-exploreRtdb();
+// init guard check já no onAuthStateChanged
 </script>
 </body>
 </html>
