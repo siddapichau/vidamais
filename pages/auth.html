@@ -22,36 +22,35 @@
         <div id="loginForm">
             <div class="input-group">
                 <label>E-mail</label>
-                <input type="email" id="l_email" class="input-custom" placeholder="seu@email.com">
+                <input type="email" id="l_email" class="input-custom" placeholder="seu@email.com" style="color: var(--text);">
             </div>
             <div class="input-group">
                 <label>Senha</label>
-                <input type="password" id="l_pass" class="input-custom" placeholder="••••••">
+                <input type="password" id="l_pass" class="input-custom" placeholder="••••••" style="color: var(--text);">
             </div>
             <button class="btn-primary" style="width: 100%;" onclick="handleLogin()">Entrar no App</button>
         </div>
 
-        <!-- Signup -->
         <div id="signupForm" style="display: none;">
             <div class="input-group">
                 <label>Nome Completo</label>
-                <input type="text" id="s_name" class="input-custom" placeholder="Como quer ser chamado?">
+                <input type="text" id="s_name" class="input-custom" placeholder="Como quer ser chamado?" style="color: var(--text);">
             </div>
             <div class="input-group">
                 <label>E-mail</label>
-                <input type="email" id="s_email" class="input-custom" placeholder="seu@email.com">
+                <input type="email" id="s_email" class="input-custom" placeholder="seu@email.com" style="color: var(--text);">
             </div>
             <div class="input-group">
                 <label>Senha</label>
-                <input type="password" id="s_pass" class="input-custom" placeholder="Mínimo 6 caracteres">
+                <input type="password" id="s_pass" class="input-custom" placeholder="Mínimo 6 caracteres" style="color: var(--text);">
             </div>
             <button class="btn-primary" style="width: 100%;" onclick="handleSignup()">Criar Conta</button>
         </div>
 
         <div style="margin: 20px 0; text-align: center; color: var(--muted); font-size: 12px; font-weight: 800;">OU CONTINUE COM</div>
         
-        <button class="btn-ghost" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;" onclick="handleGoogle()">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" width="18"> Google
+        <button class="btn-ghost" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--text);" onclick="handleGoogle()">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" width="18" style="filter: none;"> Google
         </button>
     </div>
 
