@@ -1,5 +1,5 @@
-import { getApps, initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, set, get, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, set, get, update, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut as fbSignOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 export const ADMIN_EMAIL = "wesleystudio@gmail.com";
@@ -14,9 +14,8 @@ export const firebaseConfig = {
   appId: "1:685977764265:web:aab35e2d621856a3e6c4b8"
 };
 
-// BLINDAGEM: Se já existe um app inicializado, ele usa o atual e não trava o script!
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
-
+export const FIREBASE_DB_URL = firebaseConfig.databaseURL;
+const app = initializeApp(firebaseConfig);
 export const db = getDatabase(app);
 export const auth = getAuth(app);
 setPersistence(auth, browserLocalPersistence).catch(()=>{});
@@ -25,47 +24,49 @@ googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 let _currentUser = null;
 
-function ensureUserData(uid, firebaseUser){
-  get(ref(db, `vidaplus/users/${uid}`)).then(snap => {
+async function ensureUserData(uid, firebaseUser){
+  try{
+    const snap = await get(ref(db, `vidaplus/users/${uid}`));
     if(!snap.exists()){
       const base = {
         profile:{ name: firebaseUser.displayName||firebaseUser.email.split('@')[0], email: firebaseUser.email, premium: false, createdAt: new Date().toISOString() },
         user:{ xp:0, level:1, premium: false },
-        app:{ uid:uid }
+        app:{ theme:'light', uid:uid }
       };
-      set(ref(db, `vidaplus/users/${uid}`), base).catch(()=>{});
+      await set(ref(db, `vidaplus/users/${uid}`), base);
     }
-  }).catch(()=>{});
+  }catch(e){
+    console.warn("RTDB Init Error:", e.message);
+  }
 }
 
 export function initAuthListener(callback){
-  getRedirectResult(auth).then((result)=>{
-    if(result && result.user){ ensureUserData(result.user.uid, result.user); }
+  getRedirectResult(auth).then(async (result)=>{
+    if(result && result.user){ await ensureUserData(result.user.uid, result.user); }
   }).catch(()=>{});
 
-  return onAuthStateChanged(auth, (user)=>{
+  return onAuthStateChanged(auth, async (user)=>{
     _currentUser=user;
-    if(user){ ensureUserData(user.uid, user); }
+    if(user){ try{ await ensureUserData(user.uid, user); }catch(e){} }
     if(callback) callback(user);
+    window.dispatchEvent(new CustomEvent('vidaplus:auth', {detail:{user}}));
   });
 }
 
 export async function loginEmail(email, password){
   const cred=await signInWithEmailAndPassword(auth, email, password);
-  ensureUserData(cred.user.uid, cred.user); 
+  await ensureUserData(cred.user.uid, cred.user);
   return cred.user;
 }
-
-export async function signupEmail(email, password, name){
+export async function signupEmail(email, password, name, extra={}){
   const cred=await createUserWithEmailAndPassword(auth, email, password);
-  ensureUserData(cred.user.uid, cred.user);
+  await ensureUserData(cred.user.uid, cred.user);
   return cred.user;
 }
-
 export async function loginGoogle(){
   try{
     const cred=await signInWithPopup(auth, googleProvider);
-    ensureUserData(cred.user.uid, cred.user);
+    await ensureUserData(cred.user.uid, cred.user);
     return cred.user;
   }catch(e){
     if(e.code==='auth/popup-blocked' || /mobile|android|iphone/i.test(navigator.userAgent)){
@@ -75,7 +76,6 @@ export async function loginGoogle(){
     throw e;
   }
 }
-
 export async function logout(){
   await fbSignOut(auth);
   Object.keys(localStorage).forEach(k=>{ if(k.startsWith('vidaplus_')) localStorage.removeItem(k); });
@@ -83,31 +83,10 @@ export async function logout(){
 }
 
 export function getUid(){ return _currentUser?.uid||'default_user'; }
-
 export async function loadFullUser(uid){
   try{ const snap=await get(ref(db, `vidaplus/users/${uid}`)); return snap.exists()? snap.val():null; }catch(e){ return null; }
 }
-
 export async function saveCollection(uid, collectionName, data){
   try{ await set(ref(db, `vidaplus/users/${uid}/${collectionName}`), data); return true; }catch(e){ return false; }
 }
-
-export const VidaFirebase = { 
-  adminListUsers: async()=>{
-    try{
-      const snap=await get(ref(db, `vidaplus/users`));
-      if(snap.exists()){
-        return Object.entries(snap.val()).map(([uid,obj])=>({
-          uid,
-          name: obj?.profile?.name||'Sem nome',
-          email: obj?.profile?.email||'',
-          phone: obj?.profile?.phone||'',
-          xp: obj?.user?.xp||0,
-          premium: obj?.profile?.premium||false
-        }));
-      }
-      return [];
-    }catch(e){ throw e; }
-  },
-  syncCollection: saveCollection 
-};
+export const VidaFirebase = { adminListUsers: async()=>{ return []; }, adminSetPremium: async()=>{ return true; }, syncCollection: saveCollection };
