@@ -5,33 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Vida+ AI — Evolução Inteligente</title>
     <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="assets/logo.png">
+    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
         body, html { height: 100%; overflow: hidden; background: var(--bg); margin: 0; }
         .app-shell { display: flex; flex-direction: column; height: 100vh; width: 100vw; }
         #mainIframe { flex: 1; border: none; width: 100%; height: 100%; background: var(--bg); }
-        
         .brand { display: flex; align-items: center; gap: 10px; cursor: pointer; }
-        .brand img { height: 35px; width: 35px; border-radius: 8px; }
+        .brand img { height: 36px; width: 36px; border-radius: 10px; object-fit:cover; box-shadow:0 2px 10px rgba(0,0,0,0.1); }
         .brand-text { font-weight: 800; font-size: 20px; color: var(--text); letter-spacing: -0.5px; }
-
-        .menu-pc { display: flex; gap: 5px; }
-        .top-actions { display: flex; align-items: center; gap: 12px; }
-        
-        .btn-circle, .avatar-circle { 
-            width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border); 
-            background: var(--card); display: grid; place-items: center; cursor: pointer; 
-            color: var(--text); font-size: 18px; overflow: hidden;
-        }
+        .menu-pc { display: flex; gap: 4px; overflow-x:auto; scrollbar-width:none; }
+        .menu-pc::-webkit-scrollbar{ display:none; }
+        .top-actions { display: flex; align-items: center; gap: 10px; }
+        .btn-circle { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border); background: var(--card); display: grid; place-items: center; cursor: pointer; color: var(--text); font-size: 16px; transition:0.2s; }
+        .btn-circle:hover{ transform:scale(1.05); }
+        .avatar-circle { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--border); background: var(--primary); display: grid; place-items: center; cursor: pointer; color: white; font-weight:800; overflow:hidden; }
         .avatar-circle img { width: 100%; height: 100%; object-fit: cover; }
-        
-        .mobile-toggle { display: none; font-size: 24px; cursor: pointer; color: var(--text); }
-        @media (max-width: 768px) {
-            .mobile-toggle { display: block; }
+        .mobile-toggle { display: none; font-size: 22px; cursor: pointer; color: var(--text); width:40px;height:40px;display:grid;place-items:center;border-radius:10px;border:1px solid transparent; }
+        @media (max-width: 980px) {
+            .mobile-toggle { display: grid; }
             .menu-pc { display: none; }
         }
-        #ad-bottom { height: 50px; background: var(--bg-2); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--muted); }
+        #ad-bottom { min-height: 48px; background: var(--bg-2); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--muted); gap:8px; padding:6px 12px; }
+        .sync-dot{ width:8px;height:8px;border-radius:50%;background:var(--emerald);box-shadow:0 0 0 3px rgba(16,185,129,0.2);animation:pulse 2s infinite; }
+        @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(16,185,129,0.4)}70%{box-shadow:0 0 0 6px rgba(16,185,129,0)}100%{box-shadow:0 0 0 0 rgba(16,185,129,0)}}
     </style>
 </head>
 <body>
@@ -39,46 +38,63 @@
 <div class="app-shell">
     <header class="top-nav">
         <div class="brand" onclick="navigate('home.html')">
-            <img src="logo.png" alt="Logo">
+            <img src="assets/logo.png" alt="Logo" onerror="this.src='logo.png'">
             <span class="brand-text">Vida+ AI</span>
+            <span style="font-size:10px;background:var(--primary);color:white;padding:2px 6px;border-radius:100px;font-weight:800;margin-left:2px">v2</span>
         </div>
 
         <nav class="menu-pc" id="pcNav">
-            <!-- Menus estáticos iniciais para evitar delay -->
-            <a href="javascript:void(0)" class="nav-item" onclick="navigate('home.html')">🏠 Home</a>
-            <a href="javascript:void(0)" class="nav-item" onclick="navigate('dashboard.html')">📊 Dash</a>
-            <a href="javascript:void(0)" class="nav-item" onclick="navigate('insumos.html')">📦 Insumos</a>
-            <a href="javascript:void(0)" class="nav-item" onclick="navigate('perfil.html')">👤 Perfil</a>
+            <a class="nav-item active" onclick="navigate('home.html')">🏠 Home</a>
+            <a class="nav-item" onclick="navigate('dashboard.html')">📊 Dash</a>
+            <a class="nav-item" onclick="navigate('financeiro.html')">💰 Financeiro</a>
+            <a class="nav-item" onclick="navigate('habitos.html')">⭐ Hábitos</a>
+            <a class="nav-item" onclick="navigate('humor.html')">🧠 Humor</a>
+            <a class="nav-item" onclick="navigate('metas.html')">🎯 Metas</a>
+            <a class="nav-item" onclick="navigate('conquistas.html')">🏆 Níveis</a>
+            <a class="nav-item" onclick="navigate('relatorios.html')">🤖 IA</a>
+            <a class="nav-item" onclick="navigate('insumos.html')">📦 Insumos</a>
         </nav>
 
         <div class="top-actions">
-            <div class="btn-circle" onclick="appToggleTheme()" title="Mudar Tema">🌓</div>
+            <div class="btn-circle" onclick="appToggleTheme()" title="Mudar tema">🌓</div>
             <div id="userAvatar" class="avatar-circle" onclick="navigate('perfil.html')">?</div>
             <div class="mobile-toggle" onclick="toggleMobileMenu()">☰</div>
         </div>
     </header>
 
-    <iframe id="mainIframe" name="mainIframe" src="pages/home.html"></iframe>
+    <iframe id="mainIframe" name="mainIframe" src="pages/home.html" title="Vida+ App" loading="eager"></iframe>
 
-    <div id="ad-bottom">Anúncio AdMob Banner</div>
+    <div id="ad-bottom"><span class="sync-dot"></span><span id="syncText">● Sincronizado • Vida+ AI Evolution OS</span><span style="margin-left:auto" class="pc-only"><span id="xpMini">0 XP • Nv 1</span> • <span class="link" onclick="navigate('conquistas.html')">Ver níveis</span></span></div>
 </div>
 
 <!-- Mobile Drawer -->
 <div class="overlay-bg" id="mobileOverlay" onclick="toggleMobileMenu()"></div>
 <aside class="mobile-sidebar" id="mobileDrawer">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
         <span class="brand-text">Menu</span>
-        <span onclick="toggleMobileMenu()" style="font-size:30px; cursor:pointer; color: var(--text);">&times;</span>
+        <span onclick="toggleMobileMenu()" style="font-size:28px; cursor:pointer; color: var(--text); width:36px;height:36px;display:grid;place-items:center;border-radius:10px;background:var(--bg-2)">×</span>
     </div>
-    <nav id="mobileNav" style="display:flex; flex-direction:column; gap:8px;">
-        <a href="javascript:void(0)" class="nav-item" onclick="navigate('home.html')">🏠 Home</a>
-        <a href="javascript:void(0)" class="nav-item" onclick="navigate('dashboard.html')">📊 Dashboard</a>
-        <a href="javascript:void(0)" class="nav-item" onclick="navigate('insumos.html')">📦 Insumos</a>
-        <a href="javascript:void(0)" class="nav-item" onclick="navigate('perfil.html')">👤 Perfil</a>
+    <nav id="mobileNav" style="display:flex; flex-direction:column; gap:6px;">
+        <a class="nav-item active" onclick="navigate('home.html')">🏠 Home</a>
+        <a class="nav-item" onclick="navigate('dashboard.html')">📊 Dashboard</a>
+        <a class="nav-item" onclick="navigate('financeiro.html')">💰 Financeiro</a>
+        <a class="nav-item" onclick="navigate('habitos.html')">⭐ Hábitos</a>
+        <a class="nav-item" onclick="navigate('humor.html')">🧠 Humor Diário</a>
+        <a class="nav-item" onclick="navigate('metas.html')">🎯 Metas</a>
+        <a class="nav-item" onclick="navigate('conquistas.html')">🏆 Conquistas 50 Níveis</a>
+        <a class="nav-item" onclick="navigate('relatorios.html')">🤖 Relatórios IA</a>
+        <a class="nav-item" onclick="navigate('insumos.html')">📦 Insumos & Moedas</a>
+        <a class="nav-item" onclick="navigate('perfil.html')">👤 Perfil & Temas</a>
     </nav>
+    <div style="margin-top:24px;padding:16px;background:var(--bg-2);border-radius:16px;border:1px solid var(--border)">
+        <div style="display:flex;gap:10px;align-items:center"><div id="drawerAvatar" class="avatar-circle" style="width:44px;height:44px">?</div><div><div id="drawerName" style="font-weight:800;font-size:13px">Visitante</div><div id="drawerLevel" class="muted text-xs">Nv 1 • 0 XP</div></div></div>
+        <div style="display:grid;gap:6px;margin-top:12px">
+            <button class="btn-primary btn-sm w-full" onclick="navigate('auth.html'); toggleMobileMenu()">Entrar / Criar conta</button>
+            <button class="btn-ghost btn-sm w-full" onclick="parent.logout && parent.logout()">Sair</button>
+        </div>
+    </div>
 </aside>
 
-<!-- Carregamento Prioritário -->
 <script type="module">
     import { db, ref, onValue } from './js/firebase.js';
     import './js/core.js';
@@ -92,93 +108,109 @@
     window.navigate = (page) => {
         const frame = document.getElementById('mainIframe');
         const target = page.startsWith('pages/') ? page : `pages/${page}`;
-        
-        // Evita reload se já estiver na página
-        if(frame.src.includes(target)) return;
-        
-        frame.src = target;
-        
+        if(frame.src.includes(target) && frame.src.includes('pages/')){
+            // já está, mas força reload se quiser? evita reload
+            // frame.contentWindow.location.reload();
+        }else{
+            frame.src = target;
+        }
         const urlParams = new URLSearchParams(window.location.search);
-        urlParams.set('page', page);
+        urlParams.set('page', page.replace('pages/',''));
         window.history.pushState({}, '', `${window.location.pathname}?${urlParams.toString()}`);
-
         document.getElementById('mobileDrawer').classList.remove('open');
         document.getElementById('mobileOverlay').classList.remove('open');
-        
         updateActiveMenu(page);
     };
 
-    function updateActiveMenu(page) {
-        document.querySelectorAll('.nav-item').forEach(a => {
-            const isActive = a.getAttribute('onclick').includes(page);
+    function updateActiveMenu(page){
+        const clean = page.replace('pages/','');
+        document.querySelectorAll('.nav-item').forEach(a=>{
+            const onclick = a.getAttribute('onclick')||'';
+            const isActive = onclick.includes(clean);
             a.classList.toggle('active', isActive);
         });
     }
 
-    // Listener de Estado para Avatar e UI
     window.onAppStateUpdate = () => {
         const state = window.appState;
         const av = document.getElementById('userAvatar');
-        
-        console.log("Estado atualizado:", state); // Log para debug
+        const drawerAv = document.getElementById('drawerAvatar');
+        const nameEl = document.getElementById('drawerName');
+        const lvlEl = document.getElementById('drawerLevel');
+        const xpMini = document.getElementById('xpMini');
 
-        if (state && state.profile && state.profile.email) {
-            if (state.profile.photo) {
-                av.innerHTML = `<img src="${state.profile.photo}">`;
-            } else {
-                const char = (state.profile.firstName || state.profile.name || state.profile.email || "?").charAt(0).toUpperCase();
-                av.textContent = char;
-                av.style.background = 'var(--primary)';
-                av.style.color = 'white';
+        if(state && state.profile && state.profile.email){
+            if(state.profile.photo){
+                av.innerHTML = `<img src="${state.profile.photo}" onerror="this.style.display='none'">`;
+                if(drawerAv) drawerAv.innerHTML = `<img src="${state.profile.photo}">`;
+            }else{
+                const ch = (state.profile.firstName || state.profile.name || state.profile.email || "?").charAt(0).toUpperCase();
+                av.textContent = ch; av.style.background='var(--primary)'; av.style.color='white';
+                if(drawerAv){ drawerAv.textContent=ch; drawerAv.style.background='var(--primary)'; }
             }
-        } else {
-            av.textContent = '?';
-            av.style.background = 'var(--card)';
+            if(nameEl) nameEl.textContent = state.profile.firstName || state.profile.name || state.profile.email.split('@')[0];
+            const lvl = window.getLevelData ? window.getLevelData(state.user.xp||0) : {current:{level:1}};
+            if(lvlEl) lvlEl.textContent = `Nv ${lvl.current.level} • ${state.user.xp||0} XP • 🪙 ${state.user.coins||0}`;
+            if(xpMini) xpMini.textContent = `${state.user.xp||0} XP • Nv ${lvl.current.level} • 🪙 ${state.user.coins||0}`;
+        }else{
+            av.textContent='?'; av.style.background='var(--card)'; av.style.color='var(--text)';
+            if(drawerAv){ drawerAv.textContent='?'; drawerAv.style.background='var(--card)'; drawerAv.style.color='var(--text)'; }
+            if(nameEl) nameEl.textContent='Visitante';
+            if(lvlEl) lvlEl.textContent='Faça login para sincronizar';
+            if(xpMini) xpMini.textContent='Visitante • Faça login';
         }
 
         const frame = document.getElementById('mainIframe');
-        if (frame.contentWindow && frame.contentWindow.updateUI) {
-            frame.contentWindow.updateUI();
+        if(frame.contentWindow && frame.contentWindow.updateUI){
+            try{ frame.contentWindow.updateUI(); }catch{}
         }
+        document.getElementById('syncText').textContent = state.isLoaded ? '● Sincronizado • Vida+ AI Evolution OS' : '○ Carregando...';
     };
 
-    // Atualização Dinâmica do Menu (Firebase)
-    onValue(ref(db, 'admin/menu'), (snapshot) => {
+    // Admin menu live - se existir, substitui
+    let defaultMenuApplied = false;
+    onValue(ref(db, 'admin/menu'), (snapshot)=>{
         const menuData = snapshot.val();
-        if (!menuData) return;
+        if(!menuData || (Array.isArray(menuData) && menuData.length===0)){
+            if(!defaultMenuApplied){
+                // mantém menu default estático do HTML
+                defaultMenuApplied=true;
+            }
+            return;
+        }
         const menu = Array.isArray(menuData) ? menuData : Object.values(menuData);
-        const sorted = menu.sort((a,b) => (a.order || 0) - (b.order || 0));
-        
+        const sorted = menu.filter(Boolean).sort((a,b)=> (a.order||0)-(b.order||0));
+        if(sorted.length===0) return;
         const pcNav = document.getElementById('pcNav');
         const mobNav = document.getElementById('mobileNav');
-        pcNav.innerHTML = ''; mobNav.innerHTML = '';
-
-        sorted.forEach(item => {
-            if(!item) return;
-            const linkHTML = `<span style="font-size:18px">${item.icon || '•'}</span> <span>${item.label}</span>`;
-            
-            const aPC = document.createElement('a');
-            aPC.className = 'nav-item'; aPC.href = "javascript:void(0)";
-            aPC.onclick = () => navigate(item.page);
-            aPC.innerHTML = linkHTML;
-            pcNav.appendChild(aPC);
-
-            const aMob = document.createElement('a');
-            aMob.className = 'nav-item'; aMob.href = "javascript:void(0)";
-            aMob.onclick = () => navigate(item.page);
-            aMob.innerHTML = linkHTML;
-            mobNav.appendChild(aMob);
+        pcNav.innerHTML=''; mobNav.innerHTML='';
+        sorted.forEach(item=>{
+            if(!item || !item.page) return;
+            const link=`<span style="font-size:16px">${item.icon||'•'}</span> <span>${item.label||item.page}</span>`;
+            const aPC=document.createElement('a'); aPC.className='nav-item'; aPC.href='javascript:void(0)'; aPC.onclick=()=> navigate(item.page); aPC.innerHTML=link; pcNav.appendChild(aPC);
+            const aMob=document.createElement('a'); aMob.className='nav-item'; aMob.href='javascript:void(0)'; aMob.onclick=()=> navigate(item.page); aMob.innerHTML=link; mobNav.appendChild(aMob);
         });
-        
-        const params = new URLSearchParams(window.location.search);
-        updateActiveMenu(params.get('page') || 'home.html');
+        const params=new URLSearchParams(window.location.search);
+        updateActiveMenu(params.get('page')||'home.html');
     });
 
-    // Inicialização da URL
     const params = new URLSearchParams(window.location.search);
     const startPage = params.get('page');
     if(startPage) navigate(startPage);
-</script>
 
+    // PWA register
+    if('serviceWorker' in navigator){
+        window.addEventListener('load', ()=>{
+            navigator.serviceWorker.register('./sw.js').then(r=> console.log('SW registered', r.scope)).catch(e=> console.warn('SW fail', e));
+        });
+    }
+
+    // theme sync to iframe on load
+    document.getElementById('mainIframe').addEventListener('load', ()=>{
+        const th=document.documentElement.getAttribute('data-theme');
+        const fr=document.getElementById('mainIframe');
+        try{ if(th && fr.contentWindow) fr.contentWindow.document.documentElement.setAttribute('data-theme', th); }catch{}
+    });
+</script>
 </body>
 </html>

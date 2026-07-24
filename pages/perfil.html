@@ -1,106 +1,105 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <link rel="stylesheet" href="../css/style.css">
-    <script>
-        const theme = parent.document.documentElement.getAttribute('data-theme');
-        if(theme) document.documentElement.setAttribute('data-theme', theme);
-    </script>
-    <style>
-        body { padding: 20px; }
-        .theme-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 15px; }
-        .theme-item { background: var(--card); border: 2px solid var(--border); border-radius: 12px; padding: 15px; text-align: center; cursor: pointer; transition: .2s; }
-        .theme-item.active { border-color: var(--primary); background: var(--bg-2); }
-    </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="../css/style.css">
+<script>const th=parent.document.documentElement.getAttribute('data-theme'); if(th) document.documentElement.setAttribute('data-theme',th);</script>
+<style>body{padding:20px; max-width:900px; margin:0 auto;}.theme-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-top:12px}.theme-item{background:var(--card);border:2px solid var(--border);border-radius:14px;padding:14px;text-align:center;cursor:pointer;transition:.2s}.theme-item.active{border-color:var(--primary);background:var(--bg-2)}.theme-item:hover{transform:translateY(-2px)} .theme-item.premium{position:relative;overflow:hidden}.theme-item.premium::after{content:'💎';position:absolute;top:6px;right:6px;font-size:10px}</style>
 </head>
 <body>
+<h2 style="font-size:26px;font-weight:800">Perfil e Configurações</h2>
+<p class="muted text-sm">Seus dados ficam seguros no Firebase, vinculados à sua conta.</p>
 
-    <h2>Perfil e Configurações</h2>
+<div class="card" style="margin-top:16px">
+  <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:16px">
+    <div id="avatarPreview" style="width:72px;height:72px;border-radius:50%;background:var(--primary);display:grid;place-items:center;color:white;font-weight:800;font-size:28px;overflow:hidden;border:3px solid var(--border)">?</div>
+    <div><b id="profileName">Usuário</b><p id="profileEmail" class="muted text-sm"></p><div style="display:flex;gap:6px;margin-top:6px"><span class="badge badge-free" id="profileLevel">Nv 1</span><span class="badge badge-free" id="profileXP">0 XP</span></div></div>
+  </div>
+  <div class="grid-2">
+    <div class="input-group"><label>Nome</label><input id="p_firstName" class="input" placeholder="Ex: Wesley"></div>
+    <div class="input-group"><label>Sobrenome</label><input id="p_lastName" class="input" placeholder="Ex: Studio"></div>
+  </div>
+  <div class="grid-2">
+    <div class="input-group"><label>Telefone / WhatsApp</label><input id="p_phone" class="input" placeholder="(11) 99999-9999"></div>
+    <div class="input-group"><label>Endereço / Cidade</label><input id="p_address" class="input" placeholder="São Paulo - SP"></div>
+  </div>
+  <div class="input-group"><label>Foto URL (opcional)</label><input id="p_photo" class="input" placeholder="https://..."></div>
+  <button class="btn-primary" onclick="saveProfile()">Salvar perfil +20 XP</button>
+</div>
 
-    <div class="card" style="margin-top: 20px;">
-        <h3>Dados Pessoais</h3>
-        <div class="grid" style="margin-top:15px;">
-            <div class="input-group">
-                <label>Nome</label>
-                <input type="text" id="p_firstName" class="input-custom" placeholder="Ex: Wesley" style="color: var(--text);">
-            </div>
-            <div class="input-group">
-                <label>Sobrenome</label>
-                <input type="text" id="p_lastName" class="input-custom" placeholder="Ex: Studio" style="color: var(--text);">
-            </div>
-        </div>
-        <div class="input-group">
-            <label>Telefone / WhatsApp</label>
-            <input type="text" id="p_phone" class="input-custom" placeholder="(00) 00000-0000" style="color: var(--text);">
-        </div>
-        <div class="input-group">
-            <label>Endereço / Localização</label>
-            <input type="text" id="p_address" class="input-custom" placeholder="Cidade - Estado" style="color: var(--text);">
-        </div>
-        <button class="btn-primary" onclick="saveProfile()">Salvar Perfil</button>
-    </div>
+<div class="card" style="margin-top:16px">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><div><b>Temas da Interface</b><p class="muted text-xs">💎 Premium = 500 moedas, ganhe na Home assistindo vídeos.</p></div><div class="badge badge-free">🪙 <span id="coinCount">0</span> moedas</div></div>
+  <div class="theme-grid" id="themeGrid"></div>
+  <div style="display:flex;gap:8px;margin-top:14px"><button class="btn-ghost btn-sm" onclick="parent.appToggleTheme()">Alternar claro/escuro 🌓</button><button class="btn-ghost btn-sm" onclick="parent.navigate('home.html')">Ganhar moedas 📺</button></div>
+</div>
 
-    <div class="card" style="margin-top: 20px;">
-        <h3>Temas da Interface</h3>
-        <p style="font-size: 12px; color: var(--muted); margin-top: 5px;">Temas 💎 Premium custam 500 moedas.</p>
-        <div class="theme-grid" id="themeGrid">
-            <!-- Dinâmico -->
-        </div>
-    </div>
+<div class="card" style="margin-top:16px">
+  <b>Conta</b>
+  <div style="display:grid;gap:8px;margin-top:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg-2);border-radius:12px"><span class="text-sm">E-mail</span><span id="accountEmail" class="font-bold text-sm">-</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg-2);border-radius:12px"><span class="text-sm">Premium</span><span id="accountPremium" class="font-bold text-sm">-</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg-2);border-radius:12px"><span class="text-sm">Moeda padrão</span><select id="currencySel" class="input" style="width:100px;height:32px" onchange="changeCurrency(this.value)"><option value="BRL">BRL</option><option value="USD">USD</option><option value="EUR">EUR</option></select></div>
+  </div>
+  <button class="btn" style="width:100%;margin-top:14px;color:var(--rose);border-color:var(--rose);background:transparent" onclick="parent.logout()">Sair da conta 🚪</button>
+</div>
 
-    <div class="card" style="margin-top: 20px;">
-        <button class="btn-ghost" style="width: 100%; color: #F43F5E; border-color: #F43F5E;" onclick="parent.logout()">Sair da Conta</button>
-    </div>
+<script>
+function getState(){ return parent.appState||{profile:{}, user:{xp:0,level:1,coins:0,premium:false}, settings:{currency:'BRL', theme:'default-light'}}; }
 
-    <script>
-        function updateUI() {
-            const state = parent.appState;
-            const themes = parent.themes;
-            
-            document.getElementById('p_firstName').value = state.profile.firstName || '';
-            document.getElementById('p_lastName').value = state.profile.lastName || '';
-            document.getElementById('p_phone').value = state.profile.phone || '';
-            document.getElementById('p_address').value = state.profile.address || '';
+function updateUI(){
+  const state=getState();
+  const t = parent.themes||{};
+  document.getElementById('p_firstName').value = state.profile.firstName||'';
+  document.getElementById('p_lastName').value = state.profile.lastName||'';
+  document.getElementById('p_phone').value = state.profile.phone||'';
+  document.getElementById('p_address').value = state.profile.address||'';
+  document.getElementById('p_photo').value = state.profile.photo||'';
+  document.getElementById('coinCount').textContent = state.user.coins||0;
+  document.getElementById('profileName').textContent = state.profile.name || state.profile.firstName || state.profile.email || 'Usuário';
+  document.getElementById('profileEmail').textContent = state.profile.email||'';
+  document.getElementById('accountEmail').textContent = state.profile.email||'-';
+  document.getElementById('accountPremium').textContent = state.user.premium ? '💎 Premium ativo' : 'Free';
+  document.getElementById('profileXP').textContent = (state.user.xp||0)+' XP';
+  document.getElementById('profileLevel').textContent = 'Nv '+(state.user.level||1);
+  document.getElementById('currencySel').value = state.settings.currency||'BRL';
 
-            const grid = document.getElementById('themeGrid');
-            grid.innerHTML = '';
-            Object.keys(themes).forEach(key => {
-                const isActive = state.settings.theme.startsWith(key);
-                const div = document.createElement('div');
-                div.className = `theme-item ${isActive ? 'active' : ''}`;
-                div.innerHTML = `
-                    <div style="font-weight: 800; font-size: 13px;">${themes[key].label}</div>
-                    <div style="font-size: 10px; margin-top: 4px;">${themes[key].premium ? '💎 Premium' : 'Grátis'}</div>
-                `;
-                div.onclick = () => {
-                    parent.appSelectTheme(key);
-                    updateUI();
-                };
-                grid.appendChild(div);
-            });
-        }
+  const av=document.getElementById('avatarPreview');
+  if(state.profile.photo){ av.innerHTML=`<img src="${state.profile.photo}" style="width:100%;height:100%;object-fit:cover">`; }
+  else { const ch=(state.profile.firstName||state.profile.name||state.profile.email||'?')[0].toUpperCase(); av.textContent=ch; }
 
-        window.saveProfile = async () => {
-            const data = {
-                firstName: document.getElementById('p_firstName').value,
-                lastName: document.getElementById('p_lastName').value,
-                phone: document.getElementById('p_phone').value,
-                address: document.getElementById('p_address').value,
-                name: document.getElementById('p_firstName').value + ' ' + document.getElementById('p_lastName').value
-            };
-            await parent.updateProfile(data);
-            parent.toast("Perfil atualizado!");
-        };
+  const grid=document.getElementById('themeGrid');
+  grid.innerHTML='';
+  Object.keys(t).forEach(key=>{
+    const isActive = (state.settings.theme||'').startsWith(key);
+    const def = t[key];
+    const div=document.createElement('div');
+    div.className=`theme-item ${isActive?'active':''} ${def.premium?'premium':''}`;
+    div.innerHTML=`<div style="font-size:22px">${def.icon||'🎨'}</div><div style="font-weight:800;font-size:12px;margin-top:6px">${def.label}</div><div style="font-size:10px;margin-top:4px" class="muted">${def.premium?'💎 500 🪙':'Grátis'}</div>`;
+    div.onclick=()=>{ parent.appSelectTheme(key); setTimeout(updateUI,200); };
+    grid.appendChild(div);
+  });
+}
 
-        const checkReady = setInterval(() => {
-            if (parent && parent.appState && parent.appState.isLoaded) {
-                updateUI();
-                clearInterval(checkReady);
-            }
-        }, 100);
+async function saveProfile(){
+  const data={
+    firstName: document.getElementById('p_firstName').value.trim(),
+    lastName: document.getElementById('p_lastName').value.trim(),
+    phone: document.getElementById('p_phone').value.trim(),
+    address: document.getElementById('p_address').value.trim(),
+    photo: document.getElementById('p_photo').value.trim(),
+  };
+  data.name = `${data.firstName} ${data.lastName}`.trim();
+  await parent.updateProfile(data);
+  parent.addXP(20);
+  parent.toast&&parent.toast('Perfil salvo! +20 XP');
+  updateUI();
+}
+window.saveProfile=saveProfile;
+function changeCurrency(cur){ parent.appChangeCurrency(cur); }
 
-        window.updateUI = updateUI;
-    </script>
+const ci=setInterval(()=>{ if(parent&&parent.appState&&parent.appState.isLoaded){ updateUI(); clearInterval(ci);} },100);
+setTimeout(updateUI,800);
+window.updateUI=updateUI;
+</script>
 </body>
 </html>

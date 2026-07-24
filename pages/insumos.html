@@ -1,43 +1,86 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <link rel="stylesheet" href="../css/style.css">
-    <script>
-        const theme = parent.document.documentElement.getAttribute('data-theme');
-        if(theme) document.documentElement.setAttribute('data-theme', theme);
-    </script>
-    <style>body { padding: 20px; }</style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="../css/style.css">
+<script>const th=parent.document.documentElement.getAttribute('data-theme'); if(th) document.documentElement.setAttribute('data-theme',th);</script>
+<style>body{padding:20px; max-width:1100px; margin:0 auto;}</style>
 </head>
 <body>
-    <h2>Gestão de Insumos</h2>
-    <div class="card" style="margin-top:20px">
-        <p style="color: var(--muted); margin-bottom: 20px;">Gerencie suas moedas e recursos ganhos através da inteligência artificial.</p>
-        
-        <div class="grid">
-            <div class="card" style="text-align: center;">
-                <div style="font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase;">Saldo de Moedas</div>
-                <div style="font-size: 32px; font-weight: 800; color: #D4AF37; margin: 10px 0;">🪙 <span id="coinVal">0</span></div>
-                <button class="btn-ghost" onclick="parent.navigate('home.html')">Ganhar Mais</button>
-            </div>
-            
-            <div class="card" style="text-align: center;">
-                <div style="font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase;">Experiência Total</div>
-                <div style="font-size: 32px; font-weight: 800; color: var(--primary); margin: 10px 0;">⚡ <span id="xpVal">0</span></div>
-                <button class="btn-ghost" onclick="parent.navigate('dashboard.html')">Ver Painel</button>
-            </div>
-        </div>
-    </div>
+<h2 style="font-size:26px;font-weight:800">Insumos & Recursos</h2>
+<p class="muted text-sm">Suas moedas, XP e conquistas materiais da evolução.</p>
 
-    <script>
-        function updateUI() {
-            if (parent.appState) {
-                document.getElementById('coinVal').textContent = parent.appState.user.coins || 0;
-                document.getElementById('xpVal').textContent = parent.appState.user.xp || 0;
-            }
-        }
-        setInterval(updateUI, 500);
-        updateUI();
-    </script>
+<div class="grid-3" style="margin-top:16px">
+  <div class="card" style="text-align:center"><div class="kpi-label">Saldo de Moedas</div><div style="font-size:36px;font-weight:800;color:#D4AF37;margin:12px 0">🪙 <span id="coinVal">0</span></div><div class="progress" style="height:8px"><i id="coinBar" style="background:linear-gradient(90deg,#D4AF37,#F59E0B)"></i></div><p class="muted text-xs" style="margin-top:8px">Faltam <span id="coinNeed">500</span> para Premium</p><button class="btn-ghost btn-sm" style="margin-top:12px" onclick="parent.navigate('home.html')">Ganhar moedas 📺</button></div>
+  <div class="card" style="text-align:center"><div class="kpi-label">Experiência Total</div><div style="font-size:36px;font-weight:800;color:var(--primary);margin:12px 0">⚡ <span id="xpVal">0</span></div><div class="progress" style="height:8px"><i id="xpBar"></i></div><p class="muted text-xs" style="margin-top:8px" id="xpDesc">Nv 1</p><button class="btn-ghost btn-sm" style="margin-top:12px" onclick="parent.navigate('dashboard.html')">Ver Dashboard</button></div>
+  <div class="card" style="text-align:center"><div class="kpi-label">Itens Premium</div><div style="font-size:32px;margin:12px 0">💎</div><div id="premiumStatus" style="font-weight:800;font-size:13px"></div><div id="themeCount" class="muted text-xs" style="margin-top:6px"></div><button class="btn-ghost btn-sm" style="margin-top:12px" onclick="parent.navigate('perfil.html')">Gerenciar temas</button></div>
+</div>
+
+<div class="card" style="margin-top:16px">
+  <b>Loja de Recompensas</b><p class="muted text-xs">Troque moedas por benefícios reais</p>
+  <div class="grid-3" style="margin-top:12px" id="shopGrid"></div>
+</div>
+
+<div class="card" style="margin-top:16px">
+  <b>Histórico de ganhos</b>
+  <div id="historyList" style="display:grid;gap:8px;margin-top:12px"></div>
+</div>
+
+<script>
+function getState(){ return parent.appState||{user:{xp:0,coins:0,level:1,premium:false}, transactions:[], habits:[], moods:[], goals:[]}; }
+
+function renderShop(){
+  const state=getState();
+  const coins=state.user.coins||0;
+  const items=[
+    {id:'theme_lux', name:'Tema Luxury Gold', desc:'Tema premium dourado', price:500, icon:'👑', owned: state.user.premium},
+    {id:'xp_boost', name:'Boost 100 XP', desc:'Ganho instantâneo de XP', price:200, icon:'⚡', owned:false},
+    {id:'coins_2x', name:'Dobro de moedas 24h', desc:'Ganhe 2x em vídeos', price:300, icon:'💰', owned:false},
+    {id:'habit_slot', name:'Slot de hábito extra', desc:'Libera +3 hábitos', price:150, icon:'⭐', owned:false},
+  ];
+  document.getElementById('shopGrid').innerHTML = items.map(it=>`<div style="border:1px solid var(--border);border-radius:14px;padding:14px;background:${it.owned?'var(--bg-2)':''}"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:22px">${it.icon}</span><span class="badge ${coins>=it.price?'badge-premium':'badge-free'}">🪙 ${it.price}</span></div><div style="font-weight:800;font-size:13px;margin-top:8px">${it.name}</div><div class="muted text-xs" style="margin-top:4px">${it.desc}</div><button class="btn ${it.owned?'btn-ghost':'btn-primary'} btn-sm w-full" style="margin-top:10px" ${it.owned?'disabled':''} onclick="buyItem('${it.id}',${it.price})">${it.owned?'✓ Desbloqueado':coins>=it.price?'Comprar':'Sem moedas'}</button></div>`).join('');
+}
+
+function buyItem(id, price){
+  const state=getState();
+  if((state.user.coins||0) < price){ parent.toast&&parent.toast('Moedas insuficientes 🪙'); return; }
+  if(id==='theme_lux'){ parent.appSelectTheme('luxury'); }
+  else if(id==='xp_boost'){ parent.addXP(100); }
+  else if(id==='habit_slot'){ parent.toast&&parent.toast('Slot liberado! +3 hábitos ⭐'); }
+  else { parent.appState.user.coins -= price; parent.saveLocalState&&parent.saveLocalState(); parent.toast&&parent.toast('Compra realizada! 🎉'); }
+  if(id!=='theme_lux'){ state.user.coins-=price; parent.saveLocalState&&parent.saveLocalState(); }
+  renderAll();
+}
+
+function renderAll(){
+  const state=getState();
+  document.getElementById('coinVal').textContent = state.user.coins||0;
+  document.getElementById('xpVal').textContent = state.user.xp||0;
+  document.getElementById('coinBar').style.width = Math.min(100, ((state.user.coins||0)/500)*100)+'%';
+  document.getElementById('coinNeed').textContent = Math.max(0, 500-(state.user.coins||0));
+  const lvl = parent.getLevelData? parent.getLevelData(state.user.xp||0) : {current:{name:'Nv1', level:1}, pct:0};
+  document.getElementById('xpBar').style.width = lvl.pct+'%';
+  document.getElementById('xpDesc').textContent = lvl.current.name+' • '+lvl.current.level+'/50';
+  document.getElementById('premiumStatus').textContent = state.user.premium ? '✓ Premium ativo' : 'Free • 500 🪙 para Premium';
+  document.getElementById('premiumStatus').style.color = state.user.premium? 'var(--emerald)':'var(--muted)';
+  document.getElementById('themeCount').textContent = `${Object.keys(parent.themes||{}).length} temas disponíveis`;
+
+  const history = [
+    {icon:'💰', text:'Transação registrada', xp:5, time:'Hoje'},
+    {icon:'⭐', text:'Hábito completado', xp:15, time:'Hoje'},
+    {icon:'🧠', text:'Humor registrado', xp:15, time:'Ontem'},
+    {icon:'🎯', text:'Meta criada', xp:30, time:'Ontem'},
+    {icon:'📺', text:'Vídeo assistido', xp:10, coins:50, time:'2d atrás'},
+  ];
+  document.getElementById('historyList').innerHTML = history.map(h=>`<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg-2);border-radius:12px;border:1px solid var(--border)"><span style="font-size:18px">${h.icon}</span><div style="flex:1"><div style="font-weight:700;font-size:12px">${h.text}</div><div class="muted text-xs">${h.time}</div></div><div style="text-align:right"><div style="font-weight:800;font-size:11px;color:var(--primary)">+${h.xp} XP</div>${h.coins?`<div style="font-size:10px;color:#D4AF37">+${h.coins} 🪙</div>`:''}</div></div>`).join('');
+  renderShop();
+}
+
+window.buyItem=buyItem;
+function updateUI(){ renderAll(); }
+const ci=setInterval(()=>{ if(parent&&parent.appState&&parent.appState.isLoaded){ updateUI(); clearInterval(ci);} },100);
+setTimeout(updateUI,800);
+window.updateUI=updateUI;
+</script>
 </body>
 </html>

@@ -1,8 +1,105 @@
-<script>if(window.top===window.self){ location.replace('../index.html?page=metas'); }</script>
-<div id="page-metas-fragment">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-    <div><h2 style="font-size:24px">Metas</h2><p style="font-size:12px;color:var(--muted)">Editável em pages/metas.html</p></div>
-    <button class="btn btn-primary btn-sm" onclick="appOpenGoalModal()">+ Nova meta</button>
-  </div>
-  <div class="grid grid-3" id="goalsGrid"></div>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="../css/style.css">
+<script>const th=parent.document.documentElement.getAttribute('data-theme'); if(th) document.documentElement.setAttribute('data-theme',th);</script>
+<style>body{padding:20px; max-width:1200px; margin:0 auto;}</style>
+</head>
+<body>
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:18px">
+  <div><h2 style="font-size:26px;font-weight:800">Metas</h2><p class="muted text-sm">Transforme sonhos em progresso mensurável. +30 XP ao criar, +100 XP ao concluir.</p></div>
+  <button class="btn-primary" onclick="openGoalModal()">+ Nova meta</button>
 </div>
+
+<div class="grid-3" id="metasKPI"></div>
+
+<div class="grid-3" id="goalsGrid" style="margin-top:16px"></div>
+
+<div class="modal-overlay" id="goalModal" onclick="if(event.target===this) closeGoalModal()">
+  <div class="modal"><div class="modal-header"><b>Nova meta</b><span style="cursor:pointer" onclick="closeGoalModal()">✕</span></div>
+  <div class="modal-body">
+    <div class="input-group"><label>Título da meta</label><input id="gTitle" class="input" placeholder="Ex: Economizar R$ 5.000"></div>
+    <div class="grid-2">
+      <div class="input-group"><label>Valor alvo (número)</label><input id="gTarget" class="input" type="number" value="100"></div>
+      <div class="input-group"><label>Progresso atual</label><input id="gCurrent" class="input" type="number" value="0"></div>
+    </div>
+    <div class="grid-2">
+      <div class="input-group"><label>Categoria</label><select id="gCat" class="input"><option>Financeiro</option><option>Hábitos</option><option>Saúde</option><option>Estudos</option><option>Carreira</option><option>Outros</option></select></div>
+      <div class="input-group"><label>Prazo</label><input id="gDeadline" class="input" type="date"></div>
+    </div>
+    <button class="btn-primary w-full" onclick="saveGoal()">Criar meta</button>
+  </div></div>
+</div>
+
+<script>
+function getState(){ return parent.appState||{goals:[]}; }
+function openGoalModal(){ document.getElementById('goalModal').classList.add('open'); document.getElementById('gDeadline').value = new Date(Date.now()+30*86400000).toISOString().slice(0,10); }
+function closeGoalModal(){ document.getElementById('goalModal').classList.remove('open'); }
+window.openGoalModal=openGoalModal; window.closeGoalModal=closeGoalModal;
+
+function saveGoal(){
+  const title=document.getElementById('gTitle').value.trim();
+  const target=document.getElementById('gTarget').value;
+  const current=document.getElementById('gCurrent').value;
+  const category=document.getElementById('gCat').value;
+  const deadline=document.getElementById('gDeadline').value;
+  if(!title){ alert('Título obrigatório'); return; }
+  parent.addGoal({title, target, current, category, deadline});
+  closeGoalModal();
+  document.getElementById('gTitle').value='';
+  renderAll();
+}
+
+function renderKPI(){
+  const state=getState();
+  const total=state.goals.length;
+  const done=state.goals.filter(g=>g.done||g.current>=g.target).length;
+  const progress = total? Math.round((state.goals.reduce((a,g)=>a+(Math.min(1,g.current/g.target)),0)/total)*100):0;
+  const xp = state.goals.filter(g=>g.done).length*100 + total*30;
+  document.getElementById('metasKPI').innerHTML = `
+    <div class="card"><span class="kpi-label">Total metas</span><div class="kpi-value">${total}</div><div class="kpi-sub">${done} concluídas</div></div>
+    <div class="card"><span class="kpi-label">Progresso médio</span><div class="kpi-value" style="color:var(--violet)">${progress}%</div><div class="goal-progress" style="margin-top:10px"><div class="goal-progress-bar" style="width:${progress}%"></div></div></div>
+    <div class="card"><span class="kpi-label">XP de metas</span><div class="kpi-value" style="color:var(--emerald)">${xp} XP</div><div class="kpi-sub">+100 XP por conclusão</div></div>
+  `;
+}
+
+function renderGrid(){
+  const state=getState();
+  const grid=document.getElementById('goalsGrid');
+  if(state.goals.length===0){
+    grid.innerHTML=`<div class="card" style="grid-column:1/-1; text-align:center; padding:40px"><div style="font-size:32px">🎯</div><b>Nenhuma meta ainda</b><p class="muted text-sm" style="margin-top:6px">Crie sua primeira meta e acelere sua evolução</p><button class="btn-primary" style="margin-top:12px" onclick="openGoalModal()">+ Nova meta</button></div>`;
+    return;
+  }
+  grid.innerHTML = state.goals.map(g=>{
+    const pct=Math.min(100, Math.round((g.current/g.target)*100));
+    const daysLeft = g.deadline ? Math.ceil((new Date(g.deadline)-new Date())/86400000) : null;
+    return `<div class="card goal-card" style="${g.done?'border-color:var(--emerald)':''}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div><span class="badge badge-free">${g.category}</span><div style="font-weight:800;margin-top:8px;font-size:14px">${g.title}</div></div>
+        ${g.done?'<span class="badge badge-premium">✓ Concluída</span>':`<span class="muted text-xs">${daysLeft!==null ? (daysLeft>=0?`⏳ ${daysLeft}d restantes`:`⚠ Atrasada`):''}</span>`}
+      </div>
+      <div class="goal-progress"><div class="goal-progress-bar" style="width:${pct}%"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px" class="muted"><span>${g.current} / ${g.target}</span><span class="font-bold" style="color:var(--primary)">${pct}%</span></div>
+      ${g.deadline?`<div class="muted text-xs" style="margin-top:8px">Prazo: ${new Date(g.deadline).toLocaleDateString('pt-BR')}</div>`:''}
+      <div style="display:flex;gap:6px;margin-top:12px">
+        <button class="btn-ghost btn-sm" onclick="updGoal('${g.id}',10)">+10</button>
+        <button class="btn-ghost btn-sm" onclick="updGoal('${g.id}',-10)">-10</button>
+        <button class="btn-ghost btn-sm" style="margin-left:auto" onclick="delGoal('${g.id}')">🗑 Excluir</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function updGoal(id, delta){ parent.updateGoalProgress(id, delta); renderAll(); }
+function delGoal(id){ if(confirm('Excluir meta?')){ parent.deleteGoal(id); renderAll(); } }
+window.updGoal=updGoal; window.delGoal=delGoal;
+
+function renderAll(){ renderKPI(); renderGrid(); }
+function updateUI(){ renderAll(); }
+const ci=setInterval(()=>{ if(parent&&parent.appState&&parent.appState.isLoaded){ updateUI(); clearInterval(ci);} },100);
+setTimeout(updateUI,800);
+window.updateUI=updateUI;
+</script>
+</body>
+</html>

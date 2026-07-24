@@ -1,76 +1,91 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <link rel="stylesheet" href="../css/style.css">
-    <script>
-        // Sincroniza o tema do Index para a subpágina imediatamente
-        const theme = parent.document.documentElement.getAttribute('data-theme');
-        if(theme) document.documentElement.setAttribute('data-theme', theme);
-    </script>
-    <style>body { padding: 20px; }</style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="../css/style.css">
+<script>const th=parent.document.documentElement.getAttribute('data-theme'); if(th) document.documentElement.setAttribute('data-theme',th);</script>
+<style>body{padding:20px; max-width:1100px; margin:0 auto;}</style>
 </head>
 <body>
+<div class="card" style="text-align:center; padding:40px 20px; position:relative; overflow:hidden">
+  <div style="position:absolute; inset:0; background:radial-gradient(600px at 50% -10%, color-mix(in srgb, var(--primary) 15%, transparent), transparent); pointer-events:none"></div>
+  <img src="../logo.png" style="width:90px;height:90px;object-fit:contain;border-radius:18px;box-shadow:var(--shadow);">
+  <h1 style="font-size:28px;font-weight:800;letter-spacing:-0.8px;margin-top:16px">Vida+ AI</h1>
+  <p style="color:var(--muted);margin-top:8px;max-width:460px;margin-left:auto;margin-right:auto;font-size:13px;line-height:1.6">Sua evolução diária, inteligente. Finanças, hábitos, humor e metas conectados por IA. Ganhe XP, desbloqueie temas e evolua do Nv 1 ao 50.</p>
+  <div id="authCheck" style="margin-top:22px"></div>
+  <div id="todaySummary" style="margin-top:20px;display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))"></div>
+</div>
 
-    <div class="card" style="text-align: center; padding: 60px 20px;">
-        <img src="../logo.png" style="width: 120px; margin-bottom: 20px;">
-        <h1 style="color: var(--text);">Bem-vindo ao Vida+ AI</h1>
-        <p style="color: var(--muted); margin-top: 10px; max-width: 400px; margin-left: auto; margin-right: auto;">
-            Sua jornada inteligente para evolução diária. Comece agora a monitorar seus hábitos e ganhar recompensas.
-        </p>
-        
-        <div id="authCheck" style="margin-top: 30px;">
-            <!-- Dinâmico -->
-        </div>
-    </div>
+<div class="grid-3" style="margin-top:16px">
+  <div class="card"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:24px">📺</span><b>Assista e Ganhe</b></div><p class="muted text-xs" style="margin:10px 0">50 moedas + 10 XP por vídeo. Simulação AdMob.</p><button class="btn-primary w-full" onclick="watchVideo()">Assistir 📺 +50 🪙</button><div style="margin-top:8px" class="text-xs muted">Cooldown 10s para evitar spam</div></div>
+  <div class="card"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:24px">⚡</span><b>Evolução Rápida</b></div><p class="muted text-xs" style="margin:10px 0">3 ações rápidas para +80 XP instantâneo.</p><div style="display:grid;gap:6px"><button class="btn-ghost btn-sm" onclick="quickAction('finance')">+ Registrar gasto</button><button class="btn-ghost btn-sm" onclick="quickAction('habit')">+ Check hábito</button><button class="btn-ghost btn-sm" onclick="quickAction('mood')">+ Humor do dia</button></div></div>
+  <div class="card"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:24px">💎</span><b>Premium</b></div><p class="muted text-xs" style="margin:10px 0">5 temas, IA completa, sem anúncios.</p><div id="premiumCard"></div></div>
+</div>
 
-    <div class="grid" style="margin-top: 20px;">
-        <div class="card">
-            <h3>Assista e Ganhe</h3>
-            <p style="font-size: 13px; color: var(--muted); margin: 10px 0;">Ganhe 50 moedas assistindo um anúncio premiado.</p>
-            <button class="btn-primary" onclick="watchVideo()">Assistir Vídeo 📺</button>
-        </div>
-        <div class="card">
-            <h3>Evolução</h3>
-            <p style="font-size: 13px; color: var(--muted); margin: 10px 0;">Acompanhe seu progresso do nível 1 ao 50.</p>
-            <button class="btn-ghost" onclick="parent.navigate('dashboard.html')">Ver Painel</button>
-        </div>
-    </div>
+<script>
+function getState(){ return parent.appState||{user:{xp:0,level:1,coins:0,premium:false}, profile:{}, transactions:[], habits:[], moods:[], goals:[]}; }
 
-    <script>
-        function updateUI() {
-            const state = parent.appState;
-            const authDiv = document.getElementById('authCheck');
-            
-            if (state.profile.email) {
-                authDiv.innerHTML = `
-                    <p style="font-weight: 700;">Olá, ${state.profile.name || state.profile.email}!</p>
-                    <button class="btn-primary" style="margin-top:10px;" onclick="parent.navigate('dashboard.html')">Meu Dashboard</button>
-                `;
-            } else {
-                authDiv.innerHTML = `
-                    <button class="btn-primary" onclick="parent.navigate('auth.html')">Criar Conta / Entrar</button>
-                `;
-            }
-        }
+function updateUI(){
+  const state=getState();
+  const authDiv=document.getElementById('authCheck');
+  if(state.profile.email){
+    const lvl = parent.getLevelData ? parent.getLevelData(state.user.xp) : {current:{name:'Nv1', level:1}, next:{xp:1000}, pct:0};
+    authDiv.innerHTML = `
+      <div style="display:inline-flex;align-items:center;gap:12px;background:var(--bg-2);border:1px solid var(--border);padding:8px 14px;border-radius:100px">
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--primary);color:white;display:grid;place-items:center;font-weight:800">${(state.profile.firstName||state.profile.name||state.profile.email||'?')[0].toUpperCase()}</div>
+        <div style="text-align:left"><div style="font-weight:800;font-size:13px">Olá, ${state.profile.firstName||state.profile.name||state.profile.email.split('@')[0]}! 👋</div><div class="muted text-xs">${lvl.current.name} • ${lvl.current.level}/50 • ${state.user.xp} XP</div></div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+        <button class="btn-primary btn-sm" onclick="parent.navigate('dashboard.html')">Meu Dashboard 📊</button>
+        <button class="btn-ghost btn-sm" onclick="parent.navigate('financeiro.html')">Finanças 💰</button>
+      </div>
+    `;
+  }else{
+    authDiv.innerHTML = `<button class="btn-primary" onclick="parent.navigate('auth.html')">Criar conta / Entrar 🚀</button><p class="muted text-xs" style="margin-top:8px">Leva 10 segundos, grátis para sempre no plano Free</p>`;
+  }
 
-        function watchVideo() {
-            alert("Simulando Vídeo Premiado AdMob...");
-            parent.addXP(10);
-            parent.appState.user.coins = (parent.appState.user.coins || 0) + 50;
-            parent.toast("+50 Moedas e +10 XP!");
-            updateUI();
-        }
+  const today = new Date().toISOString().slice(0,10);
+  const doneHabits = state.habits.filter(h=> h.completedDates.includes(today)).length;
+  const todayMood = state.moods.find(m=> m.date===today);
+  const txToday = state.transactions.filter(t=> (t.date||'').slice(0,10)===today).length;
+  document.getElementById('todaySummary').innerHTML = `
+    <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:14px;padding:12px"><span class="kpi-label">Hoje</span><div style="font-weight:800;margin-top:4px;font-size:13px">${new Date().toLocaleDateString('pt-BR',{weekday:'long', day:'2-digit', month:'short'})}</div></div>
+    <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:14px;padding:12px"><span class="kpi-label">Hábitos</span><div style="font-weight:800;margin-top:4px">${doneHabits}/${state.habits.length} feitos</div></div>
+    <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:14px;padding:12px"><span class="kpi-label">Humor</span><div style="font-weight:800;margin-top:4px">${todayMood? 'Registrado '+ ['😞','😐','🙂','😁','🤩'][todayMood.value-1] : 'Pendente ⏳'}</div></div>
+    <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:14px;padding:12px"><span class="kpi-label">Transações hoje</span><div style="font-weight:800;margin-top:4px">${txToday} registros</div></div>
+  `;
 
-        // Aguarda o state estar pronto no parent
-        const checkReady = setInterval(() => {
-            if (parent && parent.appState && parent.appState.isLoaded) {
-                updateUI();
-                clearInterval(checkReady);
-            }
-        }, 100);
-        
-        window.updateUI = updateUI;
-    </script>
+  document.getElementById('premiumCard').innerHTML = state.user.premium ? `<div style="background:linear-gradient(135deg,#D4AF37,#F1C40F);color:black;padding:10px 12px;border-radius:12px;font-weight:800;text-align:center">💎 Premium ativo<br><span style="font-size:11px">Temas + IA liberados</span></div>` : `<div style="font-size:12px"><div style="display:flex;justify-content:space-between" class="muted"><span>Moedas</span><span class="font-bold" style="color:var(--text)">🪙 ${state.user.coins||0}/500</span></div><div class="progress" style="margin-top:8px"><i style="width:${Math.min(100,((state.user.coins||0)/500)*100)}%"></i></div><button class="btn-ghost w-full btn-sm" style="margin-top:10px" onclick="parent.navigate('perfil.html')">Desbloquear temas 💎</button></div>`;
+}
+
+let videoCooldown=false;
+function watchVideo(){
+  if(videoCooldown){ parent.toast&&parent.toast('Aguarde 10s... ⏳'); return; }
+  videoCooldown=true;
+  if(parent.toast) parent.toast('▶️ Reproduzindo vídeo premiado... (simulação)');
+  setTimeout(()=>{
+    parent.addXP(10);
+    parent.appState.user.coins = (parent.appState.user.coins||0)+50;
+    parent.toast&&parent.toast('+50 🪙 e +10 XP! 🎉');
+    parent.saveLocalState&&parent.saveLocalState();
+    updateUI();
+    setTimeout(()=> videoCooldown=false, 10000);
+  },1200);
+}
+
+function quickAction(type){
+  if(type==='finance') parent.navigate('financeiro.html');
+  else if(type==='habit'){
+    const h = getState().habits[0];
+    if(h){ parent.toggleHabit(h.id); parent.toast&&parent.toast(`Hábito ${h.name} checkado! +15 XP`); updateUI(); }
+    else parent.navigate('habitos.html');
+  }else if(type==='mood'){ parent.navigate('humor.html'); }
+}
+window.watchVideo=watchVideo; window.quickAction=quickAction;
+
+const ci=setInterval(()=>{ if(parent&&parent.appState&&parent.appState.isLoaded){ updateUI(); clearInterval(ci);} },100);
+setTimeout(updateUI,800);
+window.updateUI=updateUI;
+</script>
 </body>
 </html>

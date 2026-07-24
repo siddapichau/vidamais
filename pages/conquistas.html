@@ -1,8 +1,105 @@
-<script>if(window.top===window.self){ location.replace('../index.html?page=conquistas'); }</script>
-<div id="page-conquistas-fragment">
-  <h2 style="font-size:24px">Conquistas • 50 Níveis • 1 Ano</h2><p style="font-size:12px;color:var(--muted);margin-bottom:12px">Editável em pages/conquistas.html • 78k XP = Nv 50</p>
-  <div class="grid grid-2">
-    <div class="card"><b>Nível atual</b><div style="font-size:24px;font-weight:800;margin-top:8px" id="achLevel">Nv 1</div><div class="lvl-bar" style="margin-top:10px"><i id="achBar"></i></div><div id="achStreak" style="margin-top:8px;font-size:12px"></div></div>
-    <div class="card"><b>Medalhas</b><div id="achList" style="display:grid;gap:8px;margin-top:10px"></div></div>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="../css/style.css">
+<script>const th=parent.document.documentElement.getAttribute('data-theme'); if(th) document.documentElement.setAttribute('data-theme',th);</script>
+<style>body{padding:20px; max-width:1200px; margin:0 auto;}</style>
+</head>
+<body>
+<h2 style="font-size:26px;font-weight:800">Conquistas • 50 Níveis • 1 Ano</h2>
+<p class="muted text-sm" style="margin-bottom:16px">78k XP para nível 50. Cada ação conta. Evolução real, diária.</p>
+
+<div class="grid-2">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div><span class="kpi-label">Nível atual</span><div id="achLevel" style="font-size:32px;font-weight:800;margin-top:6px">Nv 1</div><div id="achName" class="muted text-sm"></div></div>
+      <div id="xpBadge" class="badge badge-premium" style="font-size:12px">0 XP</div>
+    </div>
+    <div class="xp-container" style="margin-top:14px;height:14px"><div class="xp-bar" id="achBar"></div></div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:6px" class="muted"><span id="xpCur">0</span><span id="xpNext">1000</span></div>
+    <div id="achStreak" style="margin-top:12px;display:grid;gap:6px"></div>
+    <div id="benefitBox" style="margin-top:14px;padding:12px;background:var(--bg-2);border-radius:12px;border:1px solid var(--border)"></div>
+  </div>
+  <div class="card">
+    <b>Trilha de níveis</b><p class="muted text-xs">50 níveis de evolução</p>
+    <div id="levelRoad" style="max-height:380px;overflow:auto;margin-top:12px;display:grid;gap:6px;padding-right:4px"></div>
   </div>
 </div>
+
+<div class="grid-2" style="margin-top:14px">
+  <div class="card"><b>Medalhas desbloqueadas</b><div id="achList" style="display:grid;gap:8px;margin-top:12px"></div></div>
+  <div class="card"><b>Próximas recompensas</b><div id="nextRewards" style="display:grid;gap:8px;margin-top:12px"></div></div>
+</div>
+
+<script>
+function getState(){ return parent.appState||{user:{xp:0,level:1}}; }
+
+function renderLevel(){
+  const state=getState();
+  const lvl = parent.getLevelData ? parent.getLevelData(state.user.xp||0) : {current:{level:1,name:'Despertar 1', xp:0, benefit:'...'}, next:{xp:1000}, pct:0};
+  document.getElementById('achLevel').textContent = `Nv ${lvl.current.level}`;
+  document.getElementById('achName').textContent = lvl.current.name;
+  document.getElementById('xpBadge').textContent = `${state.user.xp||0} XP`;
+  document.getElementById('achBar').style.width = lvl.pct+'%';
+  document.getElementById('xpCur').textContent = lvl.current.xp;
+  document.getElementById('xpNext').textContent = lvl.next.xp;
+  const need = lvl.next.xp - (state.user.xp||0);
+  document.getElementById('achStreak').innerHTML = `
+    <div style="display:flex;justify-content:space-between;font-size:12px"><span class="muted">Faltam</span><span class="font-bold" style="color:var(--primary)">${need>0?need:0} XP</span></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+      <span class="badge badge-free">🪙 ${state.user.coins||0} moedas</span>
+      <span class="badge badge-free">🔥 ${state.user.streak||0} streak</span>
+      <span class="badge ${state.user.premium?'badge-premium':'badge-free'}">${state.user.premium?'💎 Premium':'Free'}</span>
+    </div>
+  `;
+  document.getElementById('benefitBox').innerHTML = `<div class="kpi-label">Benefício atual</div><div style="font-weight:700;font-size:13px;margin-top:4px">✅ ${lvl.current.benefit||'Sem bônus'}</div><div class="muted text-xs" style="margin-top:4px">Próximo: ${lvl.next.benefit||'-'}</div>`;
+
+  // road
+  const table = parent.levelTable || [];
+  document.getElementById('levelRoad').innerHTML = table.map((lv,i)=>{
+    const isCurrent = lv.level===lvl.current.level;
+    const isPast = lv.level < lvl.current.level;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;${isCurrent?'background:var(--primary);color:white;':isPast?'background:var(--bg-2);opacity:0.8':'background:var(--card);border:1px solid var(--border)'}">
+      <div style="width:32px;height:32px;border-radius:50%;background:${isCurrent?'white':isPast?'var(--emerald)':'var(--bg-2)'};color:${isCurrent?'var(--primary)':isPast?'white':'var(--muted)'};display:grid;place-items:center;font-weight:800;font-size:12px">${lv.level}</div>
+      <div style="flex:1;min-width:0"><div style="font-weight:800;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${lv.name}</div><div style="font-size:10px;opacity:0.8">${lv.xp} XP • ${lv.benefit||''}</div></div>
+      <div style="font-size:14px">${isPast?'✓':isCurrent?'⭐':'🔒'}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderMedals(){
+  const state=getState();
+  const xp=state.user.xp||0;
+  const txCount = (state.transactions||[]).length;
+  const habitsDone = (state.habits||[]).reduce((a,h)=>a+h.completedDates.length,0);
+  const moods = (state.moods||[]).length;
+  const goalsDone = (state.goals||[]).filter(g=>g.done).length;
+  const medals = [
+    {id:'first_xp', name:'Primeiro Passo', desc:'Ganhe 1 XP', icon:'🌱', unlocked: xp>=1},
+    {id:'xp_100', name:'Iniciante', desc:'100 XP', icon:'🔰', unlocked: xp>=100},
+    {id:'xp_1k', name:'Focado', desc:'1.000 XP', icon:'🎯', unlocked: xp>=1000},
+    {id:'xp_5k', name:'Disciplinado', desc:'5.000 XP', icon:'💎', unlocked: xp>=5000},
+    {id:'xp_10k', name:'Mestre', desc:'10.000 XP', icon:'👑', unlocked: xp>=10000},
+    {id:'tx_10', name:'Organizado', desc:'10 transações financeiras', icon:'💰', unlocked: txCount>=10},
+    {id:'habit_7', name:'Constante 7', desc:'7 hábitos completados', icon:'🔥', unlocked: habitsDone>=7},
+    {id:'habit_30', name:'Hábito de Aço', desc:'30 hábitos completados', icon:'⚡', unlocked: habitsDone>=30},
+    {id:'mood_7', name:'Autoconhecimento', desc:'7 registros de humor', icon:'🧠', unlocked: moods>=7},
+    {id:'goal_1', name:'Realizador', desc:'1 meta concluída', icon:'🎉', unlocked: goalsDone>=1},
+  ];
+  document.getElementById('achList').innerHTML = medals.map(m=>`<div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:${m.unlocked?'var(--bg-2)':'transparent'};border:1px solid ${m.unlocked?'var(--border)':'var(--border)'};opacity:${m.unlocked?1:0.5}">
+    <div style="font-size:22px">${m.icon}</div><div style="flex:1"><div style="font-weight:800;font-size:12px">${m.name}</div><div class="muted text-xs">${m.desc}</div></div><div>${m.unlocked?'✅':'🔒'}</div>
+  </div>`).join('');
+
+  const next = medals.filter(m=>!m.unlocked).slice(0,3);
+  document.getElementById('nextRewards').innerHTML = next.length? next.map(m=>`<div style="padding:12px;border-radius:12px;border:1px dashed var(--border);background:var(--bg-2)"><div style="display:flex;gap:10px;align-items:center"><span style="font-size:20px">${m.icon}</span><div><div style="font-weight:800;font-size:12px">${m.name}</div><div class="muted text-xs">Falta pouco: ${m.desc}</div></div></div></div>`).join('') : `<div style="text-align:center;padding:20px" class="muted"><b>🎉 Todas as medalhas básicas desbloqueadas!</b><p style="font-size:12px;margin-top:4px">Você é Lenda!</p></div>`;
+}
+
+function renderAll(){ renderLevel(); renderMedals(); }
+function updateUI(){ renderAll(); }
+const ci=setInterval(()=>{ if(parent&&parent.appState&&parent.appState.isLoaded){ updateUI(); clearInterval(ci);} },100);
+setTimeout(updateUI,800);
+window.updateUI=updateUI;
+</script>
+</body>
+</html>

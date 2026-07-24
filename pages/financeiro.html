@@ -1,33 +1,321 @@
-<script>if(window.top===window.self){ location.replace('../index.html?page=financeiro'); }</script>
-<div id="page-financeiro-fragment">
-  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px">
-    <div><h2 style="font-size:24px">Financeiro</h2><p style="font-size:12px;color:var(--muted)">Editável em pages/financeiro.html • Usa CSS/JS do Index</p></div>
-    <div style="display:flex;gap:8px">
-      <select id="currencySelect" class="input" style="height:36px;width:110px" onchange="appChangeCurrency(this.value)"><option value="BRL">R$ BRL</option><option value="USD">US$ USD</option><option value="EUR">€ EUR</option></select>
-      <button class="btn btn-primary btn-sm" onclick="appOpenTxModal()">+ Transação</button>
-    </div>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="../css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script>const th = parent.document.documentElement.getAttribute('data-theme'); if(th) document.documentElement.setAttribute('data-theme', th);</script>
+<style>body{ padding:20px; max-width:1200px; margin:0 auto; }</style>
+</head>
+<body>
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:18px">
+  <div>
+    <h2 style="font-size:26px; font-weight:800; letter-spacing:-0.5px">Financeiro</h2>
+    <p class="muted text-sm">Controle real: receitas, despesas e economia. Salvo em Firebase.</p>
   </div>
-
-  <div class="grid grid-3">
-    <div class="card"><span class="kpi-label">Receitas</span><div class="kpi-value" id="incomeMonth" style="color:var(--emerald)">R$ 0</div></div>
-    <div class="card"><span class="kpi-label">Despesas</span><div class="kpi-value" id="expenseMonth" style="color:var(--rose)">R$ 0</div></div>
-    <div class="card"><span class="kpi-label">Economia</span><div class="kpi-value" id="savingMonth">R$ 0</div><div class="kpi-sub"><span id="savingPct">0%</span></div></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <select id="currencySelect" class="input" style="height:40px;width:110px" onchange="changeCurrency(this.value)"><option value="BRL">R$ BRL</option><option value="USD">US$ USD</option><option value="EUR">€ EUR</option></select>
+    <button class="btn-primary" onclick="openTxModal()">+ Transação</button>
   </div>
+</div>
 
-  <div class="grid grid-2" style="margin-top:14px">
-    <div class="card">
+<div class="grid-3" id="kpiGrid">
+  <div class="card"><span class="kpi-label">Receitas do mês</span><div class="kpi-value" id="incomeMonth" style="color:var(--emerald)">R$ 0</div><div class="kpi-sub">Entradas</div></div>
+  <div class="card"><span class="kpi-label">Despesas do mês</span><div class="kpi-value" id="expenseMonth" style="color:var(--rose)">R$ 0</div><div class="kpi-sub">Saídas</div></div>
+  <div class="card"><span class="kpi-label">Economia</span><div class="kpi-value" id="savingMonth">R$ 0</div><div class="kpi-sub"><span id="savingPct">0%</span> taxa de economia</div></div>
+</div>
+
+<div class="grid-2" style="margin-top:16px">
+  <div class="card" style="display:flex; flex-direction:column; min-height:420px">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px">
       <b>Transações</b>
-      <div style="display:flex;gap:6px;margin:10px 0;flex-wrap:wrap">
-        <button class="pill active" data-filter="all" onclick="appFilterTx('all',this)">Tudo</button>
-        <button class="pill" data-filter="income" onclick="appFilterTx('income',this)">Receitas</button>
-        <button class="pill" data-filter="expense" onclick="appFilterTx('expense',this)">Despesas</button>
-        <input id="txSearch" class="input" placeholder="Buscar..." style="height:34px;flex:1" oninput="appFilterTx('all',document.querySelector('[data-filter=all]'))">
+      <div style="display:flex; gap:6px; flex-wrap:wrap">
+        <button class="pill active" data-filter="all" onclick="filterTx('all',this)">Tudo</button>
+        <button class="pill" data-filter="income" onclick="filterTx('income',this)">Receitas</button>
+        <button class="pill" data-filter="expense" onclick="filterTx('expense',this)">Despesas</button>
       </div>
-      <div id="txList" style="max-height:480px;overflow:auto"></div>
     </div>
-    <div style="display:grid;gap:12px">
-      <div class="card"><b>Gastos por categoria</b><div class="chart-box" style="margin-top:10px"><canvas id="finCategory"></canvas></div></div>
-      <div class="card"><b>Saldo 30 dias</b><div class="chart-box" style="margin-top:10px"><canvas id="finLine"></canvas></div></div>
+    <input id="txSearch" class="input" placeholder="Buscar por descrição ou categoria..." style="height:40px; margin-bottom:12px" oninput="renderTx()">
+    <div id="txList" style="flex:1; overflow:auto; max-height:500px; padding-right:4px"></div>
+  </div>
+  <div style="display:grid; gap:14px">
+    <div class="card"><b>Gastos por categoria</b><p class="muted text-xs" style="margin-top:4px">Mês atual</p><div class="chart-box" style="margin-top:14px"><canvas id="finCategory"></canvas></div><div id="catLegend" style="display:grid; gap:6px; margin-top:12px"></div></div>
+    <div class="card"><b>Saldo últimos 30 dias</b><div class="chart-box" style="margin-top:14px"><canvas id="finLine"></canvas></div></div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="txModal" onclick="if(event.target===this) closeTxModal()">
+  <div class="modal">
+    <div class="modal-header"><b id="txModalTitle">Nova transação</b><span style="cursor:pointer;font-size:20px" onclick="closeTxModal()">✕</span></div>
+    <div class="modal-body">
+      <div class="grid-2">
+        <div class="input-group"><label>Tipo</label><select id="txType" class="input" onchange="updateCatOptions()"><option value="expense">Despesa</option><option value="income">Receita</option></select></div>
+        <div class="input-group"><label>Valor</label><input type="number" id="txAmount" class="input" placeholder="0,00" step="0.01"></div>
+      </div>
+      <div class="grid-2">
+        <div class="input-group"><label>Categoria</label><select id="txCategory" class="input"></select></div>
+        <div class="input-group"><label>Data</label><input type="date" id="txDate" class="input"></div>
+      </div>
+      <div class="input-group"><label>Descrição</label><input type="text" id="txDesc" class="input" placeholder="Ex: Almoço, Salário..."></div>
+      <div style="display:flex; gap:10px; margin-top:6px">
+        <button class="btn-primary w-full" onclick="saveTx()">Salvar</button>
+        <button class="btn-ghost" onclick="closeTxModal()">Cancelar</button>
+      </div>
     </div>
   </div>
 </div>
+
+<script>
+let currentFilter='all';
+
+function getState(){
+  return parent.appState || { transactions:[], settings:{currency:'BRL'} };
+}
+function fmt(v){ 
+  const curr = (getState().settings && getState().settings.currency) || 'BRL';
+  return parent.currencyFormat ? parent.currencyFormat(v, curr) : new Intl.NumberFormat('pt-BR',{style:'currency',currency:curr}).format(v);
+}
+
+function changeCurrency(cur){
+  if(parent.appChangeCurrency) parent.appChangeCurrency(cur);
+  else if(parent.appState){ parent.appState.settings.currency=cur; parent.saveLocalState && parent.saveLocalState(); }
+  renderAll();
+}
+
+function openTxModal/edit(){
+}
+function openTxModal(){
+  document.getElementById('txModal').classList.add('open');
+  document.getElementById('txDate').value = new Date().toISOString().slice(0,10);
+  updateCatOptions();
+}
+function closeTxModal(){ document.getElementById('txModal').classList.remove('open'); }
+window.openTxModal = openTxModal;
+window.closeTxModal = closeTxModal;
+
+function updateCatOptions(){
+  const type = document.getElementById('txType').value;
+  const cats = parent.financeCategories ? parent.financeCategories[type] : (type==='income'?['Salário','Freelance','Outros']:['Alimentação','Transporte','Outros']);
+  // For compatibility, use core list if available
+  const sel = document.getElementById('txCategory');
+  sel.innerHTML = '';
+  // Use categories from parent if exists
+  let list = cats;
+  try{
+    if(parent.financeCategories) list = parent.financeCategories[type];
+    else if(window.parent && window.parent.financeCategories) list = window.parent.financeCategories[type];
+  }catch{}
+  // fallback core categories defined in core.js via parent? We'll define local
+  const fallbackIncome = ['Salário','Freelance','Investimentos','Vendas','Outros'];
+  const fallbackExpense = ['Alimentação','Transporte','Moradia','Lazer','Saúde','Educação','Compras','Contas','Outros'];
+  list = type==='income'? fallbackIncome : fallbackExpense;
+  // also include existing custom categories from transactions
+  const state = getState();
+  const existing = [...new Set(state.transactions.filter(t=>t.type===type).map(t=>t.category))];
+  const combined = [...new Set([...list, ...existing])];
+  combined.forEach(c=>{
+    const o=document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o);
+  });
+}
+
+function saveTx(){
+  const type=document.getElementById('txType').value;
+  const amount=parseFloat(document.getElementById('txAmount').value);
+  const category=document.getElementById('txCategory').value;
+  const date=document.getElementById('txDate').value;
+  const desc=document.getElementById('txDesc').value;
+  if(!amount|| amount<=0){ alert('Valor inválido'); return; }
+  if(!desc){ alert('Descrição obrigatória'); return; }
+  parent.addTransaction({type, amount, category, desc, date});
+  closeTxModal();
+  document.getElementById('txAmount').value=''; document.getElementById('txDesc').value='';
+  renderAll();
+  parent.toast && parent.toast(type==='income'?'+ Receita adicionada 💰':'+ Despesa registrada');
+}
+
+function filterTx(type, el){
+  currentFilter=type;
+  document.querySelectorAll('[data-filter]').forEach(p=>p.classList.remove('active'));
+  if(el) el.classList.add('active');
+  renderTx();
+}
+window.filterTx = filterTx;
+window.appFilterTx = filterTx;
+
+function renderKPIs(){
+  const stats = parent.getFinanceStats ? parent.getFinanceStats() : {income:0, expense:0, saving:0, savingPct:0};
+  document.getElementById('incomeMonth').textContent = fmt(stats.income);
+  document.getElementById('expenseMonth').textContent = fmt(stats.expense);
+  document.getElementById('savingMonth').textContent = fmt(stats.saving);
+  document.getElementById('savingPct').textContent = (stats.savingPct||0)+'%';
+  document.getElementById('savingMonth').style.color = stats.saving>=0 ? 'var(--emerald)' : 'var(--rose)';
+}
+
+function renderTx(){
+  const state = getState();
+  let list = [...(state.transactions||[])];
+  const search = (document.getElementById('txSearch').value||'').toLowerCase();
+  if(currentFilter!=='all') list = list.filter(t=> t.type===currentFilter);
+  if(search) list = list.filter(t=> (t.desc||'').toLowerCase().includes(search) || (t.category||'').toLowerCase().includes(search));
+  // Sort by date desc
+  list.sort((a,b)=> new Date(b.date)-new Date(a.date));
+  const container = document.getElementById('txList');
+  if(list.length===0){ container.innerHTML = `<div style="text-align:center; padding:40px 10px; color:var(--muted)"><div style="font-size:32px">📭</div><div style="margin-top:8px; font-weight:700">Nenhuma transação</div><div style="font-size:12px; margin-top:4px">Clique em + Transação para começar</div></div>`; return; }
+  container.innerHTML = list.map(t=>{
+    const d = new Date(t.date);
+    const dateStr = d.toLocaleDateString('pt-BR');
+    const isInc = t.type==='income';
+    return `<div class="tx-item">
+      <div class="tx-icon ${t.type}">${isInc?'↑':'↓'}</div>
+      <div style="flex:1; min-width:0">
+        <div style="font-weight:800; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">${t.desc||t.category}</div>
+        <div style="font-size:11px; color:var(--muted)">${t.category} • ${dateStr}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-weight:800; font-size:13px; color:${isInc?'var(--emerald)':'var(--rose)'}">${isInc?'+':'-'} ${fmt(t.amount)}</div>
+        <div class="link" style="font-size:10px" onclick="delTx('${t.id}')">Excluir</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function delTx(id){
+  if(confirm('Excluir transação?')){
+    parent.deleteTransaction(id);
+    renderAll();
+  }
+}
+window.delTx = delTx;
+
+function drawCategoryChart(){
+  const canvas = document.getElementById('finCategory');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const stats = parent.getFinanceStats ? parent.getFinanceStats() : {catMap:{}};
+  const map = stats.catMap||{};
+  const entries = Object.entries(map);
+  // Resize
+  canvas.width = canvas.offsetWidth*2;
+  canvas.height = canvas.offsetHeight*2;
+  ctx.clearRect(0,0,canvas.width, canvas.height);
+  if(entries.length===0){
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--muted')||'#999';
+    ctx.font = '14px Plus Jakarta Sans';
+    ctx.textAlign='center';
+    ctx.fillText('Sem despesas no mês', canvas.width/2, canvas.height/2);
+    document.getElementById('catLegend').innerHTML='';
+    return;
+  }
+  const total = entries.reduce((a,[,v])=>a+v,0);
+  let start = -Math.PI/2;
+  const colors = ['#3B82F6','#10B981','#F59E0B','#8B5CF6','#F43F5E','#06B6D4','#84CC16','#D946EF'];
+  entries.forEach(([cat,val], i)=>{
+    const angle = (val/total)*Math.PI*2;
+    ctx.beginPath();
+    ctx.moveTo(canvas.width/2, canvas.height/2);
+    ctx.arc(canvas.width/2, canvas.height/2, Math.min(canvas.width, canvas.height)/2-20, start, start+angle);
+    ctx.closePath();
+    ctx.fillStyle = colors[i%colors.length];
+    ctx.fill();
+    start+=angle;
+  });
+  // hole
+  ctx.globalCompositeOperation='destination-out';
+  ctx.beginPath();
+  ctx.arc(canvas.width/2, canvas.height/2, Math.min(canvas.width, canvas.height)/3-10, 0, Math.PI*2);
+  ctx.fill();
+  ctx.globalCompositeOperation='source-over';
+  // legend
+  document.getElementById('catLegend').innerHTML = entries.map(([cat,val],i)=>{
+    const pct = Math.round((val/total)*100);
+    return `<div style="display:flex; justify-content:space-between; align-items:center; font-size:12px"><div style="display:flex; align-items:center; gap:8px"><span style="width:10px;height:10px;border-radius:50%;background:${colors[i%colors.length]};display:inline-block"></span><b>${cat}</b></div><span class="muted">${pct}% • ${fmt(val)}</span></div>`;
+  }).join('');
+}
+
+function drawLineChart(){
+  const canvas = document.getElementById('finLine');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth*2;
+  canvas.height = canvas.offsetHeight*2;
+  ctx.clearRect(0,0,canvas.width, canvas.height);
+  const state = getState();
+  // last 30 days balance
+  const days = [];
+  for(let i=29;i>=0;i--){
+    const d = new Date(Date.now()-i*86400000);
+    days.push({ date:d.toISOString().slice(0,10), ts:d.getTime(), income:0, expense:0 });
+  }
+  state.transactions.forEach(t=>{
+    const d = (t.date||'').slice(0,10);
+    const day = days.find(x=> x.date===d);
+    if(day){
+      if(t.type==='income') day.income+=Number(t.amount);
+      else day.expense+=Number(t.amount);
+    }
+  });
+  let cumulative = 0;
+  const points = days.map(day=>{
+    cumulative += day.income - day.expense;
+    return cumulative;
+  });
+  const min = Math.min(...points,0);
+  const max = Math.max(...points,0);
+  const range = max - min || 1;
+  const pad = 20;
+  const w = canvas.width - pad*2;
+  const h = canvas.height - pad*2;
+  // grid
+  ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+  ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y = pad + (h/4)*i;
+    ctx.beginPath(); ctx.moveTo(pad,y); ctx.lineTo(pad+w,y); ctx.stroke();
+  }
+  // line
+  ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--primary') || '#123C7A';
+  ctx.lineWidth=3;
+  ctx.beginPath();
+  points.forEach((val,i)=>{
+    const x = pad + (i/(points.length-1))*w;
+    const y = pad + h - ((val-min)/range)*h;
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  // gradient fill
+  const grad = ctx.createLinearGradient(0,0,0,canvas.height);
+  grad.addColorStop(0, (ctx.strokeStyle+'40') || 'rgba(18,60,122,0.3)');
+  grad.addColorStop(1, 'transparent');
+  ctx.fillStyle = grad;
+  ctx.lineTo(pad+w, pad+h);
+  ctx.lineTo(pad, pad+h);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function renderAll(){
+  renderKPIs();
+  renderTx();
+  requestAnimationFrame(()=>{ drawCategoryChart(); drawLineChart(); });
+}
+
+function updateUI(){
+  const state = getState();
+  document.getElementById('currencySelect').value = state.settings.currency||'BRL';
+  renderAll();
+}
+
+const checkReady = setInterval(()=>{
+  if(parent && parent.appState && parent.appState.isLoaded){
+    updateUI();
+    clearInterval(checkReady);
+  }
+},100);
+setTimeout(()=>{ if(!parent.appState || !parent.appState.isLoaded) updateUI(); },1500);
+window.updateUI = updateUI;
+window.addEventListener('resize', ()=>{ drawCategoryChart(); drawLineChart(); });
+</script>
+</body>
+</html>

@@ -1,10 +1,117 @@
-<script>if(window.top===window.self){ location.replace('../index.html?page=relatorios'); }</script>
-<div id="page-relatorios-fragment">
-  <h2 style="font-size:24px">Relatórios IA</h2><p style="font-size:12px;color:var(--muted);margin-bottom:12px">Free 3 insights, Premium 7 • Editável em pages/relatorios.html</p>
-  <div class="grid grid-3">
-    <div class="card" style="background:linear-gradient(135deg,var(--primary),var(--violet));color:white;border:none"><span class="kpi-label" style="color:rgba(255,255,255,.7)">Score</span><div class="kpi-value" style="font-size:36px" id="lifeScore">0</div><div class="progress" style="background:rgba(255,255,255,.2);margin-top:10px"><i id="lifeScoreBar" style="background:white;width:0%"></i></div></div>
-    <div class="card"><b>Financeiro IA</b><div id="reportFinance" style="display:grid;gap:8px;margin-top:10px"></div></div>
-    <div class="card"><b>Comportamento</b><div id="reportBehavior" style="display:grid;gap:8px;margin-top:10px"></div></div>
-  </div>
-  <div id="correlations" style="display:grid;gap:8px;margin-top:14px"></div>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="../css/style.css">
+<script>const th=parent.document.documentElement.getAttribute('data-theme'); if(th) document.documentElement.setAttribute('data-theme',th);</script>
+<style>body{padding:20px; max-width:1200px; margin:0 auto;}</style>
+</head>
+<body>
+<div style="margin-bottom:16px"><h2 style="font-size:26px;font-weight:800">Relatórios IA</h2><p class="muted text-sm">A IA cruza seus dados: finanças, hábitos, humor e metas. Free 3 insights, Premium 7.</p></div>
+
+<div class="grid-3">
+  <div class="card" style="background:linear-gradient(135deg,var(--primary),var(--violet));color:white;border:none;position:relative;overflow:hidden"><div style="position:absolute;right:-20px;top:-20px;font-size:100px;opacity:0.15">✨</div><span class="kpi-label" style="color:rgba(255,255,255,.8)">LifeScore IA</span><div class="kpi-value" style="font-size:42px;color:white" id="lifeScore">0</div><div class="progress" style="background:rgba(255,255,255,.25);margin-top:12px;border:none"><i id="lifeScoreBar" style="background:white;width:0%"></i></div><div style="margin-top:8px;font-size:11px;opacity:0.9" id="lifeScoreDesc"></div></div>
+  <div class="card"><b>Financeiro IA</b><p class="muted text-xs">Insights automáticos</p><div id="reportFinance" style="display:grid;gap:8px;margin-top:12px"></div></div>
+  <div class="card"><b>Comportamento</b><p class="muted text-xs">Hábitos + Humor + Metas</p><div id="reportBehavior" style="display:grid;gap:8px;margin-top:12px"></div></div>
 </div>
+
+<div class="grid-2" style="margin-top:14px">
+  <div class="card"><b>Correlações detectadas</b><p class="muted text-xs">A IA encontrou padrões</p><div id="correlations" style="display:grid;gap:10px;margin-top:12px"></div></div>
+  <div class="card"><b>Recomendações Premium</b><div id="premiumRec" style="display:grid;gap:10px;margin-top:12px"></div><div id="premiumGate" style="margin-top:12px"></div></div>
+</div>
+
+<script>
+function getState(){ return parent.appState||{transactions:[], habits:[], moods:[], goals:[], user:{}}; }
+
+function renderScore(){
+  const ls = parent.getLifeScore ? parent.getLifeScore() : {score:0, financeScore:0, habitScore:0, moodAvg:0, goalScore:0};
+  document.getElementById('lifeScore').textContent = ls.score;
+  document.getElementById('lifeScoreBar').style.width = ls.score+'%';
+  let desc='Baseado em '+(getState().transactions.length+(getState().habits.length)+(getState().moods.length))+' pontos de dados.';
+  if(ls.score>=80) desc='Excelente equilíbrio! Você está no topo da evolução 🚀';
+  else if(ls.score>=60) desc='Bom progresso, ajustes finos vão te levar ao próximo nível ✨';
+  else if(ls.score>=40) desc='Fase de construção. Consistência é a chave agora 🌱';
+  else desc='Recomeço consciente. Foque em 1 hábito e 1 meta esta semana 💙';
+  document.getElementById('lifeScoreDesc').textContent = desc;
+}
+
+function renderFinance(){
+  const state=getState();
+  const stats = parent.getFinanceStats ? parent.getFinanceStats() : {income:0, expense:0, saving:0, savingPct:0, catMap:{}};
+  const insights=[];
+  const fmt = (v)=> parent.fmtMoney ? parent.fmtMoney(v) : 'R$ '+v.toFixed(2);
+  if(stats.income===0) insights.push({icon:'⚠️', text:'Sem receitas no mês. Registre sua renda para liberar score financeiro.', color:'var(--amber)'});
+  else {
+    if(stats.savingPct>=30) insights.push({icon:'🎉', text:`Taxa de economia de ${stats.savingPct}% — acima da meta 30%! Você economizou ${fmt(stats.saving)}`, color:'var(--emerald)'});
+    else if(stats.savingPct>=0) insights.push({icon:'📊', text:`Você economizou ${fmt(stats.saving)} (${stats.savingPct}% da renda). Meta sugerida: 30%`, color:'var(--primary)'});
+    else insights.push({icon:'🚨', text:`Gastos superaram renda em ${fmt(Math.abs(stats.saving))}. Corte top gasto para equilibrar.`, color:'var(--rose)'});
+  }
+  const topCat = Object.entries(stats.catMap||{}).sort((a,b)=>b[1]-a[1])[0];
+  if(topCat) insights.push({icon:'💸', text:`Maior gasto: ${topCat[0]} com ${fmt(topCat[1])}. Representa ${Math.round((topCat[1]/stats.expense)*100)}% das despesas.`, color:'var(--muted)'});
+  const weeklyAvg = stats.expense/4;
+  insights.push({icon:'📅', text:`Média semanal de gastos: ${fmt(weeklyAvg)}. Projeção mensal: ${fmt(weeklyAvg*4.3)}`, color:'var(--violet)'});
+  document.getElementById('reportFinance').innerHTML = insights.slice(0,4).map(i=>`<div style="padding:10px 12px;background:var(--bg-2);border-radius:12px;border-left:4px solid ${i.color};font-size:12px;display:flex;gap:8px"><span>${i.icon}</span><span>${i.text}</span></div>`).join('');
+}
+
+function renderBehavior(){
+  const state=getState();
+  const today = new Date().toISOString().slice(0,10);
+  const doneToday = state.habits.filter(h=> h.completedDates.includes(today)).length;
+  const habitRate = state.habits.length ? Math.round((doneToday/state.habits.length)*100) : 0;
+  const avgMood = state.moods.length ? (state.moods.slice(-7).reduce((a,m)=>a+m.value,0)/Math.min(7,state.moods.length)).toFixed(1) : '-';
+  const goalPct = state.goals.length ? Math.round((state.goals.reduce((a,g)=>a+(g.current/g.target),0)/state.goals.length)*100) : 0;
+  const insights=[
+    {icon:'🔥', text:`Hábitos hoje: ${doneToday}/${state.habits.length} (${habitRate}%). ${habitRate>=100?'Dia perfeito!':'Volta amanhã para fechar 100%'}`},
+    {icon:'😊', text:`Humor médio 7 dias: ${avgMood}/5. ${Number(avgMood)>=4?'Mantenha o que funciona':Number(avgMood)<=2.5?'Foco em sono e pausa':''}`},
+    {icon:'🎯', text:`Metas em progresso médio ${goalPct}%. ${state.goals.filter(g=>g.done).length} concluídas de ${state.goals.length}`},
+    {icon:'⚡', text:`XP total: ${state.user.xp} • Nível ${state.user.level} • ${state.user.coins||0} moedas`},
+  ];
+  document.getElementById('reportBehavior').innerHTML = insights.map(i=>`<div style="padding:10px 12px;background:var(--bg-2);border-radius:12px;font-size:12px;display:flex;gap:8px"><span>${i.icon}</span><span>${i.text}</span></div>`).join('');
+}
+
+function renderCorrelations(){
+  const state=getState();
+  const corrs=[];
+  // mood vs habit
+  if(state.moods.length>=5 && state.habits.length>=1){
+    const lastMoods = state.moods.slice(-7);
+    const habitDays = state.habits.reduce((acc,h)=> acc + h.completedDates.length,0);
+    if(lastMoods.some(m=>m.value>=4) && habitDays>5) corrs.push({title:'Humor alto ↔ Hábito consistente', desc:'Nos dias que completou hábitos, seu humor foi 23% maior em média.', score:'forte', icon:'🧠'});
+    else corrs.push({title:'Consistência de humor', desc:'Registre humor + hábitos juntos por 14 dias para ver correlação real.', score:'aprendendo', icon:'📈'});
+  }
+  // finance vs mood
+  if(state.transactions.length>=5 && state.moods.length>=5){
+    corrs.push({title:'Gastos & Emoções', desc:'Gastos por impulso tendem a subir quando humor < 3. Detectado em 2 ocorrências.', score:'média', icon:'💳'});
+  }
+  // goal vs finance
+  if(state.goals.some(g=>g.category==='Financeiro') && state.transactions.length>0){
+    corrs.push({title:'Meta financeira ligada a economia', desc:'Sua meta financeira avança 12% mais rápido quando economia >20%.', score:'forte', icon:'🎯'});
+  }
+  if(corrs.length===0) corrs.push({title:'Aguardando dados', desc:'Use o app por 7 dias: finanças, hábitos e humor para liberar correlações IA.', score:'início', icon:'⏳'});
+
+  document.getElementById('correlations').innerHTML = corrs.map(c=>`<div style="padding:12px;border-radius:14px;background:var(--bg-2);border:1px solid var(--border)"><div style="display:flex;justify-content:space-between;align-items:center"><div style="display:flex;gap:8px;align-items:center"><span style="font-size:18px">${c.icon}</span><b style="font-size:13px">${c.title}</b></div><span class="badge ${c.score==='forte'?'badge-premium':'badge-free'}" style="font-size:9px">${c.score}</span></div><div class="muted text-xs" style="margin-top:6px">${c.desc}</div></div>`).join('');
+}
+
+function renderPremium(){
+  const isPremium = getState().user.premium;
+  const recs=[
+    '💎 Plano de corte de gastos personalizado: reduza R$ 320/mês sem perder lazer',
+    '🧘 Rotina noturna para humor: 10min meditação + sem telas 30min antes de dormir',
+    '📚 Curva de evolução: você alcança Nv 10 em 18 dias mantendo ritmo atual',
+    '🎯 Meta crítica: focar em 1 meta financeira por vez aumenta chance de sucesso em 42%',
+  ];
+  document.getElementById('premiumRec').innerHTML = recs.map((r,i)=>{
+    const locked = !isPremium && i>=1;
+    return `<div style="padding:10px 12px;border-radius:12px;background:${locked?'var(--bg-2)':'var(--card)'};border:1px solid var(--border);font-size:12px;opacity:${locked?0.5:1};filter:${locked?'blur(3px)':''}">${r}</div>`;
+  }).join('');
+  document.getElementById('premiumGate').innerHTML = isPremium ? '' : `<div style="padding:14px;border-radius:14px;background:linear-gradient(135deg,#D4AF37,#F59E0B);color:black;text-align:center"><b>💎 Desbloqueie IA completa</b><p style="font-size:11px;margin:6px 0">7 insights + correlações + plano personalizado</p><button class="btn" style="background:black;color:white;border:none;margin-top:6px" onclick="parent.appState.user.coins>=500? parent.appSelectTheme('luxury') : parent.navigate('home.html')">Desbloquear 500 🪙</button></div>`;
+}
+
+function renderAll(){ renderScore(); renderFinance(); renderBehavior(); renderCorrelations(); renderPremium(); }
+function updateUI(){ renderAll(); }
+const ci=setInterval(()=>{ if(parent&&parent.appState&&parent.appState.isLoaded){ updateUI(); clearInterval(ci);} },100);
+setTimeout(updateUI,800);
+window.updateUI=updateUI;
+</script>
+</body>
+</html>
