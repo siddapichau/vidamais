@@ -3,15 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vida+ AI — Inteligência para sua Evolução</title>
+    <title>Vida+ AI — Evolução Inteligente</title>
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="stylesheet" href="css/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body, html { height: 100%; overflow: hidden; background: var(--bg); }
+        body, html { height: 100%; overflow: hidden; background: var(--bg); margin: 0; }
         .app-shell { display: flex; flex-direction: column; height: 100vh; width: 100vw; }
-        #mainIframe { flex: 1; border: none; width: 100%; height: 100%; transition: opacity 0.3s; }
-        .iframe-loading { opacity: 0; }
+        #mainIframe { flex: 1; border: none; width: 100%; height: 100%; background: var(--bg); }
         
         .brand { display: flex; align-items: center; gap: 10px; cursor: pointer; }
         .brand img { height: 35px; width: 35px; border-radius: 8px; }
@@ -19,15 +18,20 @@
 
         .menu-pc { display: flex; gap: 5px; }
         .top-actions { display: flex; align-items: center; gap: 12px; }
-        .btn-circle { width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--border); background: var(--card); display: grid; place-items: center; cursor: pointer; color: var(--text); }
+        
+        .btn-circle, .avatar-circle { 
+            width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border); 
+            background: var(--card); display: grid; place-items: center; cursor: pointer; 
+            color: var(--text); font-size: 18px; overflow: hidden;
+        }
+        .avatar-circle img { width: 100%; height: 100%; object-fit: cover; }
         
         .mobile-toggle { display: none; font-size: 24px; cursor: pointer; color: var(--text); }
         @media (max-width: 768px) {
             .mobile-toggle { display: block; }
             .menu-pc { display: none; }
         }
-
-        #ad-bottom { height: 60px; background: var(--bg-2); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--muted); }
+        #ad-bottom { height: 50px; background: var(--bg-2); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--muted); }
     </style>
 </head>
 <body>
@@ -40,17 +44,21 @@
         </div>
 
         <nav class="menu-pc" id="pcNav">
-            <!-- Carregado via Firebase -->
+            <!-- Menus estáticos iniciais para evitar delay -->
+            <a href="javascript:void(0)" class="nav-item" onclick="navigate('home.html')">🏠 Home</a>
+            <a href="javascript:void(0)" class="nav-item" onclick="navigate('dashboard.html')">📊 Dash</a>
+            <a href="javascript:void(0)" class="nav-item" onclick="navigate('insumos.html')">📦 Insumos</a>
+            <a href="javascript:void(0)" class="nav-item" onclick="navigate('perfil.html')">👤 Perfil</a>
         </nav>
 
         <div class="top-actions">
-            <div class="btn-circle" onclick="appToggleTheme()">🌓</div>
+            <div class="btn-circle" onclick="appToggleTheme()" title="Mudar Tema">🌓</div>
             <div id="userAvatar" class="avatar-circle" onclick="navigate('perfil.html')">?</div>
             <div class="mobile-toggle" onclick="toggleMobileMenu()">☰</div>
         </div>
     </header>
 
-    <iframe id="mainIframe" name="mainIframe" src="about:blank"></iframe>
+    <iframe id="mainIframe" name="mainIframe" src="pages/home.html"></iframe>
 
     <div id="ad-bottom">Anúncio AdMob Banner</div>
 </div>
@@ -62,16 +70,19 @@
         <span class="brand-text">Menu</span>
         <span onclick="toggleMobileMenu()" style="font-size:30px; cursor:pointer; color: var(--text);">&times;</span>
     </div>
-    <nav id="mobileNav" style="display:flex; flex-direction:column; gap:8px;"></nav>
+    <nav id="mobileNav" style="display:flex; flex-direction:column; gap:8px;">
+        <a href="javascript:void(0)" class="nav-item" onclick="navigate('home.html')">🏠 Home</a>
+        <a href="javascript:void(0)" class="nav-item" onclick="navigate('dashboard.html')">📊 Dashboard</a>
+        <a href="javascript:void(0)" class="nav-item" onclick="navigate('insumos.html')">📦 Insumos</a>
+        <a href="javascript:void(0)" class="nav-item" onclick="navigate('perfil.html')">👤 Perfil</a>
+    </nav>
 </aside>
 
-<!-- Scripts Principais -->
-<script type="module" src="js/firebase.js"></script>
-<script type="module" src="js/core.js"></script>
-<script type="module" src="js/app.js"></script>
-
+<!-- Carregamento Prioritário -->
 <script type="module">
     import { db, ref, onValue } from './js/firebase.js';
+    import './js/core.js';
+    import './js/app.js';
 
     window.toggleMobileMenu = () => {
         document.getElementById('mobileDrawer').classList.toggle('open');
@@ -80,9 +91,11 @@
 
     window.navigate = (page) => {
         const frame = document.getElementById('mainIframe');
-        frame.classList.add('iframe-loading');
-        
         const target = page.startsWith('pages/') ? page : `pages/${page}`;
+        
+        // Evita reload se já estiver na página
+        if(frame.src.includes(target)) return;
+        
         frame.src = target;
         
         const urlParams = new URLSearchParams(window.location.search);
@@ -92,24 +105,35 @@
         document.getElementById('mobileDrawer').classList.remove('open');
         document.getElementById('mobileOverlay').classList.remove('open');
         
-        if (window.updateActiveMenu) window.updateActiveMenu(page);
-        
-        setTimeout(() => frame.classList.remove('iframe-loading'), 300);
+        updateActiveMenu(page);
     };
 
-    // Atualiza Menu e Avatar baseando-se no Estado
+    function updateActiveMenu(page) {
+        document.querySelectorAll('.nav-item').forEach(a => {
+            const isActive = a.getAttribute('onclick').includes(page);
+            a.classList.toggle('active', isActive);
+        });
+    }
+
+    // Listener de Estado para Avatar e UI
     window.onAppStateUpdate = () => {
         const state = window.appState;
         const av = document.getElementById('userAvatar');
         
-        if (state.profile && state.profile.email) {
+        console.log("Estado atualizado:", state); // Log para debug
+
+        if (state && state.profile && state.profile.email) {
             if (state.profile.photo) {
-                av.innerHTML = `<img src="${state.profile.photo}" alt="Avatar">`;
+                av.innerHTML = `<img src="${state.profile.photo}">`;
             } else {
-                av.textContent = (state.profile.name || state.profile.email).charAt(0).toUpperCase();
+                const char = (state.profile.firstName || state.profile.name || state.profile.email || "?").charAt(0).toUpperCase();
+                av.textContent = char;
+                av.style.background = 'var(--primary)';
+                av.style.color = 'white';
             }
         } else {
             av.textContent = '?';
+            av.style.background = 'var(--card)';
         }
 
         const frame = document.getElementById('mainIframe');
@@ -118,53 +142,42 @@
         }
     };
 
-    // Carregar Menu do Firebase
+    // Atualização Dinâmica do Menu (Firebase)
     onValue(ref(db, 'admin/menu'), (snapshot) => {
         const menuData = snapshot.val();
-        let menu = [];
-        
-        if (menuData) {
-            menu = Array.isArray(menuData) ? menuData : Object.values(menuData);
-        } else {
-            menu = [
-                { label: 'Home', page: 'home.html', icon: '🏠', order: 0 },
-                { label: 'Dashboard', page: 'dashboard.html', icon: '📊', order: 1 },
-                { label: 'Insumos', page: 'insumos.html', icon: '📦', order: 2 },
-                { label: 'Perfil', page: 'perfil.html', icon: '👤', order: 3 }
-            ];
-        }
-
+        if (!menuData) return;
+        const menu = Array.isArray(menuData) ? menuData : Object.values(menuData);
         const sorted = menu.sort((a,b) => (a.order || 0) - (b.order || 0));
+        
         const pcNav = document.getElementById('pcNav');
         const mobNav = document.getElementById('mobileNav');
-        
         pcNav.innerHTML = ''; mobNav.innerHTML = '';
 
         sorted.forEach(item => {
             if(!item) return;
-            const createLink = () => {
-                const a = document.createElement('a');
-                a.className = 'nav-item';
-                a.href = "javascript:void(0)";
-                a.onclick = () => navigate(item.page);
-                a.innerHTML = `<span style="font-size:18px">${item.icon || '•'}</span> <span>${item.label}</span>`;
-                return a;
-            };
-            pcNav.appendChild(createLink());
-            mobNav.appendChild(createLink());
+            const linkHTML = `<span style="font-size:18px">${item.icon || '•'}</span> <span>${item.label}</span>`;
+            
+            const aPC = document.createElement('a');
+            aPC.className = 'nav-item'; aPC.href = "javascript:void(0)";
+            aPC.onclick = () => navigate(item.page);
+            aPC.innerHTML = linkHTML;
+            pcNav.appendChild(aPC);
+
+            const aMob = document.createElement('a');
+            aMob.className = 'nav-item'; aMob.href = "javascript:void(0)";
+            aMob.onclick = () => navigate(item.page);
+            aMob.innerHTML = linkHTML;
+            mobNav.appendChild(aMob);
         });
-
-        window.updateActiveMenu = (page) => {
-            document.querySelectorAll('.nav-item').forEach(a => {
-                const isActive = a.getAttribute('onclick').includes(page);
-                a.classList.toggle('active', isActive);
-            });
-        };
-
+        
         const params = new URLSearchParams(window.location.search);
-        const initial = params.get('page') || 'home.html';
-        navigate(initial);
+        updateActiveMenu(params.get('page') || 'home.html');
     });
+
+    // Inicialização da URL
+    const params = new URLSearchParams(window.location.search);
+    const startPage = params.get('page');
+    if(startPage) navigate(startPage);
 </script>
 
 </body>
