@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.3.6';
+export const APP_VERSION = '2.3.7';
 
 export const STORE = {
   user: 'vidaplus_user_v8',
@@ -494,3 +494,15 @@ export function currencyFormat(value, currency='BRL'){
 export function uid(prefix='id'){
   return prefix+'_'+Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-4);
 }
+
+// Taxas de câmbio ESTÁTICAS (aproximadas) usadas para converter valores ao
+// trocar a moeda do app. Base: BRL = 1. Atualize conforme necessário.
+export const EXCHANGE_RATES = { BRL:1, USD:0.185, EUR:0.17 };
+
+export function convertCurrency(amount, from, to){
+  from = from||'BRL'; to = to||'BRL';
+  const r = EXCHANGE_RATES;
+  if(!r[from] || !r[to]) return Number(amount)||0;
+  return (Number(amount)||0) * (r[to]/r[from]);
+}
+

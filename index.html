@@ -57,7 +57,7 @@
         <div class="brand" onclick="navigate('home.html')">
             <img src="assets/logo.png" alt="Logo" onerror="this.src='logo.png'">
             <span class="brand-text">Vida+ AI</span>
-            <span style="font-size:10px;background:linear-gradient(135deg,var(--primary),#3B82F6);color:white;padding:2px 8px;border-radius:100px;font-weight:800;margin-left:6px;box-shadow:0 2px 6px rgba(0,0,0,0.1)">v2.3.6</span>
+            <span style="font-size:10px;background:linear-gradient(135deg,var(--primary),#3B82F6);color:white;padding:2px 8px;border-radius:100px;font-weight:800;margin-left:6px;box-shadow:0 2px 6px rgba(0,0,0,0.1)">v2.3.7</span>
         </div>
 
         <nav class="menu-pc" id="pcNav">
@@ -81,7 +81,7 @@
 
     <iframe id="mainIframe" name="mainIframe" src="pages/home.html" title="Vida+ App" loading="eager"></iframe>
 
-    <div id="ad-bottom"><span class="sync-dot"></span><span id="syncText">● Sincronizado • Vida+ AI Evolution OS v2.3.6</span><span style="margin-left:auto" class="pc-only"><span id="xpMini">0 XP • Nv 1</span> • <span class="link" onclick="navigate('conquistas.html')">Ver níveis</span></span></div>
+    <div id="ad-bottom"><span class="sync-dot"></span><span id="syncText">● Sincronizado • Vida+ AI Evolution OS v2.3.7</span><span style="margin-left:auto" class="pc-only"><span id="xpMini">0 XP • Nv 1</span> • <span class="link" onclick="navigate('conquistas.html')">Ver níveis</span></span></div>
 </div>
 
 <!-- Mobile Drawer -->
@@ -148,7 +148,7 @@
             var email=(window.appState&&window.appState.profile&&window.appState.profile.email)||'';
             if(av){ av.textContent = email ? (email.charAt(0)||'?').toUpperCase() : '?'; av.style.background='var(--primary)'; av.style.color='white'; }
             var xp=document.getElementById('xpMini'); if(xp) xp.textContent='Vida+ AI';
-            var st=document.getElementById('syncText'); if(st) st.textContent='● Pronto • Vida+ AI v2.3.6';
+            var st=document.getElementById('syncText'); if(st) st.textContent='● Pronto • Vida+ AI v2.3.7';
           }catch(e){}
         };
         try{ var p=new URLSearchParams(window.location.search).get('page'); if(p) window.navigate(p); }catch(e){}
@@ -224,7 +224,7 @@
         if(frame.contentWindow && frame.contentWindow.updateUI){
             try{ frame.contentWindow.updateUI(); }catch{}
         }
-        document.getElementById('syncText').textContent = state.isLoaded ? '● Sincronizado • Vida+ AI Evolution OS v2.3.6' : '○ Carregando...';
+        document.getElementById('syncText').textContent = state.isLoaded ? '● Sincronizado • Vida+ AI Evolution OS v2.3.7' : '○ Carregando...';
     }catch(err){ console.warn('onAppStateUpdate fail', err); } };
 
     // Admin menu live: tratado dentro de app.js (initFirebase) para não
