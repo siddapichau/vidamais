@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="../css/style.css">
+    <script>
+        const theme = parent.document.documentElement.getAttribute('data-theme');
+        if(theme) document.documentElement.setAttribute('data-theme', theme);
+    </script>
     <style>
         body { padding: 40px 20px; display: grid; place-items: center; min-height: 100vh; }
         .auth-card { width: 100%; max-width: 400px; }
