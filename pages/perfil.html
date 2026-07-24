@@ -1,22 +1,102 @@
-<script>if(window.top===window.self){ location.replace('../index.html?page=perfil'); }</script>
-<div id="page-perfil-fragment">
-  <h2 style="font-size:24px">Meu Perfil</h2><p style="font-size:12px;color:var(--muted);margin-bottom:12px">Editável em pages/perfil.html • Usa regras do Index, não precisa puxar .js/.css</p>
-  <div class="grid grid-2">
-    <div class="card">
-      <b>Dados</b>
-      <div style="display:grid;gap:8px;margin-top:12px">
-        <div class="row"><input id="profileFirstName" class="input" placeholder="Nome"><input id="profileLastName" class="input" placeholder="Sobrenome"></div>
-        <input id="profilePhone" class="input" placeholder="Celular">
-        <input id="profileEmail" class="input" disabled>
-        <div class="row"><select id="profileCurrency" class="input"><option value="BRL">BRL</option><option value="USD">USD</option><option value="EUR">EUR</option></select><select id="profileTheme" class="input"><option value="light">Claro</option><option value="dark">Escuro</option><option value="midnight">Midnight</option></select></div>
-        <button class="btn btn-primary btn-sm" onclick="appSaveProfile()">Salvar perfil</button>
-      </div>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        body { padding: 20px; }
+        .theme-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 15px; }
+        .theme-item { background: var(--card); border: 2px solid var(--border); border-radius: 12px; padding: 15px; text-align: center; cursor: pointer; transition: .2s; }
+        .theme-item.active { border-color: var(--primary); background: var(--bg-2); }
+    </style>
+</head>
+<body>
+
+    <h2>Perfil e Configurações</h2>
+
+    <div class="card" style="margin-top: 20px;">
+        <h3>Dados Pessoais</h3>
+        <div class="grid" style="margin-top:15px;">
+            <div class="input-group">
+                <label>Nome</label>
+                <input type="text" id="p_firstName" class="input-custom" placeholder="Ex: Wesley">
+            </div>
+            <div class="input-group">
+                <label>Sobrenome</label>
+                <input type="text" id="p_lastName" class="input-custom" placeholder="Ex: Studio">
+            </div>
+        </div>
+        <div class="input-group">
+            <label>Telefone / WhatsApp</label>
+            <input type="text" id="p_phone" class="input-custom" placeholder="(00) 00000-0000">
+        </div>
+        <div class="input-group">
+            <label>Endereço / Localização</label>
+            <input type="text" id="p_address" class="input-custom" placeholder="Cidade - Estado">
+        </div>
+        <button class="btn-primary" onclick="saveProfile()">Salvar Perfil</button>
     </div>
-    <div class="card" style="background:linear-gradient(135deg,var(--primary),var(--violet));color:white;border:none">
-      <b>Premium & XP</b>
-      <div style="font-size:22px;font-weight:800;margin-top:8px" id="perfilLevel">Nv 1</div>
-      <div class="progress" style="background:rgba(255,255,255,.2);margin-top:8px"><i id="perfilBar" style="background:white"></i></div>
-      <button class="btn btn-white btn-sm" style="margin-top:12px;width:100%" onclick="appOpenPremium()">Virar Premium</button>
+
+    <div class="card" style="margin-top: 20px;">
+        <h3>Temas da Interface</h3>
+        <p style="font-size: 12px; color: var(--muted); margin-top: 5px;">Temas 💎 Premium custam 500 moedas.</p>
+        <div class="theme-grid" id="themeGrid">
+            <!-- Dinâmico -->
+        </div>
     </div>
-  </div>
-</div>
+
+    <div class="card" style="margin-top: 20px;">
+        <button class="btn-ghost" style="width: 100%; color: #F43F5E; border-color: #F43F5E;" onclick="parent.logout()">Sair da Conta</button>
+    </div>
+
+    <script>
+        function updateUI() {
+            const state = parent.appState;
+            const themes = parent.themes;
+            
+            document.getElementById('p_firstName').value = state.profile.firstName || '';
+            document.getElementById('p_lastName').value = state.profile.lastName || '';
+            document.getElementById('p_phone').value = state.profile.phone || '';
+            document.getElementById('p_address').value = state.profile.address || '';
+
+            const grid = document.getElementById('themeGrid');
+            grid.innerHTML = '';
+            Object.keys(themes).forEach(key => {
+                const isActive = state.settings.theme.startsWith(key);
+                const div = document.createElement('div');
+                div.className = `theme-item ${isActive ? 'active' : ''}`;
+                div.innerHTML = `
+                    <div style="font-weight: 800; font-size: 13px;">${themes[key].label}</div>
+                    <div style="font-size: 10px; margin-top: 4px;">${themes[key].premium ? '💎 Premium' : 'Grátis'}</div>
+                `;
+                div.onclick = () => {
+                    parent.appSelectTheme(key);
+                    updateUI();
+                };
+                grid.appendChild(div);
+            });
+        }
+
+        window.saveProfile = async () => {
+            const data = {
+                firstName: document.getElementById('p_firstName').value,
+                lastName: document.getElementById('p_lastName').value,
+                phone: document.getElementById('p_phone').value,
+                address: document.getElementById('p_address').value,
+                name: document.getElementById('p_firstName').value + ' ' + document.getElementById('p_lastName').value
+            };
+            await parent.updateProfile(data);
+            parent.toast("Perfil atualizado!");
+        };
+
+        const checkReady = setInterval(() => {
+            if (parent && parent.appState && parent.appState.isLoaded) {
+                updateUI();
+                clearInterval(checkReady);
+            }
+        }, 100);
+
+        window.updateUI = updateUI;
+    </script>
+</body>
+</html>

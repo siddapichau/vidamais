@@ -1,9 +1,81 @@
-<script>if(window.top===window.self){ location.replace('../index.html?page=dashboard'); }</script>
-<div id="page-dashboard-fragment">
-  <p style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:12px">📍 Dashboard carregado via Index • Menu continua no Index • Edite este arquivo em pages/dashboard.html para mudar dashboard</p>
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><b>Dashboard • Detalhes extras (editável)</b><span class="badge" style="background:#EEF2FF;color:#4338CA">Fragmento</span></div>
-  <div class="grid grid-2">
-    <div class="card"><b>Progresso semanal editável</b><p style="font-size:12px;color:var(--muted);margin-top:6px">Você pode editar este texto direto em pages/dashboard.html sem mexer no Index. Esse arquivo não precisa puxar .css ou .js porque puxa do Index.</p><div class="progress" style="margin-top:10px"><i style="width:65%"></i></div></div>
-    <div class="card"><b>Dica rápida</b><p style="font-size:12px;color:var(--muted);margin-top:6px">Adicione novos cards aqui. Eles aparecerão quando clicar em Dashboard no menu do Index.</p><button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="appLoadPage('habitos')">Ir para Hábitos</button></div>
-  </div>
-</div>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>body { padding: 20px; }</style>
+</head>
+<body>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>Dashboard</h2>
+        <div style="font-weight: 800; color: #D4AF37;">🪙 <span id="coins">0</span></div>
+    </div>
+
+    <div class="card" style="margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+                <b id="lvlName" style="font-size: 18px;">Carregando...</b>
+                <p id="lvlDesc" style="font-size: 12px; color: var(--muted); margin-top: 4px;"></p>
+            </div>
+            <div id="xpBadge" style="background: var(--bg-2); padding: 5px 12px; border-radius: 10px; font-size: 11px; font-weight: 800;">0 XP</div>
+        </div>
+        
+        <div class="xp-container" style="margin-top: 15px;">
+            <div class="xp-bar" id="xpBar" style="width: 0%"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 10px; font-weight: 700; color: var(--muted); margin-top: 5px;">
+            <span id="xpCurrent">0</span>
+            <span id="xpNext">1000</span>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <h3 style="margin-bottom: 10px;">Atividade Diária</h3>
+            <p style="font-size: 13px; color: var(--muted); margin-bottom: 15px;">Complete metas diárias para evoluir mais rápido.</p>
+            <button class="btn-primary" onclick="doTask(150, 'Atividade Física')">+150 XP</button>
+            <button class="btn-ghost" onclick="doTask(200, 'Estudo IA')">+200 XP</button>
+        </div>
+        
+        <div class="card">
+            <h3>Nível Atual</h3>
+            <div id="benefitList" style="margin-top: 10px; font-size: 13px;">
+                <!-- Carregado do Admin -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateUI() {
+            const state = parent.appState;
+            const lvl = parent.getLevelData(state.user.xp || 0);
+            
+            document.getElementById('lvlName').textContent = lvl.current.name;
+            document.getElementById('lvlDesc').textContent = `Nível ${lvl.current.level} — Faltam ${lvl.next.xp - state.user.xp} XP para o próximo nível.`;
+            document.getElementById('xpBadge').textContent = `${state.user.xp} XP`;
+            document.getElementById('xpBar').style.width = lvl.pct + '%';
+            document.getElementById('xpCurrent').textContent = lvl.current.xp;
+            document.getElementById('xpNext').textContent = lvl.next.xp;
+            document.getElementById('coins').textContent = state.user.coins || 0;
+            
+            document.getElementById('benefitList').innerHTML = `<p>✅ ${lvl.current.benefit || 'Sem bônus definido'}</p>`;
+        }
+
+        window.doTask = (xp, name) => {
+            parent.addXP(xp);
+            parent.toast(`${name} concluído! +${xp} XP`);
+            updateUI();
+        };
+
+        const checkReady = setInterval(() => {
+            if (parent && parent.appState && parent.appState.isLoaded) {
+                updateUI();
+                clearInterval(checkReady);
+            }
+        }, 100);
+        
+        window.updateUI = updateUI;
+    </script>
+</body>
+</html>

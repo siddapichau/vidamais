@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        body { padding: 40px 20px; display: grid; place-items: center; min-height: 100vh; }
+        .auth-card { width: 100%; max-width: 400px; }
+        .tab-btn { flex: 1; padding: 12px; border: none; background: transparent; color: var(--muted); font-weight: 800; cursor: pointer; border-bottom: 2px solid transparent; }
+        .tab-btn.active { color: var(--primary); border-color: var(--primary); }
+    </style>
+</head>
+<body>
+
+    <div class="card auth-card">
+        <div style="display: flex; margin-bottom: 25px;">
+            <button id="loginTab" class="tab-btn active" onclick="switchTab('login')">Entrar</button>
+            <button id="signupTab" class="tab-btn" onclick="switchTab('signup')">Cadastrar</button>
+        </div>
+
+        <!-- Login -->
+        <div id="loginForm">
+            <div class="input-group">
+                <label>E-mail</label>
+                <input type="email" id="l_email" class="input-custom" placeholder="seu@email.com">
+            </div>
+            <div class="input-group">
+                <label>Senha</label>
+                <input type="password" id="l_pass" class="input-custom" placeholder="••••••">
+            </div>
+            <button class="btn-primary" style="width: 100%;" onclick="handleLogin()">Entrar no App</button>
+        </div>
+
+        <!-- Signup -->
+        <div id="signupForm" style="display: none;">
+            <div class="input-group">
+                <label>Nome Completo</label>
+                <input type="text" id="s_name" class="input-custom" placeholder="Como quer ser chamado?">
+            </div>
+            <div class="input-group">
+                <label>E-mail</label>
+                <input type="email" id="s_email" class="input-custom" placeholder="seu@email.com">
+            </div>
+            <div class="input-group">
+                <label>Senha</label>
+                <input type="password" id="s_pass" class="input-custom" placeholder="Mínimo 6 caracteres">
+            </div>
+            <button class="btn-primary" style="width: 100%;" onclick="handleSignup()">Criar Conta</button>
+        </div>
+
+        <div style="margin: 20px 0; text-align: center; color: var(--muted); font-size: 12px; font-weight: 800;">OU CONTINUE COM</div>
+        
+        <button class="btn-ghost" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;" onclick="handleGoogle()">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" width="18"> Google
+        </button>
+    </div>
+
+    <script>
+        function switchTab(mode) {
+            document.getElementById('loginForm').style.display = mode === 'login' ? 'block' : 'none';
+            document.getElementById('signupForm').style.display = mode === 'signup' ? 'block' : 'none';
+            document.getElementById('loginTab').classList.toggle('active', mode === 'login');
+            document.getElementById('signupTab').classList.toggle('active', mode === 'signup');
+        }
+
+        async function handleLogin() {
+            const e = document.getElementById('l_email').value;
+            const p = document.getElementById('l_pass').value;
+            try {
+                await parent.loginEmail(e, p);
+                parent.toast("Bem-vindo de volta!");
+                parent.navigate('dashboard.html');
+            } catch(err) { alert("Erro: " + err.message); }
+        }
+
+        async function handleSignup() {
+            const n = document.getElementById('s_name').value;
+            const e = document.getElementById('s_email').value;
+            const p = document.getElementById('s_pass').value;
+            try {
+                await parent.signupEmail(e, p, n);
+                parent.toast("Conta criada com sucesso!");
+                parent.navigate('dashboard.html');
+            } catch(err) { alert("Erro: " + err.message); }
+        }
+
+        async function handleGoogle() {
+            try {
+                await parent.loginGoogle();
+                parent.toast("Login via Google realizado!");
+                parent.navigate('dashboard.html');
+            } catch(err) { alert("Erro: " + err.message); }
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>body { padding: 20px; }</style>
+</head>
+<body>
+    <h2>Gestão de Insumos</h2>
+    <div class="card" style="margin-top:20px">
+        <p style="color: var(--muted); margin-bottom: 20px;">Gerencie suas moedas e recursos ganhos através da inteligência artificial.</p>
+        
+        <div class="grid">
+            <div class="card" style="text-align: center;">
+                <div style="font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase;">Saldo de Moedas</div>
+                <div style="font-size: 32px; font-weight: 800; color: #D4AF37; margin: 10px 0;">🪙 <span id="coinVal">0</span></div>
+                <button class="btn-ghost" onclick="parent.navigate('home.html')">Ganhar Mais</button>
+            </div>
+            
+            <div class="card" style="text-align: center;">
+                <div style="font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase;">Experiência Total</div>
+                <div style="font-size: 32px; font-weight: 800; color: var(--primary); margin: 10px 0;">⚡ <span id="xpVal">0</span></div>
+                <button class="btn-ghost" onclick="parent.navigate('dashboard.html')">Ver Painel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateUI() {
+            if (parent.appState) {
+                document.getElementById('coinVal').textContent = parent.appState.user.coins || 0;
+                document.getElementById('xpVal').textContent = parent.appState.user.xp || 0;
+            }
+        }
+        setInterval(updateUI, 500);
+        updateUI();
+    </script>
+</body>
+</html>
