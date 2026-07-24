@@ -64,9 +64,19 @@ function watchVideo(){
   videoCooldown=true;
   if(parent.toast) parent.toast('▶️ Reproduzindo vídeo premiado... (simulação)');
   setTimeout(()=>{
+    // Respeita multiplicador de moedas do item coins_2x
+    let mult = 1;
+    if(parent.appState.user.coinsMultiplier===2 && parent.appState.user.coinsMultiplierUntil && parent.appState.user.coinsMultiplierUntil > Date.now()){
+      mult = 2;
+    } else if(parent.appState.user.coinsMultiplier){
+      // expirou
+      parent.appState.user.coinsMultiplier = 1;
+      parent.appState.user.coinsMultiplierUntil = 0;
+    }
+    const coinGain = 50 * mult;
     parent.addXP(10);
-    parent.appState.user.coins = (parent.appState.user.coins||0)+50;
-    parent.toast&&parent.toast('+50 🪙 e +10 XP! 🎉');
+    parent.appState.user.coins = (parent.appState.user.coins||0)+coinGain;
+    parent.toast&&parent.toast(`+${coinGain} 🪙 e +10 XP! ${mult>1?'💰 2x ativo!':'🎉'}`);
     parent.saveLocalState&&parent.saveLocalState();
     updateUI();
     setTimeout(()=> videoCooldown=false, 10000);

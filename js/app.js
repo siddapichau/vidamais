@@ -9,6 +9,9 @@ window.themes = themes;
 window.levelTable = levelTable;
 window.currencyFormat = currencyFormat;
 window.financeCategories = financeCategories;
+window.saveLocalState = saveLocalState;
+window.loadLocalState = loadLocalState;
+window.uid = uid;
 
 const googleProvider = new GoogleAuthProvider();
 let saveDebounce = null;
@@ -97,12 +100,40 @@ try{
 
 // ===== Core gamification =====
 window.addXP = async (amount)=>{
+  const oldLvl = getLevelData(appState.user.xp||0).current.level;
   appState.user.xp = (appState.user.xp||0) + amount;
   const lvl = getLevelData(appState.user.xp);
   appState.user.level = lvl.current.level;
+  // Level-up bonus: +50 coins por nível subido + toast
+  if(lvl.current.level > oldLvl){
+    const diff = lvl.current.level - oldLvl;
+    appState.user.coins = (appState.user.coins||0) + 50*diff;
+    window.toast && window.toast(`🎉 Nível ${lvl.current.level}! +${50*diff} 🪙 • ${lvl.current.name}`);
+  }
+  // Atualiza streak global com base em hábitos feitos hoje
+  recalcGlobalStreak();
   saveLocalState();
   if(window.onAppStateUpdate) window.onAppStateUpdate();
 };
+
+function recalcGlobalStreak(){
+  // Streak do usuário = maior streak entre seus hábitos, ou streak de humor consecutivo
+  let maxStreak = 0;
+  (appState.habits||[]).forEach(h=>{ if((h.streak||0)>maxStreak) maxStreak=h.streak; });
+  // Calcula streak de humor (dias consecutivos com registro)
+  if((appState.moods||[]).length){
+    const dates = new Set(appState.moods.map(m=> m.date));
+    let moodStreak = 0;
+    const d = new Date();
+    while(dates.has(d.toISOString().slice(0,10))){
+      moodStreak++;
+      d.setDate(d.getDate()-1);
+    }
+    if(moodStreak>maxStreak) maxStreak=moodStreak;
+  }
+  appState.user.streak = maxStreak;
+  return maxStreak;
+}
 
 window.updateProfile = async (data)=>{
   appState.profile = {...appState.profile, ...data};
