@@ -18,8 +18,12 @@ async function syncWithFirebase(user) {
         appState.profile = { ...appState.profile, ...data.profile };
         appState.isLoaded = true;
         saveLocalState();
-        if (window.onAppStateUpdate) window.onAppStateUpdate();
+    } else {
+        // Se for novo usuário, garantir que o profile tenha o e-mail
+        appState.profile.email = user.email;
+        appState.isLoaded = true;
     }
+    if (window.onAppStateUpdate) window.onAppStateUpdate();
 }
 
 // Funções Globais para o App
@@ -50,6 +54,13 @@ window.appToggleTheme = () => {
     let nextTheme = `${base}-${nextMode}`;
     appState.settings.theme = nextTheme;
     document.documentElement.setAttribute('data-theme', nextTheme);
+    
+    // Sincroniza o tema para o iframe atual
+    const frame = document.getElementById('mainIframe');
+    if(frame && frame.contentWindow) {
+        frame.contentWindow.document.documentElement.setAttribute('data-theme', nextTheme);
+    }
+
     saveLocalState();
     if (window.onAppStateUpdate) window.onAppStateUpdate();
 };
@@ -70,8 +81,16 @@ window.appSelectTheme = async (baseId) => {
         }
     }
     let mode = (appState.settings.theme || 'default-light').split('-')[1] || 'light';
-    appState.settings.theme = `${baseId}-${mode}`;
-    document.documentElement.setAttribute('data-theme', appState.settings.theme);
+    const nextTheme = `${baseId}-${mode}`;
+    appState.settings.theme = nextTheme;
+    document.documentElement.setAttribute('data-theme', nextTheme);
+
+    // Sincroniza o tema para o iframe atual
+    const frame = document.getElementById('mainIframe');
+    if(frame && frame.contentWindow) {
+        frame.contentWindow.document.documentElement.setAttribute('data-theme', nextTheme);
+    }
+
     saveLocalState();
     if (window.onAppStateUpdate) window.onAppStateUpdate();
 };
