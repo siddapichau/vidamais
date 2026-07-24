@@ -59,9 +59,13 @@
   --nav-text: #F5F3FF;
 }
 
+/* RESET E BASE */
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
 
 body { background: var(--bg); color: var(--text); transition: background var(--transition), color var(--transition); overflow-x: hidden; min-height: 100vh; }
+
+/* Garante que o CSS se aplique dentro dos Iframes */
+html, body { background-color: var(--bg); color: var(--text); }
 
 /* REGRAS GERAIS DE UI */
 .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
