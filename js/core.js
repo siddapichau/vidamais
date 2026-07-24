@@ -1,4 +1,4 @@
-export const APP_VERSION = '2.3.4';
+export const APP_VERSION = '2.3.5';
 
 export const STORE = {
   user: 'vidaplus_user_v8',

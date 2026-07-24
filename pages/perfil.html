@@ -67,7 +67,7 @@ function selectAvatar(i){
   if(!e) return;
   selectedAvatar = (selectedAvatar===e) ? '' : e;
   const av=document.getElementById('avatarPreview');
-  if(window.fillAvatar) window.fillAvatar(av, {...(getState().profile||{}), avatar: selectedAvatar});
+  if(parent.fillAvatar) parent.fillAvatar(av, {...(getState().profile||{}), avatar: selectedAvatar});
   renderAvatarGrid(selectedAvatar);
 }
 
@@ -89,7 +89,7 @@ function updateUI(){
   document.getElementById('currencySel').value = state.settings.currency||'BRL';
 
   const av=document.getElementById('avatarPreview');
-  if(window.fillAvatar){ window.fillAvatar(av, state.profile||{}); }
+  if(parent.fillAvatar){ parent.fillAvatar(av, state.profile||{}); }
   else if(state.profile.photo){ av.innerHTML=`<img src="${state.profile.photo}" style="width:100%;height:100%;object-fit:cover">`; }
   else { const ch=(state.profile.firstName||state.profile.name||state.profile.email||'?')[0].toUpperCase(); av.textContent=ch; }
   renderAvatarGrid(state.profile.avatar);

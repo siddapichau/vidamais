@@ -117,7 +117,7 @@ function updateUI(){
 
   document.getElementById('premiumCard').innerHTML = state.user.premium ? `<div style="background:linear-gradient(135deg,#D4AF37,#F1C40F);color:black;padding:10px 12px;border-radius:12px;font-weight:800;text-align:center">💎 Premium ativo<br><span style="font-size:11px">Temas + IA liberados</span></div>` : `<div style="font-size:12px"><div style="display:flex;justify-content:space-between" class="muted"><span>Moedas</span><span class="font-bold" style="color:var(--text)">🪙 ${state.user.coins||0}/500</span></div><div class="progress" style="margin-top:8px"><i style="width:${Math.min(100,((state.user.coins||0)/500)*100)}%"></i></div><button class="btn-ghost w-full btn-sm" style="margin-top:10px" onclick="parent.navigate('perfil.html')">Desbloquear temas 💎</button></div>`;
 
-  if(window.fillAvatar) window.fillAvatar(document.getElementById('homeAvatar'), state.profile||{});
+  if(parent.fillAvatar) parent.fillAvatar(document.getElementById('homeAvatar'), state.profile||{});
   renderAITips(state);
   renderAd(state);
 }

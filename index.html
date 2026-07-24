@@ -32,6 +32,23 @@
         .sync-dot{ width:8px;height:8px;border-radius:50%;background:var(--emerald);box-shadow:0 0 0 3px rgba(16,185,129,0.2);animation:pulse 2s infinite; }
         @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(16,185,129,0.4)}70%{box-shadow:0 0 0 6px rgba(16,185,129,0)}100%{box-shadow:0 0 0 0 rgba(16,185,129,0)}}
     </style>
+    <script>
+      // Overlay de erro global: nunca congela em silêncio. Se um módulo falhar
+      // (ex.: import incompatível após atualização do SW), mostra aviso e sugere reload.
+      window.addEventListener('error', function(e){
+        try{
+          if(e && e.message && /import|module|fetch/i.test(e.message)){
+            var b = document.getElementById('fatalError');
+            if(!b){ b = document.createElement('div'); b.id='fatalError';
+              b.style='position:fixed;top:0;left:0;right:0;z-index:99999;background:#F43F5E;color:#fff;padding:12px 16px;font:13px/1.4 system-ui;box-shadow:0 4px 12px rgba(0,0,0,.3);cursor:pointer';
+              b.onclick=function(){ location.reload(); };
+              (document.body||document.documentElement).appendChild(b);
+            }
+            b.textContent='⚠️ Falha ao carregar (provável cache antigo do app). Toque aqui ou pressione F5 para recarregar.';
+          }
+        }catch(_){}
+      }, true);
+    </script>
 </head>
 <body>
 
@@ -40,7 +57,7 @@
         <div class="brand" onclick="navigate('home.html')">
             <img src="assets/logo.png" alt="Logo" onerror="this.src='logo.png'">
             <span class="brand-text">Vida+ AI</span>
-            <span style="font-size:10px;background:linear-gradient(135deg,var(--primary),#3B82F6);color:white;padding:2px 8px;border-radius:100px;font-weight:800;margin-left:6px;box-shadow:0 2px 6px rgba(0,0,0,0.1)">v2.3.4</span>
+            <span style="font-size:10px;background:linear-gradient(135deg,var(--primary),#3B82F6);color:white;padding:2px 8px;border-radius:100px;font-weight:800;margin-left:6px;box-shadow:0 2px 6px rgba(0,0,0,0.1)">v2.3.5</span>
         </div>
 
         <nav class="menu-pc" id="pcNav">
@@ -64,7 +81,7 @@
 
     <iframe id="mainIframe" name="mainIframe" src="pages/home.html" title="Vida+ App" loading="eager"></iframe>
 
-    <div id="ad-bottom"><span class="sync-dot"></span><span id="syncText">● Sincronizado • Vida+ AI Evolution OS v2.3.4</span><span style="margin-left:auto" class="pc-only"><span id="xpMini">0 XP • Nv 1</span> • <span class="link" onclick="navigate('conquistas.html')">Ver níveis</span></span></div>
+    <div id="ad-bottom"><span class="sync-dot"></span><span id="syncText">● Sincronizado • Vida+ AI Evolution OS v2.3.5</span><span style="margin-left:auto" class="pc-only"><span id="xpMini">0 XP • Nv 1</span> • <span class="link" onclick="navigate('conquistas.html')">Ver níveis</span></span></div>
 </div>
 
 <!-- Mobile Drawer -->
@@ -131,7 +148,7 @@
         });
     }
 
-    window.onAppStateUpdate = () => {
+    window.onAppStateUpdate = () => { try{
         const state = window.appState;
         const av = document.getElementById('userAvatar');
         const drawerAv = document.getElementById('drawerAvatar');
@@ -156,8 +173,8 @@
         if(frame.contentWindow && frame.contentWindow.updateUI){
             try{ frame.contentWindow.updateUI(); }catch{}
         }
-        document.getElementById('syncText').textContent = state.isLoaded ? '● Sincronizado • Vida+ AI Evolution OS v2.3.4' : '○ Carregando...';
-    };
+        document.getElementById('syncText').textContent = state.isLoaded ? '● Sincronizado • Vida+ AI Evolution OS v2.3.5' : '○ Carregando...';
+    }catch(err){ console.warn('onAppStateUpdate fail', err); } };
 
     // Admin menu live - se existir, substitui
     let defaultMenuApplied = false;
@@ -190,8 +207,13 @@
     const startPage = params.get('page');
     if(startPage) navigate(startPage);
 
-    // PWA register
+    // PWA register + hard refresh quando o SW atualizado assumir o controle
+    // (evita servir core.js antigo + app.js novo -> falha de import -> tela congelada)
     if('serviceWorker' in navigator){
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', ()=>{
+            if(!refreshing){ refreshing = true; location.reload(); }
+        });
         window.addEventListener('load', ()=>{
             navigator.serviceWorker.register('./sw.js').then(r=> console.log('SW registered', r.scope)).catch(e=> console.warn('SW fail', e));
         });
