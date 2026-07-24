@@ -57,7 +57,7 @@
         <div class="brand" onclick="navigate('home.html')">
             <img src="assets/logo.png" alt="Logo" onerror="this.src='logo.png'">
             <span class="brand-text">Vida+ AI</span>
-            <span style="font-size:10px;background:linear-gradient(135deg,var(--primary),#3B82F6);color:white;padding:2px 8px;border-radius:100px;font-weight:800;margin-left:6px;box-shadow:0 2px 6px rgba(0,0,0,0.1)">v2.3.5</span>
+            <span style="font-size:10px;background:linear-gradient(135deg,var(--primary),#3B82F6);color:white;padding:2px 8px;border-radius:100px;font-weight:800;margin-left:6px;box-shadow:0 2px 6px rgba(0,0,0,0.1)">v2.3.6</span>
         </div>
 
         <nav class="menu-pc" id="pcNav">
@@ -81,7 +81,7 @@
 
     <iframe id="mainIframe" name="mainIframe" src="pages/home.html" title="Vida+ App" loading="eager"></iframe>
 
-    <div id="ad-bottom"><span class="sync-dot"></span><span id="syncText">● Sincronizado • Vida+ AI Evolution OS v2.3.5</span><span style="margin-left:auto" class="pc-only"><span id="xpMini">0 XP • Nv 1</span> • <span class="link" onclick="navigate('conquistas.html')">Ver níveis</span></span></div>
+    <div id="ad-bottom"><span class="sync-dot"></span><span id="syncText">● Sincronizado • Vida+ AI Evolution OS v2.3.6</span><span style="margin-left:auto" class="pc-only"><span id="xpMini">0 XP • Nv 1</span> • <span class="link" onclick="navigate('conquistas.html')">Ver níveis</span></span></div>
 </div>
 
 <!-- Mobile Drawer -->
@@ -110,10 +110,61 @@
             <button class="btn-ghost btn-sm w-full" onclick="parent.logout && parent.logout()">Sair</button>
         </div>
     </div>
-</aside>
+    </aside>
 
-<script type="module">
-    import { db, ref, onValue } from './js/firebase.js';
+    <!-- Shell resiliente: roda SEMPRE (script comum, não módulo) e NÃO depende de
+         core.js/app.js/Firebase. Garante navegação mesmo se os módulos falharem
+         ao carregar (MIME errado, file://, CDN bloqueada ou cache antigo do SW). -->
+    <script>
+      (function(){
+        function setActive(page){
+          try{ document.querySelectorAll('.nav-item').forEach(function(a){ var oc=a.getAttribute('onclick')||''; a.classList.toggle('active', oc.indexOf(page.replace('pages/',''))>-1); }); }catch(e){}
+        }
+        window.navigate = function(page){
+          var frame=document.getElementById('mainIframe'); if(!frame) return;
+          var target = (page.indexOf('pages/')===0) ? page : 'pages/'+page;
+          try{ frame.src=target; }catch(e){}
+          try{ var u=new URLSearchParams(window.location.search); u.set('page', page.replace('pages/','')); window.history.pushState({}, '', window.location.pathname+'?'+u.toString()); }catch(e){}
+          try{ var dd=document.getElementById('mobileDrawer'); if(dd) dd.classList.remove('open'); var ov=document.getElementById('mobileOverlay'); if(ov) ov.classList.remove('open'); }catch(e){}
+          setActive(target);
+        };
+        window.toggleMobileMenu = function(){
+          try{ var dd=document.getElementById('mobileDrawer'); if(dd) dd.classList.toggle('open'); var ov=document.getElementById('mobileOverlay'); if(ov) ov.classList.toggle('open'); }catch(e){}
+        };
+        window.appToggleTheme = function(){
+          try{
+            var cur=document.documentElement.getAttribute('data-theme')||'default-light';
+            var parts=cur.split('-'); var base=parts[0]; var mode=parts[1]||'light';
+            var nm = (mode==='light')?'dark':'light';
+            var next = (base==='oled')?'oled-dark':(base+'-'+nm);
+            document.documentElement.setAttribute('data-theme', next);
+            try{ var f=document.getElementById('mainIframe'); if(f&&f.contentWindow) f.contentWindow.document.documentElement.setAttribute('data-theme', next); }catch(e){}
+            try{ var s=localStorage.getItem('vidaplus_settings_v8'); s=JSON.parse(s||'{}'); s.theme=next; localStorage.setItem('vidaplus_settings_v8', JSON.stringify(s)); }catch(e){}
+          }catch(e){}
+        };
+        window.onAppStateUpdate = function(){
+          try{
+            var av=document.getElementById('userAvatar');
+            var email=(window.appState&&window.appState.profile&&window.appState.profile.email)||'';
+            if(av){ av.textContent = email ? (email.charAt(0)||'?').toUpperCase() : '?'; av.style.background='var(--primary)'; av.style.color='white'; }
+            var xp=document.getElementById('xpMini'); if(xp) xp.textContent='Vida+ AI';
+            var st=document.getElementById('syncText'); if(st) st.textContent='● Pronto • Vida+ AI v2.3.6';
+          }catch(e){}
+        };
+        try{ var p=new URLSearchParams(window.location.search).get('page'); if(p) window.navigate(p); }catch(e){}
+        if('serviceWorker' in navigator){
+          var refreshing=false;
+          navigator.serviceWorker.addEventListener('controllerchange', function(){ if(!refreshing){ refreshing=true; location.reload(); } });
+          window.addEventListener('load', function(){ navigator.serviceWorker.register('./sw.js').catch(function(){}); });
+        }
+      })();
+    </script>
+
+    <script type="module">
+    // Observação: o Firebase NÃO é mais importado de forma estática aqui.
+    // O app.js carrega o Firebase dinamicamente (import()) com fallback para
+    // modo local. Assim, se o CDN (gstatic) estiver bloqueado/offline, este
+    // módulo continua linkando normalmente e a navegação funciona.
     import './js/core.js';
     import './js/app.js';
 
@@ -173,35 +224,11 @@
         if(frame.contentWindow && frame.contentWindow.updateUI){
             try{ frame.contentWindow.updateUI(); }catch{}
         }
-        document.getElementById('syncText').textContent = state.isLoaded ? '● Sincronizado • Vida+ AI Evolution OS v2.3.5' : '○ Carregando...';
+        document.getElementById('syncText').textContent = state.isLoaded ? '● Sincronizado • Vida+ AI Evolution OS v2.3.6' : '○ Carregando...';
     }catch(err){ console.warn('onAppStateUpdate fail', err); } };
 
-    // Admin menu live - se existir, substitui
-    let defaultMenuApplied = false;
-    onValue(ref(db, 'admin/menu'), (snapshot)=>{
-        const menuData = snapshot.val();
-        if(!menuData || (Array.isArray(menuData) && menuData.length===0)){
-            if(!defaultMenuApplied){
-                // mantém menu default estático do HTML
-                defaultMenuApplied=true;
-            }
-            return;
-        }
-        const menu = Array.isArray(menuData) ? menuData : Object.values(menuData);
-        const sorted = menu.filter(Boolean).sort((a,b)=> (a.order||0)-(b.order||0));
-        if(sorted.length===0) return;
-        const pcNav = document.getElementById('pcNav');
-        const mobNav = document.getElementById('mobileNav');
-        pcNav.innerHTML=''; mobNav.innerHTML='';
-        sorted.forEach(item=>{
-            if(!item || !item.page) return;
-            const link=`<span style="font-size:16px">${item.icon||'•'}</span> <span>${item.label||item.page}</span>`;
-            const aPC=document.createElement('a'); aPC.className='nav-item'; aPC.href='javascript:void(0)'; aPC.onclick=()=> navigate(item.page); aPC.innerHTML=link; pcNav.appendChild(aPC);
-            const aMob=document.createElement('a'); aMob.className='nav-item'; aMob.href='javascript:void(0)'; aMob.onclick=()=> navigate(item.page); aMob.innerHTML=link; mobNav.appendChild(aMob);
-        });
-        const params=new URLSearchParams(window.location.search);
-        updateActiveMenu(params.get('page')||'home.html');
-    });
+    // Admin menu live: tratado dentro de app.js (initFirebase) para não
+    // depender do Firebase no escopo deste módulo.
 
     const params = new URLSearchParams(window.location.search);
     const startPage = params.get('page');
