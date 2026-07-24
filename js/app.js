@@ -168,6 +168,22 @@ window.addXP = async (amount)=>{
   if(window.onAppStateUpdate) window.onAppStateUpdate();
 };
 
+// ===== XP diário (1 vez por atividade por dia) — evita farm de XP infinito =====
+// Ganha XP apenas na PRIMEIRA vez que a atividade é feita no dia. Ex.: registrar
+// humor várias vezes no mesmo dia só dá XP 1x; marcar/desmarcar hábito não dá XP
+// infinito; "Check geral" só conta 1x/dia.
+function awardDailyXp(type, amount){
+  const today = new Date().toISOString().slice(0,10);
+  if(!appState.user.dailyXp || appState.user.dailyXp.date !== today){
+    appState.user.dailyXp = { date: today, types: {} };
+  }
+  if(appState.user.dailyXp.types[type]) return false; // já ganhou hoje
+  appState.user.dailyXp.types[type] = true;
+  window.addXP(amount);
+  return true;
+}
+window.awardDailyXp = awardDailyXp;
+
 function recalcGlobalStreak(){
   // Streak do usuário = maior streak entre seus hábitos, ou streak de humor consecutivo
   let maxStreak = 0;
@@ -250,7 +266,7 @@ window.addTransaction = (data)=>{
   const tx = { id: uid('tx'), type: data.type||'expense', amount: Number(data.amount)||0, category: data.category||'Outros', desc: data.desc||data.description||'', date: data.date || new Date().toISOString(), createdAt: new Date().toISOString() };
   appState.transactions.unshift(tx);
   saveLocalState();
-  window.addXP(tx.type==='income'?10:5);
+  awardDailyXp('tx', tx.type==='income'?10:5);
   if(window.onAppStateUpdate) window.onAppStateUpdate();
   return tx;
 };
@@ -277,6 +293,15 @@ window.getFinanceStats = ()=>{
 
 // Compatibility wrappers for old fragments
 window.appChangeCurrency = (cur)=>{
+  const old = appState.settings.currency || 'BRL';
+  // Converte os valores já registrados para a nova moeda (ex.: 1000 BRL -> ~185 USD)
+  if(old !== cur){
+    const RATES = { BRL:1, USD:0.185, EUR:0.17 };
+    const factor = (RATES[cur]||1)/(RATES[old]||1);
+    if(isFinite(factor) && factor>0){
+      appState.transactions.forEach(t=>{ if(typeof t.amount==='number'){ t.amount = Math.round((t.amount*factor)*100)/100; } });
+    }
+  }
   appState.settings.currency = cur;
   saveLocalState();
   if(window.onAppStateUpdate) window.onAppStateUpdate();
@@ -290,7 +315,7 @@ window.addHabit = (data)=>{
   const h = { id: uid('habit'), name: data.name, icon: data.icon||'⭐', color: data.color||'#3B82F6', streak:0, completedDates:[], createdAt:new Date().toISOString() };
   appState.habits.push(h);
   saveLocalState();
-  window.addXP(20);
+  awardDailyXp('habit', 20);
   if(window.onAppStateUpdate) window.onAppStateUpdate();
   return h;
 };
@@ -300,7 +325,7 @@ window.toggleHabit = (id)=>{
   const today = new Date().toISOString().slice(0,10);
   const idx = h.completedDates.indexOf(today);
   if(idx>=0){ h.completedDates.splice(idx,1); h.streak=Math.max(0,(h.streak||1)-1); }
-  else { h.completedDates.push(today); h.streak=(h.streak||0)+1; window.addXP(15); }
+  else { h.completedDates.push(today); h.streak=(h.streak||0)+1; awardDailyXp('habit_'+h.id, 15); }
   saveLocalState();
   if(window.onAppStateUpdate) window.onAppStateUpdate();
 };
@@ -320,7 +345,7 @@ window.addMood = (value, note='')=>{
   if(existingIdx>=0) appState.moods[existingIdx]=mood;
   else appState.moods.push(mood);
   saveLocalState();
-  window.addXP(15);
+  awardDailyXp('mood', 15);
   if(window.onAppStateUpdate) window.onAppStateUpdate();
 };
 window.appQuickMood = (v)=> window.addMood(v);
@@ -330,7 +355,7 @@ window.addGoal = (data)=>{
   const g = { id: uid('goal'), title: data.title, target: Number(data.target)||100, current: Number(data.current)||0, category: data.category||'Geral', deadline: data.deadline||'', done:false, createdAt:new Date().toISOString() };
   appState.goals.push(g);
   saveLocalState();
-  window.addXP(30);
+  awardDailyXp('goal', 30);
   if(window.onAppStateUpdate) window.onAppStateUpdate();
   return g;
 };

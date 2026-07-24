@@ -21,7 +21,14 @@
   <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;color:var(--muted);margin-top:6px"><span id="xpCurrent">0</span><span id="xpNext">1000</span></div>
 </div>
 
+<div class="card" style="margin-bottom:14px; border:1px solid color-mix(in srgb, var(--primary) 25%, var(--border)); background:linear-gradient(135deg, color-mix(in srgb, var(--primary) 8%, var(--card)), var(--card))">
+  <div style="display:flex;align-items:center;gap:10px"><span style="font-size:20px">🤖</span><b>Análise IA de hoje</b><span class="muted text-xs" id="aiGreet" style="margin-left:auto"></span></div>
+  <div id="aiInsights" style="display:grid;gap:8px;margin-top:12px"></div>
+</div>
+
 <div class="grid-4" id="miniKPIs"></div>
+
+<div class="grid-4" id="extraKPIs" style="margin-top:14px"></div>
 
 <div class="grid-2" style="margin-top:14px">
   <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><b>Atividades de hoje</b><span class="link" onclick="parent.navigate('conquistas.html')">Ver conquistas</span></div><div id="todayTasks" style="display:grid;gap:8px"></div></div>
@@ -70,14 +77,48 @@ function updateUI(){
     <div><div style="display:flex;justify-content:space-between"><span class="kpi-label">LifeScore IA</span><span class="font-bold">${score.score}/100</span></div><div class="progress" style="margin-top:6px;height:10px"><i style="width:${score.score}%"></i></div></div>
     <div><div style="display:flex;justify-content:space-between"><span class="kpi-label">Nível</span><span class="font-bold">${lvlData.current.level}/50</span></div><div class="progress" style="margin-top:6px;height:8px"><i style="width:${(lvlData.current.level/50)*100}%"></i></div></div>
     <div><div style="display:flex;justify-content:space-between"><span class="kpi-label">Moedas</span><span class="font-bold">🪙 ${state.user.coins||0}/500</span></div><div class="progress" style="margin-top:6px;height:8px"><i style="width:${Math.min(100,((state.user.coins||0)/500)*100)}%;background:linear-gradient(90deg,#D4AF37,#F59E0B)"></i></div></div>
-    <div style="display:grid;gap:6px;margin-top:6px">
-      <button class="btn-primary btn-sm" onclick="doTask(50,'Check geral')">+50 XP Check geral</button>
-      <button class="btn-ghost btn-sm" onclick="parent.navigate('relatorios.html')">Ver insights completos 🤖</button>
-    </div>
+      <div style="display:grid;gap:6px;margin-top:6px">
+        <button class="btn-primary btn-sm" onclick="doTask(50,'Check diário')">+50 XP Check diário</button>
+        <button class="btn-ghost btn-sm" onclick="parent.navigate('relatorios.html')">Ver insights completos 🤖</button>
+      </div>
+  `;
+  renderExtraKPIs(state, lvlData);
+  renderAI(state, score, stats);
+}
+
+function renderExtraKPIs(state, lvlData){
+  const xpToNext = Math.max(0, lvlData.next.xp - (state.user.xp||0));
+  const medals = parent.evaluateMedals ? parent.evaluateMedals(state) : [];
+  const unlocked = medals.filter(m=>m.unlocked).length;
+  const streak = state.user.streak||0;
+  document.getElementById('extraKPIs').innerHTML = `
+    <div class="card"><span class="kpi-label">Sequência</span><div class="kpi-value" style="font-size:22px">🔥 ${streak}d</div><div class="kpi-sub">login seguido</div></div>
+    <div class="card"><span class="kpi-label">Moedas</span><div class="kpi-value" style="font-size:22px;color:#D4AF37">🪙 ${state.user.coins||0}</div><div class="kpi-sub">${500-(state.user.coins||0)>0?('faltam '+(500-(state.user.coins||0))+' p/ 500'):'teto atingido'}</div></div>
+    <div class="card"><span class="kpi-label">Medalhas</span><div class="kpi-value" style="font-size:22px">🏅 ${unlocked}/${medals.length||0}</div><div class="kpi-sub">desbloqueadas</div></div>
+    <div class="card"><span class="kpi-label">Próximo nível</span><div class="kpi-value" style="font-size:20px">${xpToNext} XP</div><div class="kpi-sub">para ${lvlData.next.name||'subir'}</div></div>
   `;
 }
 
-window.doTask=(xp,name)=>{ parent.addXP(xp); parent.toast&&parent.toast(`${name} +${xp} XP`); updateUI(); };
+function renderAI(state, score, stats){
+  const name = state.profile.firstName||state.profile.name||(state.profile.email? state.profile.email.split('@')[0]:'');
+  const el = document.getElementById('aiGreet');
+  if(el) el.textContent = name? ('Olá, '+name+'!') : '';
+  const today = new Date().toISOString().slice(0,10);
+  const doneH = state.habits.filter(h=> h.completedDates.includes(today)).length;
+  const avgMood = state.moods.length ? (state.moods.slice(-7).reduce((a,m)=>a+m.value,0)/Math.min(7,state.moods.length)).toFixed(1) : '-';
+  const tips=[];
+  tips.push(`🎯 LifeScore hoje: <b>${score.score}/100</b> — ${score.score>=70?'você está equilibrado 🚀':score.score>=40?'bom progresso, foco no consistente ✨':'fase de construção, um hábito por vez 💙'}`);
+  if(stats.income>0){
+    tips.push(`💰 Economia do mês: <b>${parent.fmtMoney?parent.fmtMoney(stats.saving):stats.saving}</b> (${stats.savingPct||0}%). ${stats.savingPct>=30?'Meta de poupança batida! 🎉':'Meta sugerida: 30% da renda.'}`);
+  } else {
+    tips.push('💰 Registre sua receita do mês para liberar o score financeiro da IA.');
+  }
+  tips.push(`⭐ Hábitos hoje: <b>${doneH}/${state.habits.length}</b>. ${doneH===state.habits.length&&state.habits.length>0?'Dia 100% concluído! 🔥':'Complete todos para manter a streak.'}`);
+  tips.push(`🧠 Humor médio 7d: <b>${avgMood}/5</b>. ${Number(avgMood)>=4?'Humor positivo, mantenha o que funciona 😊':Number(avgMood)>0&&Number(avgMood)<=2.5?'Cuidado com sono e telas 💙':'Registre humor para mais insights.'}`);
+  document.getElementById('aiInsights').innerHTML = tips.map(t=>`<div style="padding:10px 12px;background:var(--bg-2);border-radius:12px;font-size:12px;display:flex;gap:8px"><span>${t}</span></div>`).join('');
+}
+
+window.doTask=(xp,name)=>{ const ok = parent.awardDailyXp ? parent.awardDailyXp('check_geral', xp) : parent.addXP(xp); if(ok){ parent.toast&&parent.toast(`${name} +${xp} XP`); } else { parent.toast&&parent.toast('Check de hoje já feito ⏳ (1x por dia)'); } updateUI(); };
 
 const ci=setInterval(()=>{ if(parent&&parent.appState&&parent.appState.isLoaded){ updateUI(); clearInterval(ci);} },100);
 setTimeout(updateUI,800);

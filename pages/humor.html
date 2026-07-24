@@ -31,6 +31,10 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="noteModal" onclick="if(event.target===this) closeNoteModal()">
+  <div class="modal"><div class="modal-header"><b>Nota do dia 📝</b><span style="cursor:pointer;font-size:20px" onclick="closeNoteModal()">✕</span></div><div class="modal-body"><pre id="noteModalText" style="white-space:pre-wrap;font-family:inherit;font-size:13px;line-height:1.6;margin:0"></pre></div></div>
+</div>
+
 <script>
 function getState(){ return parent.appState||{moods:[]}; }
 let viewDate = new Date();
@@ -77,7 +81,8 @@ function renderCalendar(){
     let cls='cal-day';
     if(mood) cls+=` has-mood-${mood.value}`;
     if(key===new Date().toISOString().slice(0,10)) cls+=' today';
-    cells.push(`<div class="${cls}" title="${key}${mood?' - '+mood.value:''}${mood&&mood.note?' - '+mood.note:''}">${d}</div>`);
+    const clickAttr = mood? ` onclick="showDayNote('${key}')" style="cursor:pointer"` : '';
+    cells.push(`<div class="${cls}"${clickAttr} title="${key}${mood?' - '+mood.value:''}${mood&&mood.note?' - '+mood.note:''}">${d}</div>`);
   }
   document.getElementById('moodCalendar').innerHTML=cells.join('');
   document.getElementById('calLegend').innerHTML = `<span class="badge" style="background:#FEE2E2;color:#991B1B">1 Muito Ruim</span><span class="badge" style="background:#FEF3C7;color:#92400E">2 Ruim</span><span class="badge" style="background:#DBEAFE;color:#1E40AF">3 Normal</span><span class="badge" style="background:#D1FAE5;color:#065F46">4 Bom</span><span class="badge" style="background:#10B981;color:white">5 Excelente</span>`;
@@ -159,6 +164,21 @@ function renderAll(){
 }
 
 function updateUI(){ renderAll(); }
+
+function showDayNote(key){
+  const m = getState().moods.find(x=> x.date===key);
+  if(!m) return;
+  const faces=['Muito Ruim','Ruim','Normal','Bom','Excelente'];
+  const dataStr = new Date(key+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+  const txt = `${dataStr}\nHumor: ${m.value}/5 (${faces[m.value-1]})\n\nNota do dia:\n${m.note? m.note : '(sem nota registrada)'}`;
+  const box = document.getElementById('noteModalText');
+  if(box) box.textContent = txt;
+  const modal = document.getElementById('noteModal');
+  if(modal) modal.classList.add('open');
+  parent.toast && parent.toast('📝 Nota de '+dataStr);
+}
+function closeNoteModal(){ const m=document.getElementById('noteModal'); if(m) m.classList.remove('open'); }
+window.showDayNote=showDayNote; window.closeNoteModal=closeNoteModal;
 const ci=setInterval(()=>{ if(parent&&parent.appState&&parent.appState.isLoaded){ updateUI(); clearInterval(ci);} },100);
 setTimeout(updateUI,1000);
 window.updateUI=updateUI;

@@ -33,7 +33,7 @@
 </div>
 
 <div class="grid-3" style="margin-top:16px">
-  <div class="card"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:24px">📺</span><b>Assista e Ganhe</b></div><p class="muted text-xs" style="margin:10px 0">50 moedas + 10 XP por vídeo. Simulação AdMob.</p><button class="btn-primary w-full" onclick="watchVideo()">Assistir 📺 +50 🪙</button><div style="margin-top:8px" class="text-xs muted">Cooldown 10s para evitar spam</div></div>
+  <div class="card"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:24px">📺</span><b>Assista e Ganhe</b></div><p class="muted text-xs" style="margin:10px 0">Recompensa diária: 50 🪙 + 10 XP (1x por dia). Simulação AdMob.</p><button class="btn-primary w-full" onclick="watchVideo()">Assistir 📺 +50 🪙/dia</button><div style="margin-top:8px" class="text-xs muted">Disponível 1x por dia</div></div>
   <div class="card"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:24px">⚡</span><b>Evolução Rápida</b></div><p class="muted text-xs" style="margin:10px 0">3 ações rápidas para +80 XP instantâneo.</p><div style="display:grid;gap:6px"><button class="btn-ghost btn-sm" onclick="quickAction('finance')">+ Registrar gasto</button><button class="btn-ghost btn-sm" onclick="quickAction('habit')">+ Check hábito</button><button class="btn-ghost btn-sm" onclick="quickAction('mood')">+ Humor do dia</button></div></div>
   <div class="card"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:24px">💎</span><b>Premium</b></div><p class="muted text-xs" style="margin:10px 0">5 temas, IA completa, sem anúncios.</p><div id="premiumCard"></div></div>
 </div>
@@ -50,6 +50,10 @@ function getAITips(state){
   if((state.moods||[]).length===0) tips.push({icon:'🧠', t:'Registre seu humor', d:'Acompanhar o humor ajuda a IA a entender seu padrão emocional.'});
   if((state.goals||[]).length===0) tips.push({icon:'🎯', t:'Defina uma meta', d:'Metas dão direção. Crie uma meta financeira ou de hábito.'});
   if((state.user.xp||0)<200) tips.push({icon:'📺', t:'Ganhe moedas assistindo', d:'No card abaixo, assista vídeos para ganhar 50 🪙 e 10 XP rapidamente.'});
+  if(tips.length===0){
+    const lvl = (parent.getLevelData? parent.getLevelData(state.user.xp||0) : {current:{name:'Nv 1', level:1}}).current;
+    tips.push({icon:'🤖', t:`Análise inicial: você está no nível ${lvl.level} (${lvl.name}).`, d:'Continue registrando finanças, hábitos e humor todos os dias para liberar insights personalizados da IA e evoluir mais rápido.'});
+  }
   return tips.slice(0,3);
 }
 
@@ -138,9 +142,13 @@ function watchVideo(){
       parent.appState.user.coinsMultiplierUntil = 0;
     }
     const coinGain = 50 * mult;
-    parent.addXP(10);
-    parent.appState.user.coins = (parent.appState.user.coins||0)+coinGain;
-    parent.toast&&parent.toast(`+${coinGain} 🪙 e +10 XP! ${mult>1?'💰 2x ativo!':'🎉'}`);
+    const firstTime = parent.awardDailyXp ? parent.awardDailyXp('watch', 10) : (parent.addXP(10), true);
+    if(firstTime){
+      parent.appState.user.coins = (parent.appState.user.coins||0)+coinGain;
+      parent.toast&&parent.toast(`+${coinGain} 🪙 e +10 XP! ${mult>1?'💰 2x ativo!':'🎉'}`);
+    } else {
+      parent.toast&&parent.toast('Recompensa de hoje já resgatada ⏳ (volte amanhã)');
+    }
     parent.saveLocalState&&parent.saveLocalState();
     updateUI();
     setTimeout(()=> videoCooldown=false, 10000);
