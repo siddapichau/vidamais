@@ -1,5 +1,5 @@
 import { db, auth, initAuthListener, ADMIN_EMAIL, ref, get, set, update, onValue, arrayToObj, objToArray } from './firebase.js';
-import { appState, saveLocalState, loadLocalState, getLevelData, themes, levelTable, currencyFormat, uid, seedDemoData, generateDefaultLevels, financeCategories } from './core.js';
+import { appState, saveLocalState, loadLocalState, getLevelData, themes, levelTable, currencyFormat, uid, seedDemoData, generateDefaultLevels, financeCategories, APP_VERSION, avatarEmojis, medalCategories, evaluateMedals, getAdSettings, trackDailyLogin, renderAvatarHTML, getAvatarChar, applyLevelRewards, resetAppState } from './core.js';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 // Expose globally for iframes
@@ -12,13 +12,23 @@ window.financeCategories = financeCategories;
 window.saveLocalState = saveLocalState;
 window.loadLocalState = loadLocalState;
 window.uid = uid;
+window.APP_VERSION = APP_VERSION;
+window.avatarEmojis = avatarEmojis;
+window.medalCategories = medalCategories;
+window.evaluateMedals = evaluateMedals;
+window.getAdSettings = getAdSettings;
+window.renderAvatarHTML = renderAvatarHTML;
+window.getAvatarChar = getAvatarChar;
+window.fillAvatar = fillAvatar;
 
 const googleProvider = new GoogleAuthProvider();
 let saveDebounce = null;
 let currentMenuData = null;
+let isSyncing = false; // trava o debounce durante o sync (evita race de persistência)
 
 // ===== Persistence to Firebase =====
 function debounceSaveToFirebase(){
+  if(isSyncing) return;        // não sobrescreve o Firebase enquanto sincroniza
   if(!auth.currentUser) return;
   clearTimeout(saveDebounce);
   saveDebounce = setTimeout(async ()=>{
@@ -39,9 +49,45 @@ function debounceSaveToFirebase(){
   }, 900);
 }
 
+// Força o flush imediato do estado para o Firebase (usado no unload)
+function flushFirebaseSave(){
+  if(!auth.currentUser) return;
+  const uidUser = auth.currentUser.uid;
+  try{
+    update(ref(db, `vidaplus/users/${uidUser}`), {
+      user: appState.user,
+      profile: appState.profile,
+      settings: appState.settings,
+      transactions: arrayToObj(appState.transactions),
+      habits: arrayToObj(appState.habits),
+      moods: arrayToObj(appState.moods),
+      goals: arrayToObj(appState.goals),
+      app: { uid: uidUser, updatedAt: new Date().toISOString() }
+    });
+  }catch(e){ console.warn('Firebase flush fail', e); }
+}
+
 window.addEventListener('vidaplus:save', debounceSaveToFirebase);
+window.addEventListener('pagehide', ()=>{ isSyncing = false; flushFirebaseSave(); });
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden'){ isSyncing=false; flushFirebaseSave(); } });
+
+// Mescla array local com remoto por id (preserva adições locais feitas antes do sync)
+function mergeById(localArr, remoteArr){
+  const map = new Map();
+  (localArr||[]).forEach(item=>{ if(item && item.id) map.set(item.id, item); });
+  (remoteArr||[]).forEach(item=>{
+    if(!item || !item.id) return;
+    const local = map.get(item.id);
+    if(!local){ map.set(item.id, item); return; }
+    const lt = new Date(local.updatedAt || local.createdAt || local.date || 0).getTime() || 0;
+    const rt = new Date(item.updatedAt || item.createdAt || item.date || 0).getTime() || 0;
+    if(rt >= lt) map.set(item.id, item);
+  });
+  return Array.from(map.values());
+}
 
 async function syncWithFirebase(user){
+  isSyncing = true; // trava o debounce para não sobrescrever o Firebase com dados antigos
   try{
     const snap = await get(ref(db, `vidaplus/users/${user.uid}`));
     if(snap.exists()){
@@ -49,24 +95,26 @@ async function syncWithFirebase(user){
       if(data.user) appState.user = {...appState.user, ...data.user};
       if(data.profile) appState.profile = {...appState.profile, ...data.profile};
       if(data.settings) appState.settings = {...appState.settings, ...data.settings};
-      if(data.transactions) appState.transactions = objToArray(data.transactions);
-      if(data.habits) appState.habits = objToArray(data.habits);
-      if(data.moods) appState.moods = objToArray(data.moods);
-      if(data.goals) appState.goals = objToArray(data.goals);
-      appState.isLoaded = true;
-      document.documentElement.setAttribute('data-theme', appState.settings.theme||'default-light');
-      saveLocalState();
-    } else {
-      appState.profile.email = user.email;
-      appState.profile.photo = user.photoURL || '';
-      appState.profile.name = user.displayName || '';
-      appState.isLoaded = true;
-      seedDemoData();
+      // mescla por id (preserva adições locais feitas antes do sync)
+      if(data.transactions) appState.transactions = mergeById(appState.transactions, objToArray(data.transactions));
+      if(data.habits) appState.habits = mergeById(appState.habits, objToArray(data.habits));
+      if(data.moods) appState.moods = mergeById(appState.moods, objToArray(data.moods));
+      if(data.goals) appState.goals = mergeById(appState.goals, objToArray(data.goals));
     }
+    // garante identidade do usuário logado (corrige "tela de entrar")
+    appState.profile.email = user.email;
+    appState.profile.photo = user.photoURL || appState.profile.photo || '';
+    if(!appState.profile.name && user.displayName) appState.profile.name = user.displayName;
+    trackDailyLogin(appState);
+    appState.isLoaded = true;
+    document.documentElement.setAttribute('data-theme', appState.settings.theme||'default-light');
+    saveLocalState();
   }catch(e){
     console.error('sync error', e);
+    appState.profile.email = user.email;
     appState.isLoaded = true;
   }
+  isSyncing = false;
   if(window.onAppStateUpdate) window.onAppStateUpdate();
   // try load levels from admin
   try{
@@ -100,15 +148,23 @@ try{
 
 // ===== Core gamification =====
 window.addXP = async (amount)=>{
+  amount = Number(amount)||0;
+  // multiplicador de XP por prêmio de nível
+  if(appState.user.xpBoostUntil && appState.user.xpBoostUntil > Date.now() && appState.user.xpBoost>1){
+    amount = Math.round(amount * appState.user.xpBoost);
+  }
   const oldLvl = getLevelData(appState.user.xp||0).current.level;
   appState.user.xp = (appState.user.xp||0) + amount;
   const lvl = getLevelData(appState.user.xp);
   appState.user.level = lvl.current.level;
-  // Level-up bonus: +50 coins por nível subido + toast
+  // Level-up bonus: +50 coins por nível + prêmios reais aplicados
   if(lvl.current.level > oldLvl){
     const diff = lvl.current.level - oldLvl;
     appState.user.coins = (appState.user.coins||0) + 50*diff;
-    window.toast && window.toast(`🎉 Nível ${lvl.current.level}! +${50*diff} 🪙 • ${lvl.current.name}`);
+    const gained = applyLevelRewards(oldLvl, lvl.current.level, appState.user);
+    let msg = `🎉 Nível ${lvl.current.level} (${lvl.current.name})! +${50*diff} 🪙`;
+    if(gained.length) msg += ` • 🎁 ${gained.join(', ')}`;
+    window.toast && window.toast(msg);
   }
   // Atualiza streak global com base em hábitos feitos hoje
   recalcGlobalStreak();
@@ -150,6 +206,7 @@ window.appToggleTheme = ()=>{
   let [base, mode] = current.split('-');
   if(!mode){ mode='light'; base=current; }
   let nextMode = mode==='light' ? 'dark' : 'light';
+  if(base==='oled') nextMode='dark'; // OLED Midnight é sempre dark
   let nextTheme = `${base}-${nextMode}`;
   appState.settings.theme = nextTheme;
   document.documentElement.setAttribute('data-theme', nextTheme);
@@ -163,7 +220,10 @@ window.appToggleTheme = ()=>{
 
 window.appSelectTheme = async (baseId)=>{
   const themeDef = themes[baseId];
-  if(themeDef && themeDef.premium && !appState.user.premium){
+  if(!themeDef) return;
+  // tema desbloqueado por nível ou "todos os temas grátis" → sem custo
+  const unlocked = (appState.user.unlockedThemes||[]).includes(baseId) || appState.user.allThemesFree;
+  if(themeDef.premium && !appState.user.premium && !unlocked){
     const coins = appState.user.coins||0;
     if(coins>=500){
       if(confirm(`Desbloquear tema ${themeDef.label} por 500 moedas?`)){
@@ -176,7 +236,7 @@ window.appSelectTheme = async (baseId)=>{
       return;
     }
   }
-  let mode = (appState.settings.theme||'default-light').split('-')[1] || 'light';
+  let mode = themeDef.forceMode || (appState.settings.theme||'default-light').split('-')[1] || 'light';
   const nextTheme = `${baseId}-${mode}`;
   appState.settings.theme = nextTheme;
   document.documentElement.setAttribute('data-theme', nextTheme);
@@ -312,7 +372,50 @@ window.signupEmail = async (email, pass, name)=>{
   return cred;
 };
 window.loginGoogle = ()=> signInWithPopup(auth, googleProvider);
-window.logout = ()=> signOut(auth).then(()=>{ localStorage.clear(); location.reload(); });
+// Logout robusto: reseta o estado em memória e limpa o storage antes do reload
+window.logout = ()=>{
+  try{
+    resetAppState();
+  }catch(e){ console.warn('resetAppState fail', e); }
+  try{ localStorage.clear(); }catch(e){}
+  signOut(auth).then(()=> location.reload()).catch(()=> location.reload());
+};
+
+// ===== Loja: compra atômica (anti dedução em dobro) =====
+let purchasing = false;
+window.purchaseStoreItem = async (id, price)=>{
+  if(purchasing) return; // protege contra duplo-clique
+  if((appState.user.coins||0) < price){ window.toast && window.toast('Moedas insuficientes 🪙'); return; }
+  purchasing = true;
+  try{
+    appState.user.coins = (appState.user.coins||0) - price; // desconta UMA única vez
+    if(id==='theme_lux'){
+      appState.user.premium = true;
+      saveLocalState();
+      await window.appSelectTheme('luxury');
+      window.toast && window.toast('💎 Premium desbloqueado!');
+    } else if(id==='xp_boost'){
+      saveLocalState();
+      await window.addXP(100);
+      window.toast && window.toast('⚡ +100 XP aplicado!');
+    } else if(id==='coins_2x'){
+      appState.user.coinsMultiplier = 2;
+      appState.user.coinsMultiplierUntil = Date.now() + 24*60*60*1000;
+      saveLocalState();
+      window.toast && window.toast('💰 Dobro de moedas ativo por 24h!');
+    } else if(id==='habit_slot'){
+      appState.user.extraHabitSlots = (appState.user.extraHabitSlots||0)+3;
+      saveLocalState();
+      window.toast && window.toast('⭐ +3 slots de hábito liberados!');
+    } else {
+      saveLocalState();
+      window.toast && window.toast('Compra realizada! 🎉');
+    }
+    if(window.onAppStateUpdate) window.onAppStateUpdate();
+  } finally {
+    purchasing = false;
+  }
+};
 
 // ===== Init =====
 loadLocalState();

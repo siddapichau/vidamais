@@ -40,7 +40,7 @@
         <div class="brand" onclick="navigate('home.html')">
             <img src="assets/logo.png" alt="Logo" onerror="this.src='logo.png'">
             <span class="brand-text">Vida+ AI</span>
-            <span style="font-size:10px;background:linear-gradient(135deg,var(--primary),#3B82F6);color:white;padding:2px 8px;border-radius:100px;font-weight:800;margin-left:6px;box-shadow:0 2px 6px rgba(0,0,0,0.1)">v2.3.3</span>
+            <span style="font-size:10px;background:linear-gradient(135deg,var(--primary),#3B82F6);color:white;padding:2px 8px;border-radius:100px;font-weight:800;margin-left:6px;box-shadow:0 2px 6px rgba(0,0,0,0.1)">v2.3.4</span>
         </div>
 
         <nav class="menu-pc" id="pcNav">
@@ -64,7 +64,7 @@
 
     <iframe id="mainIframe" name="mainIframe" src="pages/home.html" title="Vida+ App" loading="eager"></iframe>
 
-    <div id="ad-bottom"><span class="sync-dot"></span><span id="syncText">● Sincronizado • Vida+ AI Evolution OS v2.3.3</span><span style="margin-left:auto" class="pc-only"><span id="xpMini">0 XP • Nv 1</span> • <span class="link" onclick="navigate('conquistas.html')">Ver níveis</span></span></div>
+    <div id="ad-bottom"><span class="sync-dot"></span><span id="syncText">● Sincronizado • Vida+ AI Evolution OS v2.3.4</span><span style="margin-left:auto" class="pc-only"><span id="xpMini">0 XP • Nv 1</span> • <span class="link" onclick="navigate('conquistas.html')">Ver níveis</span></span></div>
 </div>
 
 <!-- Mobile Drawer -->
@@ -140,21 +140,13 @@
         const xpMini = document.getElementById('xpMini');
 
         if(state && state.profile && state.profile.email){
-            if(state.profile.photo){
-                av.innerHTML = `<img src="${state.profile.photo}" onerror="this.style.display='none'">`;
-                if(drawerAv) drawerAv.innerHTML = `<img src="${state.profile.photo}">`;
-            }else{
-                const ch = (state.profile.firstName || state.profile.name || state.profile.email || "?").charAt(0).toUpperCase();
-                av.textContent = ch; av.style.background='var(--primary)'; av.style.color='white';
-                if(drawerAv){ drawerAv.textContent=ch; drawerAv.style.background='var(--primary)'; }
-            }
+            if(window.fillAvatar){ window.fillAvatar(av, state.profile); if(drawerAv) window.fillAvatar(drawerAv, state.profile); }
             if(nameEl) nameEl.textContent = state.profile.firstName || state.profile.name || state.profile.email.split('@')[0];
             const lvl = window.getLevelData ? window.getLevelData(state.user.xp||0) : {current:{level:1}};
             if(lvlEl) lvlEl.textContent = `Nv ${lvl.current.level} • ${state.user.xp||0} XP • 🪙 ${state.user.coins||0}`;
             if(xpMini) xpMini.textContent = `${state.user.xp||0} XP • Nv ${lvl.current.level} • 🪙 ${state.user.coins||0}`;
         }else{
-            av.textContent='?'; av.style.background='var(--card)'; av.style.color='var(--text)';
-            if(drawerAv){ drawerAv.textContent='?'; drawerAv.style.background='var(--card)'; drawerAv.style.color='var(--text)'; }
+            if(window.fillAvatar){ window.fillAvatar(av, { avatar:'' }); if(drawerAv) window.fillAvatar(drawerAv, { avatar:'' }); }
             if(nameEl) nameEl.textContent='Visitante';
             if(lvlEl) lvlEl.textContent='Faça login para sincronizar';
             if(xpMini) xpMini.textContent='Visitante • Faça login';
@@ -164,7 +156,7 @@
         if(frame.contentWindow && frame.contentWindow.updateUI){
             try{ frame.contentWindow.updateUI(); }catch{}
         }
-        document.getElementById('syncText').textContent = state.isLoaded ? '● Sincronizado • Vida+ AI Evolution OS v2.3.3' : '○ Carregando...';
+        document.getElementById('syncText').textContent = state.isLoaded ? '● Sincronizado • Vida+ AI Evolution OS v2.3.4' : '○ Carregando...';
     };
 
     // Admin menu live - se existir, substitui

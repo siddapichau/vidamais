@@ -42,38 +42,14 @@ function renderShop(){
 }
 
 function buyItem(id, price){
-  const state=getState();
-  if((state.user.coins||0) < price){ parent.toast&&parent.toast('Moedas insuficientes 🪙'); return; }
-  // Deduz moedas uma única vez
-  parent.appState.user.coins = (parent.appState.user.coins||0) - price;
-  if(id==='theme_lux'){
-    // Compra + desbloqueio de premium + aplica tema
-    parent.appState.user.premium = true;
-    parent.saveLocalState&&parent.saveLocalState();
-    parent.appSelectTheme('luxury');
-    parent.toast&&parent.toast('💎 Premium desbloqueado!');
+  // compra atômica no app.js (anti dedução em dobro + 1 save único)
+  const done = ()=> renderAll();
+  if(parent.purchaseStoreItem){
+    Promise.resolve(parent.purchaseStoreItem(id, price)).then(done).catch(done);
+  } else {
+    parent.toast&&parent.toast('Loja indisponível');
+    done();
   }
-  else if(id==='xp_boost'){
-    parent.saveLocalState&&parent.saveLocalState();
-    parent.addXP(100);
-    parent.toast&&parent.toast('⚡ +100 XP aplicado!');
-  }
-  else if(id==='coins_2x'){
-    parent.appState.user.coinsMultiplier = 2;
-    parent.appState.user.coinsMultiplierUntil = Date.now() + 24*60*60*1000;
-    parent.saveLocalState&&parent.saveLocalState();
-    parent.toast&&parent.toast('💰 Dobro de moedas ativo por 24h!');
-  }
-  else if(id==='habit_slot'){
-    parent.appState.user.extraHabitSlots = (parent.appState.user.extraHabitSlots||0)+3;
-    parent.saveLocalState&&parent.saveLocalState();
-    parent.toast&&parent.toast('⭐ +3 slots de hábito liberados!');
-  }
-  else {
-    parent.saveLocalState&&parent.saveLocalState();
-    parent.toast&&parent.toast('Compra realizada! 🎉');
-  }
-  renderAll();
 }
 
 function renderAll(){
