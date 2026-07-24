@@ -1,6 +1,14 @@
-import { db, auth, initAuthListener, ADMIN_EMAIL, ref, get, set, update, onValue, arrayToObj, objToArray } from './firebase.js';
-import { appState, saveLocalState, loadLocalState, getLevelData, themes, levelTable, currencyFormat, uid, seedDemoData, generateDefaultLevels, financeCategories, APP_VERSION, avatarEmojis, medalCategories, evaluateMedals, getAdSettings, trackDailyLogin, renderAvatarHTML, getAvatarChar, applyLevelRewards, resetAppState } from './core.js';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { appState, saveLocalState, loadLocalState, getLevelData, themes, levelTable, currencyFormat, uid, seedDemoData, generateDefaultLevels, financeCategories, APP_VERSION, avatarEmojis, medalCategories, evaluateMedals, getAdSettings, trackDailyLogin, renderAvatarHTML, getAvatarChar, applyLevelRewards, resetAppState, fillAvatar } from './core.js';
+
+// Firebase é carregado DE FORMA DINÂMICA e TOLERANTE A FALHAS.
+// Antigamente o app.js importava o Firebase (e o CDN gstatic) de forma estática no
+// topo do módulo. Se o CDN estivesse bloqueado/offline, TODO o grafo de módulos
+// falhava ao linkar e `window.navigate`/funções do shell NUNCA eram definidas ->
+// tela congelada ("abre normal mas nada funciona"). Agora o Firebase é opcional:
+// se falhar, o app continua 100% funcional em MODO LOCAL.
+let db, auth, ref, get, set, update, onValue, arrayToObj, objToArray, initAuthListener, ADMIN_EMAIL;
+let signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, signOut;
+let GoogleAuthProvider, googleProvider;
 
 // Expose globally for iframes
 window.appState = appState;
@@ -21,15 +29,14 @@ window.renderAvatarHTML = renderAvatarHTML;
 window.getAvatarChar = getAvatarChar;
 window.fillAvatar = fillAvatar;
 
-const googleProvider = new GoogleAuthProvider();
 let saveDebounce = null;
 let currentMenuData = null;
 let isSyncing = false; // trava o debounce durante o sync (evita race de persistência)
 
-// ===== Persistence to Firebase =====
+// ===== Persistence to Firebase (modo local seguro se o Firebase estiver indisponível) =====
 function debounceSaveToFirebase(){
   if(isSyncing) return;        // não sobrescreve o Firebase enquanto sincroniza
-  if(!auth.currentUser) return;
+  if(!db || !auth || !auth.currentUser) return;   // modo local: nada a sincronizar
   clearTimeout(saveDebounce);
   saveDebounce = setTimeout(async ()=>{
     const uidUser = auth.currentUser.uid;
@@ -51,7 +58,7 @@ function debounceSaveToFirebase(){
 
 // Força o flush imediato do estado para o Firebase (usado no unload)
 function flushFirebaseSave(){
-  if(!auth.currentUser) return;
+  if(!db || !auth || !auth.currentUser) return;
   const uidUser = auth.currentUser.uid;
   try{
     update(ref(db, `vidaplus/users/${uidUser}`), {
@@ -131,20 +138,9 @@ async function syncWithFirebase(user){
   }catch{}
 }
 
-// Listen levels live
-try{
-  onValue(ref(db, 'admin/levels'), (snap)=>{
-    if(snap.exists()){
-      const lv = snap.val();
-      const arr = Array.isArray(lv) ? lv : Object.values(lv);
-      if(arr && arr.length>=20){
-        levelTable.length = 0;
-        arr.forEach(it=> levelTable.push(it));
-        if(window.onAppStateUpdate) window.onAppStateUpdate();
-      }
-    }
-  });
-}catch{}
+// (O listener de níveis admin agora é registrado dentro de initFirebase,
+//  só depois que o Firebase carrega com sucesso — evita ReferenceError se o
+//  CDN estiver indisponível.)
 
 // ===== Core gamification =====
 window.addXP = async (amount)=>{
@@ -364,21 +360,29 @@ window.getLifeScore = ()=>{
   return { score, financeScore, habitScore, moodAvg, goalScore };
 };
 
-// ===== Auth =====
-window.loginEmail = (email, pass)=> signInWithEmailAndPassword(auth, email, pass);
+// ===== Auth (todos protegidos caso o Firebase não tenha carregado) =====
+window.loginEmail = (email, pass)=>{
+  if(!signInWithEmailAndPassword || !auth) return Promise.reject(new Error('Firebase indisponível'));
+  return signInWithEmailAndPassword(auth, email, pass);
+};
 window.signupEmail = async (email, pass, name)=>{
+  if(!createUserWithEmailAndPassword || !auth || !db) throw new Error('Firebase indisponível');
   const cred = await createUserWithEmailAndPassword(auth, email, pass);
-  await update(ref(db, `vidaplus/users/${cred.user.uid}/profile`), { name, email, createdAt: new Date().toISOString() });
+  if(db && ref && update){
+    try{ await update(ref(db, `vidaplus/users/${cred.user.uid}/profile`), { name, email, createdAt: new Date().toISOString() }); }catch(e){}
+  }
   return cred;
 };
-window.loginGoogle = ()=> signInWithPopup(auth, googleProvider);
+window.loginGoogle = ()=>{
+  if(!signInWithPopup || !auth) return Promise.reject(new Error('Firebase indisponível'));
+  return signInWithPopup(auth, googleProvider);
+};
 // Logout robusto: reseta o estado em memória e limpa o storage antes do reload
 window.logout = ()=>{
-  try{
-    resetAppState();
-  }catch(e){ console.warn('resetAppState fail', e); }
+  try{ resetAppState(); }catch(e){ console.warn('resetAppState fail', e); }
   try{ localStorage.clear(); }catch(e){}
-  signOut(auth).then(()=> location.reload()).catch(()=> location.reload());
+  if(signOut && auth){ signOut(auth).then(()=> location.reload()).catch(()=> location.reload()); }
+  else { location.reload(); }
 };
 
 // ===== Loja: compra atômica (anti dedução em dobro) =====
@@ -421,14 +425,72 @@ window.purchaseStoreItem = async (id, price)=>{
 loadLocalState();
 if(appState.transactions.length===0 && appState.habits.length===0) seedDemoData();
 
-initAuthListener(async (user)=>{
-  if(user){
-    await syncWithFirebase(user);
-  }else{
+// Carrega o Firebase de forma dinâmica e tolerante a falhas.
+// Se o CDN (gstatic) estiver bloqueado/offline, o app continua 100% funcional
+// em MODO LOCAL — a tela NUNCA mais congela por causa do Firebase.
+async function initFirebase(){
+  try{
+    const fb = await import('./firebase.js');
+    ({ db, auth, ref, get, set, update, onValue, arrayToObj, objToArray, initAuthListener, ADMIN_EMAIL } = fb);
+    const fa = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
+    ({ signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut } = fa);
+    googleProvider = new GoogleAuthProvider();
+
+    // Níveis admin (live) — só depois do Firebase disponível
+    try{
+      onValue(ref(db, 'admin/levels'), (snap)=>{
+        if(snap.exists()){
+          const lv = snap.val();
+          const arr = Array.isArray(lv) ? lv : Object.values(lv);
+          if(arr && arr.length>=20){
+            levelTable.length = 0;
+            arr.forEach(it=> levelTable.push(it));
+            if(window.onAppStateUpdate) window.onAppStateUpdate();
+          }
+        }
+      });
+    }catch(e){ console.warn('admin/levels listener fail', e); }
+
+    // Menu admin (live) — só depois do Firebase disponível
+    try{
+      onValue(ref(db, 'admin/menu'), (snapshot)=>{
+        const menuData = snapshot.val();
+        if(!menuData || (Array.isArray(menuData) && menuData.length===0)) return;
+        const menu = Array.isArray(menuData) ? menuData : Object.values(menuData);
+        const sorted = menu.filter(Boolean).sort((a,b)=> (a.order||0)-(b.order||0));
+        if(sorted.length===0) return;
+        const pcNav = document.getElementById('pcNav');
+        const mobNav = document.getElementById('mobileNav');
+        if(!pcNav || !mobNav) return;
+        pcNav.innerHTML=''; mobNav.innerHTML='';
+        sorted.forEach(item=>{
+          if(!item || !item.page) return;
+          const link=`<span style="font-size:16px">${item.icon||'•'}</span> <span>${item.label||item.page}</span>`;
+          const aPC=document.createElement('a'); aPC.className='nav-item'; aPC.href='javascript:void(0)'; aPC.onclick=()=>{ if(window.navigate) window.navigate(item.page); }; aPC.innerHTML=link; pcNav.appendChild(aPC);
+          const aMob=document.createElement('a'); aMob.className='nav-item'; aMob.href='javascript:void(0)'; aMob.onclick=()=>{ if(window.navigate) window.navigate(item.page); }; aMob.innerHTML=link; mobNav.appendChild(aMob);
+        });
+        const p2=new URLSearchParams(window.location.search);
+        const cur=(p2.get('page')||'home.html').replace('pages/','');
+        document.querySelectorAll('.nav-item').forEach(a=>{ const oc=a.getAttribute('onclick')||''; a.classList.toggle('active', oc.indexOf(cur)>-1); });
+      });
+    }catch(e){ console.warn('admin/menu listener fail', e); }
+
+    initAuthListener(async (user)=>{
+      if(user){
+        await syncWithFirebase(user);
+      }else{
+        appState.isLoaded = true;
+        if(window.onAppStateUpdate) window.onAppStateUpdate();
+      }
+    });
+  }catch(e){
+    // MODO LOCAL: Firebase indisponível. App continua funcionando normalmente.
+    console.warn('⚠️ Firebase indisponível — app em modo local (sem sincronização na nuvem).', e && e.message ? e.message : e);
     appState.isLoaded = true;
     if(window.onAppStateUpdate) window.onAppStateUpdate();
   }
-});
+}
+initFirebase();
 
 // Toast
 window.toast = (msg)=>{
