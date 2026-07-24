@@ -1,137 +1,144 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Admin • Vida+ AI • Protegido</title>
-<link rel="icon" type="image/png" href="assets/favicon.png">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css">
-<style>
-.admin{max-width:1280px;margin:0 auto;padding:16px 12px 100px}
-.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
-.apanel{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:14px;box-shadow:var(--shadow-sm)}
-.apanel h3{font-size:16px;margin-bottom:2px;line-height:1.1}
-.apanel small{color:var(--muted);font-size:11px;line-height:1.3;display:block}
-.kv{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;gap:8px}
-.kv:last-child{border:none}
-.code{font-family:ui-monospace,Menlo,monospace;font-size:11px;background:var(--bg-2);padding:10px 12px;border-radius:10px;border:1px solid var(--border);overflow:auto;word-break:break-all;white-space:pre-wrap;line-height:1.4}
-.user-row{display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid var(--border);border-radius:14px;background:var(--card);gap:8px}
-.ai-chat{height:300px;overflow:auto;display:grid;gap:8px;padding:10px;background:var(--bg-2);border-radius:12px;border:1px solid var(--border)}
-.msg{padding:10px 12px;border-radius:12px;font-size:12px;line-height:1.4;max-width:90%;word-break:break-word}
-.msg.user{background:var(--text);color:white;justify-self:end;border-bottom-right-radius:4px}
-.msg.ai{background:var(--card);border:1px solid var(--border);justify-self:start;border-bottom-left-radius:4px}
-.topbar-admin{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:16px;padding:12px 14px;background:var(--card);border:1px solid var(--border);border-radius:16px;position:sticky;top:10px;z-index:10;backdrop-filter:blur(12px)}
-</style>
+    <meta charset="UTF-8">
+    <title>Painel Admin - Vida+ AI</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { padding: 20px; background: var(--bg); color: var(--text); }
+        .section { margin-bottom: 40px; }
+        .level-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+        .menu-item { background: var(--card); padding: 15px; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+    </style>
 </head>
 <body>
-<div class="admin">
-  <div id="authGuard"></div>
-  <div class="topbar-admin">
-    <div style="display:flex;align-items:center;gap:10px;min-width:0">
-      <div style="min-width:0"><h1 style="font-size:18px;line-height:.95;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Admin Dashboard</h1><p id="adminEmailStatus" style="font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></p></div>
+
+    <div class="topbar">
+        <h1>Painel Administrativo</h1>
+        <button class="btn-primary" onclick="saveAll()">Salvar Todas as Alterações</button>
     </div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0"><button class="btn btn-ghost btn-sm" onclick="location.href='index.html'">Voltar ao App</button><button class="btn btn-primary btn-sm" onclick="handleLogoutAdmin()">Sair</button></div>
-  </div>
 
-  <div id="adminBlocked" style="display:none; border-color:#F43F5E; background:#FEF2F2; text-align:center; padding:24px" class="card">
-    <div style="font-size:40px">🔒</div><h2 style="color:#991B1B;margin-top:10px;font-size:18px">Acesso negado</h2><p style="color:#991B1B;font-size:12px;margin-top:8px;line-height:1.4">Painel exclusivo para administradores.</p><button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="location.href='index.html'">Voltar</button>
-  </div>
-
-  <div id="adminContent" style="display:none">
-    <div class="tiles">
-      <div class="apanel">
-        <h3>Sistema de Usuários</h3><small>Listagem geral do banco de dados</small>
-        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap"><button class="btn btn-ghost btn-sm" onclick="loadUsers()">↻ Carregar Usuários</button></div>
-        <div id="usersList" style="margin-top:10px;max-height:460px;overflow:auto;display:grid;gap:8px"></div>
-        <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><span id="userCount" style="font-size:10px;color:var(--muted);align-self:center">0 usuários</span></div>
-      </div>
-      <div class="apanel">
-        <h3>Assistente IA Admin</h3><small>Controle e relatórios</small>
-        <div id="aiChat" class="ai-chat" style="margin-top:10px"></div>
-        <div style="display:flex;gap:6px;margin-top:8px"><input id="aiInput" class="input" placeholder="Pergunte..." style="height:38px" onkeydown="if(event.key==='Enter') sendAI()"><button class="btn btn-primary btn-sm" onclick="sendAI()">Enviar</button></div>
-      </div>
+    <!-- Gestão de Menu -->
+    <div class="section">
+        <h2>Ordem e Itens do Menu</h2>
+        <div id="menuList"></div>
+        <button class="btn-ghost" onclick="addMenuItem()">+ Adicionar Menu</button>
     </div>
-  </div>
-</div>
 
-<div class="toast-stack" id="toasts"></div>
+    <!-- Gestão de Níveis -->
+    <div class="section">
+        <h2>Configuração de Níveis (1 a 50)</h2>
+        <div id="levelsList" style="max-height: 400px; overflow-y: auto; border: 1px solid var(--border); padding: 10px; border-radius: 10px;">
+            <!-- Gerado via JS -->
+        </div>
+    </div>
 
-<script type="module">
-import { auth, db, FIREBASE_DB_URL, firebaseConfig, ADMIN_EMAIL } from './js/firebase.js';
-import { VidaFirebase } from './js/firebase.js';
-import { onAuthStateChanged, signOut as fbSignOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    <!-- AdMob -->
+    <div class="section">
+        <h2>Monetização (AdMob IDs)</h2>
+        <div class="admin-card">
+            <label>App Open ID</label>
+            <input type="text" id="ad_appopen" class="admin-input" placeholder="ca-app-pub-...">
+            <label>Banner Rodapé ID</label>
+            <input type="text" id="ad_banner" class="admin-input" placeholder="ca-app-pub-...">
+            <label>Rewarded Ad (Ganhar Moedas) ID</label>
+            <input type="text" id="ad_rewarded" class="admin-input" placeholder="ca-app-pub-...">
+        </div>
+    </div>
 
-window.toast=(msg,ico='✦')=>{ const s=document.getElementById('toasts'); const el=document.createElement('div'); el.className='toast'; el.innerHTML=`<div class="t-ico">${ico}</div><div>${msg}</div>`; s.appendChild(el); setTimeout(()=>el.remove(),3500); };
+    <script type="module">
+        import { db } from './firebase.js';
+        import { ref, get, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-let allUsersCache = [];
+        let currentMenu = [];
+        let currentLevels = [];
 
-onAuthStateChanged(auth, async (user)=>{
-  const blocked=document.getElementById('adminBlocked');
-  const content=document.getElementById('adminContent');
-  const status=document.getElementById('adminEmailStatus');
-  if(!user || user.email.toLowerCase()!==ADMIN_EMAIL.toLowerCase()){
-    blocked.style.display='block';
-    content.style.display='none';
-    if(status) status.textContent='Acesso não autorizado.';
-    return;
-  }
-  blocked.style.display='none';
-  content.style.display='block';
-  if(status) status.textContent=`✓ Logado como admin: ${user.email}`;
-  initAiChat();
-});
+        async function loadData() {
+            // Load Menu
+            const mSnap = await get(ref(db, 'admin/menu'));
+            currentMenu = mSnap.exists() ? mSnap.val() : [
+                { label: 'Home', page: 'home.html', icon: '🏠', order: 0 },
+                { label: 'Dashboard', page: 'dashboard.html', icon: '📊', order: 1 }
+            ];
+            renderMenu();
 
-window.loadUsers=async()=>{
-  const cont=document.getElementById('usersList');
-  if(cont) cont.innerHTML='<p style="font-size:11px;color:var(--muted)">Carregando...</p>';
-  try{
-    const list=await VidaFirebase.adminListUsers();
-    allUsersCache=list;
-    renderUsersFiltered(list);
-    const countEl=document.getElementById('userCount');
-    if(countEl) countEl.textContent=`${list.length} usuários`;
-  }catch(e){
-    console.error(e);
-    toast('Erro: '+e.message,'⚠️');
-  }
-};
+            // Load Levels
+            const lSnap = await get(ref(db, 'admin/levels'));
+            if (lSnap.exists()) {
+                currentLevels = lSnap.val();
+            } else {
+                for(let i=1; i<=50; i++) {
+                    currentLevels.push({ level: i, xp: i*1000, name: `Nível ${i}`, benefit: 'Bônus em breve' });
+                }
+            }
+            renderLevels();
 
-function renderUsersFiltered(list){
-  const cont=document.getElementById('usersList'); if(!cont) return;
-  cont.innerHTML='';
-  list.forEach(u=>{
-    const div=document.createElement('div'); div.className='user-row';
-    div.innerHTML=`<div style="flex:1;min-width:0"><b style="font-size:12px">${u.name||'Sem nome'}</b><br><small style="color:var(--muted);font-size:10px;word-break:break-all">${u.email||''} • ${u.xp||0} XP</small></div><div style="display:flex;flex-direction:column;gap:6px"><button class="btn btn-ghost btn-sm" style="font-size:11px" onclick="toggleRemotePremium('${u.uid}', ${!u.premium})">${u.premium?'Remover Premium':'Ativar Premium'}</button></div>`;
-    cont.appendChild(div);
-  });
-}
+            // Load AdMob
+            const aSnap = await get(ref(db, 'admin/admob'));
+            if (aSnap.exists()) {
+                const ad = aSnap.val();
+                document.getElementById('ad_appopen').value = ad.appOpenId || '';
+                document.getElementById('ad_banner').value = ad.bannerId || '';
+                document.getElementById('ad_rewarded').value = ad.rewardedId || '';
+            }
+        }
 
-window.toggleRemotePremium=async(uid,val)=>{
-  try{ const ok=await VidaFirebase.adminSetPremium(uid,val); toast(ok?(val?'Premium ON':'Premium OFF'):'Falha','★'); if(ok) loadUsers(); }catch(e){ toast('Erro: '+e.message,'⚠️'); }
-};
+        function renderMenu() {
+            const list = document.getElementById('menuList');
+            list.innerHTML = '';
+            currentMenu.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'menu-item';
+                div.innerHTML = `
+                    <div>
+                        <input type="text" value="${item.label}" onchange="updateMenu(${index}, 'label', this.value)" style="width:100px">
+                        <input type="text" value="${item.page}" onchange="updateMenu(${index}, 'page', this.value)" style="width:150px">
+                        <input type="text" value="${item.icon}" onchange="updateMenu(${index}, 'icon', this.value)" style="width:40px">
+                    </div>
+                    <button onclick="removeMenu(${index})">🗑️</button>
+                `;
+                list.appendChild(div);
+            });
+        }
 
-window.handleLogoutAdmin=async()=>{ await fbSignOut(auth); toast('Deslogado','👋'); setTimeout(()=>location.href='index.html',600); };
+        window.updateMenu = (index, key, val) => { currentMenu[index][key] = val; };
+        window.removeMenu = (index) => { currentMenu.splice(index, 1); renderMenu(); };
+        window.addMenuItem = () => { currentMenu.push({label:'Novo', page:'new.html', icon:'•', order:currentMenu.length}); renderMenu(); };
 
-function initAiChat(){
-  const chat=document.getElementById('aiChat'); if(!chat) return;
-  chat.innerHTML='';
-  addAiMsg('ai','Painel IA carregado com sucesso. Selecione os usuários no painel lateral ou gere relatórios gerenciais.');
-}
+        function renderLevels() {
+            const list = document.getElementById('levelsList');
+            list.innerHTML = '';
+            currentLevels.forEach((lvl, index) => {
+                const div = document.createElement('div');
+                div.className = 'level-row';
+                div.innerHTML = `
+                    <span>#${lvl.level}</span>
+                    <input type="text" value="${lvl.name}" placeholder="Nome" onchange="updateLevel(${index}, 'name', this.value)">
+                    <input type="number" value="${lvl.xp}" placeholder="XP" onchange="updateLevel(${index}, 'xp', parseInt(this.value))">
+                    <input type="text" value="${lvl.benefit || ''}" placeholder="Vantagem" onchange="updateLevel(${index}, 'benefit', this.value)" style="flex:1">
+                `;
+                list.appendChild(div);
+            });
+        }
 
-function addAiMsg(who,text){
-  const chat=document.getElementById('aiChat'); if(!chat) return;
-  const div=document.createElement('div'); div.className='msg '+who; div.textContent=text; chat.appendChild(div); chat.scrollTop=chat.scrollHeight;
-}
+        window.updateLevel = (index, key, val) => { currentLevels[index][key] = val; };
 
-window.sendAI=()=>{
-  const input=document.getElementById('aiInput'); if(!input) return;
-  const q=input.value.trim(); if(!q) return;
-  addAiMsg('user', q); input.value='';
-  setTimeout(()=>{
-    addAiMsg('ai', 'Recebido: "'+q+'". Função em desenvolvimento para análise de dados do RTDB.');
-  }, 500);
-};
-</script>
+        window.saveAll = async () => {
+            try {
+                await set(ref(db, 'admin/menu'), currentMenu);
+                await set(ref(db, 'admin/levels'), currentLevels);
+                await set(ref(db, 'admin/admob'), {
+                    appOpenId: document.getElementById('ad_appopen').value,
+                    bannerId: document.getElementById('ad_banner').value,
+                    rewardedId: document.getElementById('ad_rewarded').value
+                });
+                alert("Configurações salvas com sucesso!");
+            } catch (e) {
+                alert("Erro ao salvar: " + e.message);
+            }
+        };
+
+        loadData();
+    </script>
 </body>
 </html>

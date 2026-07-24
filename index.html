@@ -1,118 +1,185 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br" data-theme="default-light">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Vida+ AI — Evolução Diária</title>
-<link rel="icon" type="image/png" href="assets/favicon.png">
-<link rel="stylesheet" href="css/style.css">
-<link rel="manifest" href="manifest.json">
-<style>
-.auth-modal .modal{max-width:400px}
-.google-btn{width:100%;height:46px;border-radius:12px;border:1px solid var(--border);background:white;color:var(--text);font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer}
-.auth-tabs{display:flex;gap:6px;background:var(--bg-2);padding:4px;border-radius:12px;margin-top:12px}
-.auth-tabs button{flex:1;height:36px;border-radius:9px;border:none;background:transparent;font-weight:700;font-size:13px;cursor:pointer;color:var(--muted)}
-.auth-tabs button.active{background:var(--card);color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.08);border:1px solid var(--border)}
-.divider{display:flex;align-items:center;gap:12px;color:var(--muted-2);font-size:11px;font-weight:700;letter-spacing:.12em;margin:8px 0}
-.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--border)}
-#pageContainer{display:none;animation:fade .25s ease}
-#homeView{display:block;animation:fade .3s ease}
-.page-loader{padding:50px 20px;text-align:center;color:var(--muted)}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vida+ AI — Evolução Inteligente</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Fraunces:wght@700&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/a076d15399.js" crossorigin="anonymous"></script>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: var(--bg); }
+        .app-container { display: flex; flex-direction: column; height: 100vh; width: 100vw; }
+        
+        /* Desktop Menu (Top) */
+        .top-nav {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 24px; height: 70px; background: var(--card);
+            border-bottom: 1px solid var(--border); z-index: 1000;
+        }
+        .nav-links { display: flex; gap: 20px; }
+        .nav-links a { 
+            text-decoration: none; color: var(--muted); font-weight: 600; 
+            padding: 8px 12px; border-radius: 8px; transition: .2s;
+        }
+        .nav-links a.active { color: var(--primary); background: var(--bg-2); }
+
+        /* Content Iframe */
+        #contentFrame { flex: 1; border: none; width: 100%; height: 100%; }
+
+        /* Mobile Menu (Side) */
+        .mobile-sidebar {
+            position: fixed; top: 0; left: -280px; width: 280px; height: 100%;
+            background: var(--card); z-index: 2000; transition: .3s;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.1); padding: 20px;
+        }
+        .mobile-sidebar.open { left: 0; }
+        .overlay-bg {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+            display: none; z-index: 1500;
+        }
+        .overlay-bg.open { display: block; }
+
+        @media (max-width: 768px) {
+            .top-nav .nav-links { display: none; }
+            .top-nav .menu-toggle { display: block; cursor: pointer; font-size: 24px; color: var(--text); }
+        }
+        @media (min-width: 769px) {
+            .menu-toggle { display: none; }
+        }
+
+        /* AdMob Banner Placeholder */
+        #ad-banner {
+            height: 50px; background: var(--bg-2); display: flex; 
+            align-items: center; justify-content: center; font-size: 10px;
+            color: var(--muted); border-top: 1px solid var(--border);
+        }
+    </style>
 </head>
 <body>
-<div class="app">
-  <aside class="sidebar">
-    <div class="brand"><div class="logo has-img"><img src="assets/logo.png" alt="Logo" onerror="this.style.display='none'"><span>V+</span></div><div class="brand-text"><b>Vida+ AI</b><i>Painel</i></div></div>
-    <nav class="nav" id="nav">
-      <button class="active" data-page="home" onclick="appLoadPage('home')"><span class="ico">⌂</span> Home</button>
-      <button data-page="dashboard" onclick="appLoadPage('dashboard')"><span class="ico">◧</span> Dashboard</button>
-      <button data-page="financeiro" onclick="appLoadPage('financeiro')"><span class="ico">₿</span> Financeiro</button>
-      <button data-page="habitos" onclick="appLoadPage('habitos')"><span class="ico">◍</span> Hábitos</button>
-      <button data-page="humor" onclick="appLoadPage('humor')"><span class="ico">☺</span> Humor</button>
-      <button data-page="metas" onclick="appLoadPage('metas')"><span class="ico">◎</span> Metas</button>
-      <button data-page="relatorios" onclick="appLoadPage('relatorios')"><span class="ico">✦</span> IA & Insights</button>
-      <button data-page="conquistas" onclick="appLoadPage('conquistas')"><span class="ico">★</span> Conquistas</button>
-      <button data-page="perfil" onclick="appLoadPage('perfil')"><span class="ico">👤</span> Perfil</button>
+
+<div class="app-container">
+    <!-- Topbar para PC -->
+    <header class="top-nav">
+        <div class="brand" onclick="navigate('home.html')">
+            <img src="logo.png" alt="Vida+" style="height: 32px;">
+            <span class="brand-text" style="margin-left: 10px; font-weight: 800; font-size: 18px; color: var(--text);">Vida+ AI</span>
+        </div>
+        
+        <nav class="nav-links" id="pcMenu">
+            <!-- Carregado via Firebase -->
+        </nav>
+
+        <div class="top-actions">
+            <button class="btn-ghost" onclick="appToggleTheme()" style="padding: 8px; border-radius: 50%; width: 40px; height: 40px;">🌓</button>
+            <div class="menu-toggle" onclick="toggleMobileMenu()">☰</div>
+        </div>
+    </header>
+
+    <iframe id="contentFrame" src="about:blank"></iframe>
+
+    <div id="ad-banner">
+        Anúncio AdMob aqui
+    </div>
+</div>
+
+<!-- Mobile Sidebar -->
+<div class="overlay-bg" id="mobileOverlay" onclick="toggleMobileMenu()"></div>
+<aside class="mobile-sidebar" id="mobileMenu">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+        <b style="font-size:20px;">Menu</b>
+        <span onclick="toggleMobileMenu()" style="cursor:pointer; font-size:24px;">&times;</span>
+    </div>
+    <nav id="mobileMenuLinks" style="display:flex; flex-direction:column; gap:10px;">
+        <!-- Carregado via Firebase -->
     </nav>
-    <div class="sidebar-foot">
-      <span class="premium-tag" id="premiumTag">Free</span>
-      <h4 id="sidebarName">Bem-vindo</h4>
-      <p id="userEmailChip" style="font-size:11px;opacity:.9;word-break:break-all">Visitante • Faça login</p>
-      <div id="syncStatus" style="font-size:10px;margin-top:8px;opacity:.8">● Pronto</div>
-      <button class="btn btn-white btn-sm" style="margin-top:10px;width:100%" id="btnMainAction" onclick="appOpenAuthModal()">Entrar / Criar conta</button>
-      <button class="btn btn-ghost btn-sm" style="margin-top:6px;background:rgba(255,255,255,.12);border:none;color:white;width:100%;display:none" id="btnLogout" onclick="appHandleLogout()">Sair</button>
-    </div>
-  </aside>
+</aside>
 
-  <main class="main">
-    <div class="topbar">
-      <div class="search-wrap"><span class="sico">⌕</span><input id="globalSearch" placeholder="Buscar... (Ex: transações, hábitos)" onkeydown="if(event.key==='Enter'){ appLoadPage('financeiro'); }"></div>
-      <div class="top-actions">
-        <span class="chip"><span class="dot"></span> <span id="streakLabel">Visitante</span></span>
-        <button class="btn btn-ghost btn-sm" onclick="appToggleTheme()">◐</button>
-        <div class="avatar" id="avatar" onclick="appOpenAuthModal()">?</div>
-        <button class="btn btn-primary btn-sm" id="topLoginBtn" onclick="appOpenAuthModal()">Entrar</button>
-      </div>
-    </div>
+<script type="module">
+    import { initAuthListener, db } from './firebase.js';
+    import { ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-    <!-- VIEWS CONTAINER -->
-    <div id="homeView"></div>
-    <div id="pageContainer" style="display:none"></div>
-  </main>
-</div>
+    window.toggleMobileMenu = () => {
+        document.getElementById('mobileMenu').classList.toggle('open');
+        document.getElementById('mobileOverlay').classList.toggle('open');
+    }
 
-<!-- MODALS -->
-<div class="overlay" id="overlayAuth" style="z-index:150;display:none">
-  <div class="modal" style="max-width:400px">
-    <div style="padding:22px 22px 0;text-align:center">
-      <h2 id="authTitle" style="font-size:22px">Entrar no Vida+ AI</h2>
-      <p style="color:var(--muted);font-size:12px;margin-top:6px">Seus dados salvos e sincronizados com segurança.</p>
-      <div class="auth-tabs">
-        <button class="active" id="tabLogin" onclick="appSwitchAuthMode('login')">Entrar</button>
-        <button id="tabSignup" onclick="appSwitchAuthMode('signup')">Criar conta</button>
-      </div>
-    </div>
-    <div style="padding:16px 20px;display:grid;gap:10px">
-      <div id="authLoginView" style="display:grid;gap:10px">
-        <button class="google-btn" id="authBtnGoogle" onclick="appHandleGoogleLogin()"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px"> Continuar com Google</button>
-        <div class="divider">OU E-MAIL</div>
-        <input id="authEmail" class="input" type="email" placeholder="seu@email.com">
-        <input id="authPass" class="input" type="password" placeholder="Sua senha">
-        <button class="btn btn-primary" id="authBtnLogin" onclick="appHandleLogin()" style="height:44px">Entrar</button>
-        <span class="link" style="text-align:center;display:block;font-size:12px" onclick="appHandleReset()">Esqueci senha</span>
-      </div>
-      <div id="authSignupView" style="display:none;gap:10px">
-        <button class="google-btn" onclick="appHandleGoogleLogin()"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px"> Cadastrar com Google</button>
-        <div class="divider">OU</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input id="authFirstName" class="input" placeholder="Nome"><input id="authLastName" class="input" placeholder="Sobrenome"></div>
-        <input id="authEmailSignup" class="input" type="email" placeholder="seu@email.com">
-        <input id="authPassSignup" class="input" type="password" placeholder="Senha mín 6">
-        <button class="btn btn-primary" id="authBtnSignup" onclick="appHandleSignup()" style="height:44px">Criar conta</button>
-      </div>
-      <div id="authError" style="display:none;padding:10px;border-radius:10px;background:#FEF2F2;border:1px solid #FECACA;color:#991B1B;font-size:12px"></div>
-      <button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayAuth')" style="width:100%">Fechar</button>
-    </div>
-  </div>
-</div>
+    window.navigate = (page) => {
+        const frame = document.getElementById('contentFrame');
+        frame.src = page;
+        // Update URL without reload
+        const newUrl = window.location.pathname + '?page=' + page;
+        window.history.pushState({path:newUrl},'',newUrl);
+        
+        // Close mobile menu
+        document.getElementById('mobileMenu').classList.remove('open');
+        document.getElementById('mobileOverlay').classList.remove('open');
+        
+        // Update active links
+        updateActiveLinks(page);
+    }
 
-<div class="overlay" id="overlayCompleteProfile" style="z-index:160;display:none">
-  <div class="modal" style="max-width:400px">
-    <div class="modal-head"><h3>Completar perfil (opcional)</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayCompleteProfile')">Pular</button></div>
-    <div class="modal-body">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input id="completeFirstName" class="input" placeholder="Nome"><input id="completeLastName" class="input" placeholder="Sobrenome"></div>
-      <input id="completePhone" class="input" placeholder="Celular">
-    </div>
-    <div class="modal-foot"><button class="btn btn-ghost" onclick="appCloseModal('overlayCompleteProfile')">Pular</button><button class="btn btn-primary" onclick="appSaveCompleteProfile()">Salvar</button></div>
-  </div>
-</div>
+    function updateActiveLinks(page) {
+        document.querySelectorAll('nav a').forEach(a => {
+            a.classList.toggle('active', a.getAttribute('onclick')?.includes(page));
+        });
+    }
 
-<div class="overlay" id="overlayTx" style="display:none"><div class="modal"><div class="modal-head"><h3>Nova transação</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayTx')">✕</button></div><div class="modal-body"><div class="pills"><button class="pill active" data-type="expense" onclick="appSetTxType('expense',this)">Despesa</button><button class="pill" data-type="income" onclick="appSetTxType('income',this)">Receita</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input id="txAmount" class="input" type="number" placeholder="Valor"><input id="txDate" class="input" type="date"></div><div><input id="txCategoryCustom" class="input" placeholder="Categoria" style="margin-top:6px"></div><input id="txDesc" class="input" placeholder="Descrição"></div><div class="modal-foot"><button class="btn btn-ghost" onclick="appCloseModal('overlayTx')">Cancelar</button><button class="btn btn-primary" onclick="appSaveTx()">Salvar</button></div></div></div>
-<div class="overlay" id="overlayPremium" style="display:none"><div class="modal" style="max-width:480px"><div class="modal-head"><h3>Premium</h3><button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayPremium')">✕</button></div><div class="modal-body"><p style="font-size:13px;color:var(--muted)">10 temas exclusivos + Análise avançada por IA + 50 níveis épicos.</p><button class="btn btn-primary" onclick="appCloseModal('overlayPremium')">Desbloquear agora</button></div></div></div>
+    // Load Menu from Firebase
+    const menuRef = ref(db, 'admin/menu');
+    onValue(menuRef, (snapshot) => {
+        const menuData = snapshot.val() || [
+            { id: 1, label: 'Home', page: 'home.html', icon: '🏠' },
+            { id: 2, label: 'Dashboard', page: 'dashboard.html', icon: '📊' },
+            { id: 3, label: 'Insumos', page: 'insumos.html', icon: '📦' },
+            { id: 4, label: 'Perfil', page: 'perfil.html', icon: '👤' }
+        ];
+        
+        // Sort by order if available
+        const sorted = menuData.sort((a,b) => (a.order || 0) - (b.order || 0));
 
-<div class="toast-stack" id="toasts"></div>
+        const pcMenu = document.getElementById('pcMenu');
+        const mobileMenu = document.getElementById('mobileMenuLinks');
+        
+        pcMenu.innerHTML = '';
+        mobileMenu.innerHTML = '';
 
-<!-- Lógica central de negócio -->
-<script type="module" src="js/app.js"></script>
+        sorted.forEach(item => {
+            const pcA = document.createElement('a');
+            pcA.href = "#";
+            pcA.innerHTML = `${item.label}`;
+            pcA.onclick = (e) => { e.preventDefault(); navigate(item.page); };
+            pcMenu.appendChild(pcA);
+
+            const mobA = document.createElement('a');
+            mobA.href = "#";
+            mobA.style.display = "flex";
+            mobA.style.alignItems = "center";
+            mobA.style.gap = "15px";
+            mobA.style.padding = "12px";
+            mobA.style.borderRadius = "10px";
+            mobA.style.textDecoration = "none";
+            mobA.style.color = "var(--text)";
+            mobA.style.fontWeight = "600";
+            mobA.innerHTML = `<span>${item.icon || '•'}</span> ${item.label}`;
+            mobA.onclick = (e) => { e.preventDefault(); navigate(item.page); };
+            mobileMenu.appendChild(mobA);
+        });
+
+        // Initial Navigation
+        const params = new URLSearchParams(window.location.search);
+        const startPage = params.get('page') || 'home.html';
+        navigate(startPage);
+    });
+
+    // Handle Auth and Redirect if needed
+    initAuthListener((user) => {
+        if (!user && window.location.search.includes('page=dashboard.html')) {
+            // navigate('home.html'); // Opcional: forçar home se deslogado
+        }
+    });
+
+</script>
 </body>
 </html>

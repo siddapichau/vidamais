@@ -1,0 +1,81 @@
+:root {
+  --radius: 16px;
+  --transition: 0.3s;
+}
+
+/* 1. TEMA PADRÃO: VIDA+ AI (MODERNO E PROFISSIONAL) */
+[data-theme="default-light"] {
+  --bg: #F8FAFC; --bg-2: #F1F5F9; --card: #FFFFFF; --text: #0F172A;
+  --muted: #64748B; --border: #E2E8F0; --primary: #2563EB; --accent: #3B82F6;
+}
+[data-theme="default-dark"] {
+  --bg: #0F172A; --bg-2: #1E293B; --card: #1E293B; --text: #F8FAFC;
+  --muted: #94A3B8; --border: #334155; --primary: #3B82F6; --accent: #60A5FA;
+}
+
+/* 2. PREMIUM: LUXURY GOLD (PROFISSIONAL) */
+[data-theme="luxury-light"] {
+  --bg: #FAFAFA; --bg-2: #F5F5F5; --card: #FFFFFF; --text: #1C1C1C;
+  --muted: #737373; --border: #E5E5E5; --primary: #D4AF37; --accent: #B8860B;
+}
+[data-theme="luxury-dark"] {
+  --bg: #0A0A0A; --bg-2: #171717; --card: #171717; --text: #F5F5F5;
+  --muted: #A3A3A3; --border: #262626; --primary: #D4AF37; --accent: #F1C40F;
+}
+
+/* 3. PREMIUM: CYBERPUNK (MODERNO) */
+[data-theme="cyberpunk-light"] {
+  --bg: #FDF2F8; --bg-2: #FCE7F3; --card: #FFFFFF; --text: #1E1B4B;
+  --muted: #6366F1; --border: #E0E7FF; --primary: #D946EF; --accent: #818CF8;
+}
+[data-theme="cyberpunk-dark"] {
+  --bg: #020617; --bg-2: #0F172A; --card: #0F172A; --text: #F0F9FF;
+  --muted: #94A3B8; --border: #1E293B; --primary: #D946EF; --accent: #A855F7;
+}
+
+/* 4. PREMIUM: NATURE ECO (GRADIENTE) */
+[data-theme="nature-light"] {
+  --bg: #F0FDF4; --bg-2: #DCFCE7; --card: #FFFFFF; --text: #064E3B;
+  --muted: #059669; --border: #BBF7D0; --primary: #10B981; --accent: #34D399;
+  background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%);
+}
+[data-theme="nature-dark"] {
+  --bg: #064E3B; --bg-2: #065F46; --card: #064E3B; --text: #ECFDF5;
+  --muted: #34D399; --border: #065F46; --primary: #10B981; --accent: #6EE7B7;
+}
+
+/* 5. PREMIUM: DEEP SPACE (GRADIENTE) */
+[data-theme="space-light"] {
+  --bg: #F5F3FF; --bg-2: #EDE9FE; --card: #FFFFFF; --text: #2E1065;
+  --muted: #7C3AED; --border: #DDD6FE; --primary: #6D28D9; --accent: #8B5CF6;
+  background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%);
+}
+[data-theme="space-dark"] {
+  --bg: #0F172A; --bg-2: #1E1B4B; --card: #0F172A; --text: #F5F3FF;
+  --muted: #A78BFA; --border: #1E293B; --primary: #8B5CF6; --accent: #C084FC;
+  background: radial-gradient(circle at top right, #1E1B4B, #0F172A);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+
+body { background: var(--bg); color: var(--text); transition: background var(--transition), color var(--transition); }
+
+.btn-primary { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; }
+.btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 8px 16px; border-radius: 10px; cursor: pointer; }
+
+/* Admin Panel Styles */
+.admin-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 20px; }
+.admin-input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-2); color: var(--text); margin-bottom: 12px; }
+
+/* Dashboard etc. (re-used from previous project) */
+.card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+.grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+
+/* XP Bar */
+.xp-container { width: 100%; height: 12px; background: var(--bg-2); border-radius: 10px; overflow: hidden; margin: 10px 0; }
+.xp-bar { height: 100%; background: var(--primary); transition: width 0.5s ease; }
+
+@media (max-width: 600px) {
+  :root { --radius: 12px; }
+  .grid { grid-template-columns: 1fr; }
+}
