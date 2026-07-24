@@ -3,183 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vida+ AI — Evolução Inteligente</title>
+    <title>Vida+ AI — Inteligência para sua Evolução</title>
     <link rel="icon" type="image/png" href="favicon.png">
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Fraunces:wght@700&display=swap" rel="stylesheet">
-    <script src="https://kit.fontawesome.com/a076d15399.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: var(--bg); }
-        .app-container { display: flex; flex-direction: column; height: 100vh; width: 100vw; }
+        body, html { height: 100%; overflow: hidden; background: var(--bg); }
+        .app-shell { display: flex; flex-direction: column; height: 100vh; width: 100vw; }
+        #mainIframe { flex: 1; border: none; width: 100%; height: 100%; transition: opacity 0.3s; }
+        .iframe-loading { opacity: 0; }
         
-        /* Desktop Menu (Top) */
-        .top-nav {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 24px; height: 70px; background: var(--card);
-            border-bottom: 1px solid var(--border); z-index: 1000;
-        }
-        .nav-links { display: flex; gap: 20px; }
-        .nav-links a { 
-            text-decoration: none; color: var(--muted); font-weight: 600; 
-            padding: 8px 12px; border-radius: 8px; transition: .2s;
-        }
-        .nav-links a.active { color: var(--primary); background: var(--bg-2); }
+        .brand { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+        .brand img { height: 35px; width: 35px; border-radius: 8px; }
+        .brand-text { font-weight: 800; font-size: 20px; color: var(--text); letter-spacing: -0.5px; }
 
-        /* Content Iframe */
-        #contentFrame { flex: 1; border: none; width: 100%; height: 100%; }
-
-        /* Mobile Menu (Side) */
-        .mobile-sidebar {
-            position: fixed; top: 0; left: -280px; width: 280px; height: 100%;
-            background: var(--card); z-index: 2000; transition: .3s;
-            box-shadow: 10px 0 30px rgba(0,0,0,0.1); padding: 20px;
-        }
-        .mobile-sidebar.open { left: 0; }
-        .overlay-bg {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.5);
-            display: none; z-index: 1500;
-        }
-        .overlay-bg.open { display: block; }
-
+        .menu-pc { display: flex; gap: 5px; }
+        .top-actions { display: flex; align-items: center; gap: 12px; }
+        .btn-circle { width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--border); background: var(--card); display: grid; place-items: center; cursor: pointer; color: var(--text); }
+        
+        .mobile-toggle { display: none; font-size: 24px; cursor: pointer; }
         @media (max-width: 768px) {
-            .top-nav .nav-links { display: none; }
-            .top-nav .menu-toggle { display: block; cursor: pointer; font-size: 24px; color: var(--text); }
-        }
-        @media (min-width: 769px) {
-            .menu-toggle { display: none; }
+            .mobile-toggle { display: block; }
+            .menu-pc { display: none; }
         }
 
-        /* AdMob Banner Placeholder */
-        #ad-banner {
-            height: 50px; background: var(--bg-2); display: flex; 
-            align-items: center; justify-content: center; font-size: 10px;
-            color: var(--muted); border-top: 1px solid var(--border);
-        }
+        #ad-bottom { height: 60px; background: var(--bg-2); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--muted); }
     </style>
 </head>
 <body>
 
-<div class="app-container">
-    <!-- Topbar para PC -->
+<div class="app-shell">
     <header class="top-nav">
         <div class="brand" onclick="navigate('home.html')">
-            <img src="logo.png" alt="Vida+" style="height: 32px;">
-            <span class="brand-text" style="margin-left: 10px; font-weight: 800; font-size: 18px; color: var(--text);">Vida+ AI</span>
+            <img src="logo.png" alt="Logo">
+            <span class="brand-text">Vida+ AI</span>
         </div>
-        
-        <nav class="nav-links" id="pcMenu">
-            <!-- Carregado via Firebase -->
+
+        <nav class="menu-pc" id="pcNav">
+            <!-- Carregado via JS -->
         </nav>
 
         <div class="top-actions">
-            <button class="btn-ghost" onclick="appToggleTheme()" style="padding: 8px; border-radius: 50%; width: 40px; height: 40px;">🌓</button>
-            <div class="menu-toggle" onclick="toggleMobileMenu()">☰</div>
+            <div class="btn-circle" onclick="appToggleTheme()">🌓</div>
+            <div class="mobile-toggle" onclick="toggleMobileMenu()">☰</div>
         </div>
     </header>
 
-    <iframe id="contentFrame" src="about:blank"></iframe>
+    <iframe id="mainIframe" name="mainIframe" src="about:blank"></iframe>
 
-    <div id="ad-banner">
-        Anúncio AdMob aqui
-    </div>
+    <div id="ad-bottom">Anúncio AdMob Banner</div>
 </div>
 
-<!-- Mobile Sidebar -->
+<!-- Mobile Drawer -->
 <div class="overlay-bg" id="mobileOverlay" onclick="toggleMobileMenu()"></div>
-<aside class="mobile-sidebar" id="mobileMenu">
+<aside class="mobile-sidebar" id="mobileDrawer">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
-        <b style="font-size:20px;">Menu</b>
-        <span onclick="toggleMobileMenu()" style="cursor:pointer; font-size:24px;">&times;</span>
+        <span class="brand-text">Menu</span>
+        <span onclick="toggleMobileMenu()" style="font-size:30px; cursor:pointer;">&times;</span>
     </div>
-    <nav id="mobileMenuLinks" style="display:flex; flex-direction:column; gap:10px;">
-        <!-- Carregado via Firebase -->
-    </nav>
+    <nav id="mobileNav" style="display:flex; flex-direction:column; gap:8px;"></nav>
 </aside>
 
+<!-- Scripts Principais -->
+<script type="module" src="js/firebase.js"></script>
+<script type="module" src="js/core.js"></script>
+<script type="module" src="js/app.js"></script>
+
 <script type="module">
-    import { initAuthListener, db } from './firebase.js';
-    import { ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { db, ref, onValue } from './js/firebase.js';
 
     window.toggleMobileMenu = () => {
-        document.getElementById('mobileMenu').classList.toggle('open');
+        document.getElementById('mobileDrawer').classList.toggle('open');
         document.getElementById('mobileOverlay').classList.toggle('open');
-    }
+    };
 
     window.navigate = (page) => {
-        const frame = document.getElementById('contentFrame');
-        frame.src = page;
-        // Update URL without reload
-        const newUrl = window.location.pathname + '?page=' + page;
-        window.history.pushState({path:newUrl},'',newUrl);
+        const frame = document.getElementById('mainIframe');
+        frame.classList.add('iframe-loading');
         
-        // Close mobile menu
-        document.getElementById('mobileMenu').classList.remove('open');
-        document.getElementById('mobileOverlay').classList.remove('open');
+        // Garante que o caminho seja relativo a /pages/
+        const target = page.startsWith('pages/') ? page : `pages/${page}`;
+        frame.src = target;
         
-        // Update active links
-        updateActiveLinks(page);
-    }
+        // Atualiza URL sem recarregar
+        const urlParams = new URLSearchParams(window.location.search);
+        urlParams.set('page', page);
+        window.history.pushState({}, '', `${window.location.pathname}?${urlParams.toString()}`);
 
-    function updateActiveLinks(page) {
-        document.querySelectorAll('nav a').forEach(a => {
-            a.classList.toggle('active', a.getAttribute('onclick')?.includes(page));
-        });
-    }
+        toggleMobileMenu();
+        if (window.updateActiveMenu) window.updateActiveMenu(page);
+        
+        setTimeout(() => frame.classList.remove('iframe-loading'), 300);
+    };
 
-    // Load Menu from Firebase
-    const menuRef = ref(db, 'admin/menu');
-    onValue(menuRef, (snapshot) => {
-        const menuData = snapshot.val() || [
-            { id: 1, label: 'Home', page: 'home.html', icon: '🏠' },
-            { id: 2, label: 'Dashboard', page: 'dashboard.html', icon: '📊' },
-            { id: 3, label: 'Insumos', page: 'insumos.html', icon: '📦' },
-            { id: 4, label: 'Perfil', page: 'perfil.html', icon: '👤' }
+    // Carregar Menu do Firebase
+    onValue(ref(db, 'admin/menu'), (snapshot) => {
+        const menu = snapshot.val() || [
+            { label: 'Home', page: 'home.html', icon: '🏠', order: 0 },
+            { label: 'Dashboard', page: 'dashboard.html', icon: '📊', order: 1 },
+            { label: 'Insumos', page: 'insumos.html', icon: '📦', order: 2 },
+            { label: 'Perfil', page: 'perfil.html', icon: '👤', order: 3 }
         ];
-        
-        // Sort by order if available
-        const sorted = menuData.sort((a,b) => (a.order || 0) - (b.order || 0));
 
-        const pcMenu = document.getElementById('pcMenu');
-        const mobileMenu = document.getElementById('mobileMenuLinks');
+        const sorted = menu.sort((a,b) => a.order - b.order);
+        const pcNav = document.getElementById('pcNav');
+        const mobNav = document.getElementById('mobileNav');
         
-        pcMenu.innerHTML = '';
-        mobileMenu.innerHTML = '';
+        pcNav.innerHTML = ''; mobNav.innerHTML = '';
 
         sorted.forEach(item => {
-            const pcA = document.createElement('a');
-            pcA.href = "#";
-            pcA.innerHTML = `${item.label}`;
-            pcA.onclick = (e) => { e.preventDefault(); navigate(item.page); };
-            pcMenu.appendChild(pcA);
-
-            const mobA = document.createElement('a');
-            mobA.href = "#";
-            mobA.style.display = "flex";
-            mobA.style.alignItems = "center";
-            mobA.style.gap = "15px";
-            mobA.style.padding = "12px";
-            mobA.style.borderRadius = "10px";
-            mobA.style.textDecoration = "none";
-            mobA.style.color = "var(--text)";
-            mobA.style.fontWeight = "600";
-            mobA.innerHTML = `<span>${item.icon || '•'}</span> ${item.label}`;
-            mobA.onclick = (e) => { e.preventDefault(); navigate(item.page); };
-            mobileMenu.appendChild(mobA);
+            const createLink = (isMob) => {
+                const a = document.createElement('a');
+                a.className = 'nav-item';
+                a.href = "javascript:void(0)";
+                a.onclick = () => navigate(item.page);
+                a.innerHTML = `<span>${item.icon || '•'}</span> <span>${item.label}</span>`;
+                return a;
+            };
+            pcNav.appendChild(createLink(false));
+            mobNav.appendChild(createLink(true));
         });
 
-        // Initial Navigation
+        window.updateActiveMenu = (page) => {
+            document.querySelectorAll('.nav-item').forEach(a => {
+                const isActive = a.getAttribute('onclick').includes(page);
+                a.classList.toggle('active', isActive);
+            });
+        };
+
+        // Navegação Inicial
         const params = new URLSearchParams(window.location.search);
-        const startPage = params.get('page') || 'home.html';
-        navigate(startPage);
+        const initial = params.get('page') || 'home.html';
+        navigate(initial);
     });
 
-    // Handle Auth and Redirect if needed
-    initAuthListener((user) => {
-        if (!user && window.location.search.includes('page=dashboard.html')) {
-            // navigate('home.html'); // Opcional: forçar home se deslogado
+    // Detectar login e recarregar iframe se necessário
+    window.onAppStateUpdate = () => {
+        const frame = document.getElementById('mainIframe');
+        if (frame.contentWindow && frame.contentWindow.updateUI) {
+            frame.contentWindow.updateUI();
         }
-    });
-
+    };
 </script>
+
 </body>
 </html>

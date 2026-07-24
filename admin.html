@@ -1,144 +1,159 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-br" data-theme="default-light">
 <head>
     <meta charset="UTF-8">
-    <title>Painel Admin - Vida+ AI</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Admin Panel — Vida+ AI</title>
+    <link rel="stylesheet" href="css/style.css">
     <style>
-        body { padding: 20px; background: var(--bg); color: var(--text); }
-        .section { margin-bottom: 40px; }
-        .level-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
-        .menu-item { background: var(--card); padding: 15px; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        body { padding: 40px 20px; overflow-y: auto; }
+        .admin-container { max-width: 1000px; margin: 0 auto; display: none; }
+        .restricted { text-align: center; padding: 100px 20px; }
+        .section { margin-bottom: 50px; }
+        .menu-row, .level-row { display: grid; grid-template-columns: 50px 1fr 1fr 1fr 50px; gap: 10px; margin-bottom: 10px; align-items: center; }
     </style>
 </head>
 <body>
 
-    <div class="topbar">
-        <h1>Painel Administrativo</h1>
-        <button class="btn-primary" onclick="saveAll()">Salvar Todas as Alterações</button>
+<div id="forbidden" class="restricted">
+    <h1 style="font-size: 60px;">🚫</h1>
+    <h2>Acesso Restrito</h2>
+    <p>Apenas o administrador <b>wesleystudio@gmail.com</b> pode acessar esta página.</p>
+    <br>
+    <button class="btn-primary" onclick="location.href='index.html'">Voltar ao App</button>
+</div>
+
+<div class="admin-container" id="adminUI">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+        <h1>Painel de Controle</h1>
+        <button class="btn-primary" onclick="saveAll()">Salvar Alterações</button>
     </div>
 
-    <!-- Gestão de Menu -->
+    <!-- Menus -->
     <div class="section">
-        <h2>Ordem e Itens do Menu</h2>
-        <div id="menuList"></div>
-        <button class="btn-ghost" onclick="addMenuItem()">+ Adicionar Menu</button>
+        <h3>Configuração do Menu</h3>
+        <div id="menuEditor" class="card" style="margin-top:15px;"></div>
+        <button class="btn-ghost" style="margin-top:10px;" onclick="addMenu()">+ Adicionar Item</button>
     </div>
 
-    <!-- Gestão de Níveis -->
+    <!-- Níveis -->
     <div class="section">
-        <h2>Configuração de Níveis (1 a 50)</h2>
-        <div id="levelsList" style="max-height: 400px; overflow-y: auto; border: 1px solid var(--border); padding: 10px; border-radius: 10px;">
-            <!-- Gerado via JS -->
-        </div>
+        <h3>Níveis e XP (1 a 50)</h3>
+        <div id="levelEditor" class="card" style="margin-top:15px; max-height: 400px; overflow-y: auto;"></div>
     </div>
 
     <!-- AdMob -->
     <div class="section">
-        <h2>Monetização (AdMob IDs)</h2>
-        <div class="admin-card">
-            <label>App Open ID</label>
-            <input type="text" id="ad_appopen" class="admin-input" placeholder="ca-app-pub-...">
-            <label>Banner Rodapé ID</label>
-            <input type="text" id="ad_banner" class="admin-input" placeholder="ca-app-pub-...">
-            <label>Rewarded Ad (Ganhar Moedas) ID</label>
-            <input type="text" id="ad_rewarded" class="admin-input" placeholder="ca-app-pub-...">
+        <h3>Monetização AdMob</h3>
+        <div class="card grid">
+            <div class="input-group">
+                <label>App Open ID</label>
+                <input type="text" id="ad_open" class="input-custom" placeholder="ca-app-pub-...">
+            </div>
+            <div class="input-group">
+                <label>Banner ID</label>
+                <input type="text" id="ad_banner" class="input-custom" placeholder="ca-app-pub-...">
+            </div>
+            <div class="input-group">
+                <label>Rewarded ID</label>
+                <input type="text" id="ad_reward" class="input-custom" placeholder="ca-app-pub-...">
+            </div>
         </div>
     </div>
+</div>
 
-    <script type="module">
-        import { db } from './firebase.js';
-        import { ref, get, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+<script type="module">
+    import { db, auth, initAuthListener, ADMIN_EMAIL, ref, get, set } from './js/firebase.js';
 
-        let currentMenu = [];
-        let currentLevels = [];
+    let menuData = [];
+    let levelData = [];
 
-        async function loadData() {
-            // Load Menu
-            const mSnap = await get(ref(db, 'admin/menu'));
-            currentMenu = mSnap.exists() ? mSnap.val() : [
-                { label: 'Home', page: 'home.html', icon: '🏠', order: 0 },
-                { label: 'Dashboard', page: 'dashboard.html', icon: '📊', order: 1 }
-            ];
-            renderMenu();
-
-            // Load Levels
-            const lSnap = await get(ref(db, 'admin/levels'));
-            if (lSnap.exists()) {
-                currentLevels = lSnap.val();
-            } else {
-                for(let i=1; i<=50; i++) {
-                    currentLevels.push({ level: i, xp: i*1000, name: `Nível ${i}`, benefit: 'Bônus em breve' });
-                }
-            }
-            renderLevels();
-
-            // Load AdMob
-            const aSnap = await get(ref(db, 'admin/admob'));
-            if (aSnap.exists()) {
-                const ad = aSnap.val();
-                document.getElementById('ad_appopen').value = ad.appOpenId || '';
-                document.getElementById('ad_banner').value = ad.bannerId || '';
-                document.getElementById('ad_rewarded').value = ad.rewardedId || '';
-            }
+    initAuthListener(async (user) => {
+        if (user && user.email === ADMIN_EMAIL) {
+            document.getElementById('forbidden').style.display = 'none';
+            document.getElementById('adminUI').style.display = 'block';
+            loadData();
+        } else if (user) {
+            // Logado mas não é admin
+            console.warn("Acesso negado para", user.email);
+        } else {
+            // Não logado
+            console.log("Aguardando login do admin...");
         }
+    });
 
-        function renderMenu() {
-            const list = document.getElementById('menuList');
-            list.innerHTML = '';
-            currentMenu.forEach((item, index) => {
-                const div = document.createElement('div');
-                div.className = 'menu-item';
-                div.innerHTML = `
-                    <div>
-                        <input type="text" value="${item.label}" onchange="updateMenu(${index}, 'label', this.value)" style="width:100px">
-                        <input type="text" value="${item.page}" onchange="updateMenu(${index}, 'page', this.value)" style="width:150px">
-                        <input type="text" value="${item.icon}" onchange="updateMenu(${index}, 'icon', this.value)" style="width:40px">
-                    </div>
-                    <button onclick="removeMenu(${index})">🗑️</button>
-                `;
-                list.appendChild(div);
+    async function loadData() {
+        const mSnap = await get(ref(db, 'admin/menu'));
+        menuData = mSnap.exists() ? mSnap.val() : [
+            { label: 'Home', page: 'home.html', icon: '🏠', order: 0 },
+            { label: 'Dashboard', page: 'dashboard.html', icon: '📊', order: 1 }
+        ];
+        renderMenus();
+
+        const lSnap = await get(ref(db, 'admin/levels'));
+        if (lSnap.exists()) levelData = lSnap.val();
+        else {
+            for(let i=1; i<=50; i++) levelData.push({ level: i, xp: i*1000, name: `Nível ${i}`, benefit: '...' });
+        }
+        renderLevels();
+
+        const aSnap = await get(ref(db, 'admin/admob'));
+        if (aSnap.exists()) {
+            const ad = aSnap.val();
+            document.getElementById('ad_open').value = ad.appOpenId || '';
+            document.getElementById('ad_banner').value = ad.bannerId || '';
+            document.getElementById('ad_reward').value = ad.rewardedId || '';
+        }
+    }
+
+    function renderMenus() {
+        const container = document.getElementById('menuEditor');
+        container.innerHTML = '';
+        menuData.forEach((item, i) => {
+            const div = document.createElement('div');
+            div.className = 'menu-row';
+            div.innerHTML = `
+                <input type="number" class="input-custom" value="${item.order}" onchange="menuData[${i}].order=parseInt(this.value)">
+                <input type="text" class="input-custom" value="${item.label}" onchange="menuData[${i}].label=this.value">
+                <input type="text" class="input-custom" value="${item.page}" onchange="menuData[${i}].page=this.value">
+                <input type="text" class="input-custom" value="${item.icon}" onchange="menuData[${i}].icon=this.value">
+                <button class="btn-ghost" onclick="removeMenu(${i})">🗑️</button>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    window.addMenu = () => { menuData.push({label:'Novo', page:'new.html', icon:'•', order: menuData.length}); renderMenus(); };
+    window.removeMenu = (i) => { menuData.splice(i,1); renderMenus(); };
+
+    function renderLevels() {
+        const container = document.getElementById('levelEditor');
+        container.innerHTML = '';
+        levelData.forEach((lvl, i) => {
+            const div = document.createElement('div');
+            div.className = 'level-row';
+            div.innerHTML = `
+                <b style="text-align:center;">#${lvl.level}</b>
+                <input type="text" class="input-custom" value="${lvl.name}" onchange="levelData[${i}].name=this.value">
+                <input type="number" class="input-custom" value="${lvl.xp}" onchange="levelData[${i}].xp=parseInt(this.value)">
+                <input type="text" class="input-custom" value="${lvl.benefit}" placeholder="Vantagem" onchange="levelData[${i}].benefit=this.value">
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    window.saveAll = async () => {
+        try {
+            await set(ref(db, 'admin/menu'), menuData);
+            await set(ref(db, 'admin/levels'), levelData);
+            await set(ref(db, 'admin/admob'), {
+                appOpenId: document.getElementById('ad_open').value,
+                bannerId: document.getElementById('ad_banner').value,
+                rewardedId: document.getElementById('ad_reward').value
             });
-        }
+            alert("Dados salvos com sucesso!");
+        } catch (e) { alert("Erro ao salvar: " + e.message); }
+    };
+</script>
 
-        window.updateMenu = (index, key, val) => { currentMenu[index][key] = val; };
-        window.removeMenu = (index) => { currentMenu.splice(index, 1); renderMenu(); };
-        window.addMenuItem = () => { currentMenu.push({label:'Novo', page:'new.html', icon:'•', order:currentMenu.length}); renderMenu(); };
-
-        function renderLevels() {
-            const list = document.getElementById('levelsList');
-            list.innerHTML = '';
-            currentLevels.forEach((lvl, index) => {
-                const div = document.createElement('div');
-                div.className = 'level-row';
-                div.innerHTML = `
-                    <span>#${lvl.level}</span>
-                    <input type="text" value="${lvl.name}" placeholder="Nome" onchange="updateLevel(${index}, 'name', this.value)">
-                    <input type="number" value="${lvl.xp}" placeholder="XP" onchange="updateLevel(${index}, 'xp', parseInt(this.value))">
-                    <input type="text" value="${lvl.benefit || ''}" placeholder="Vantagem" onchange="updateLevel(${index}, 'benefit', this.value)" style="flex:1">
-                `;
-                list.appendChild(div);
-            });
-        }
-
-        window.updateLevel = (index, key, val) => { currentLevels[index][key] = val; };
-
-        window.saveAll = async () => {
-            try {
-                await set(ref(db, 'admin/menu'), currentMenu);
-                await set(ref(db, 'admin/levels'), currentLevels);
-                await set(ref(db, 'admin/admob'), {
-                    appOpenId: document.getElementById('ad_appopen').value,
-                    bannerId: document.getElementById('ad_banner').value,
-                    rewardedId: document.getElementById('ad_rewarded').value
-                });
-                alert("Configurações salvas com sucesso!");
-            } catch (e) {
-                alert("Erro ao salvar: " + e.message);
-            }
-        };
-
-        loadData();
-    </script>
 </body>
 </html>
