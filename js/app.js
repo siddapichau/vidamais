@@ -103,11 +103,20 @@ window.appSelectAvatar = (url) => {
   if(activeImg) activeImg.classList.add('selected');
 };
 
-// --- ROTEAMENTO E INJEÇÃO EXTERNA (Puxa os arquivos da pasta /pages) ---
+// --- HTMLs Nativos (Usados se o fetch falhar em file:///) ---
+function getPageHTML(name) {
+  if(name === 'home') return `<div id="home-welcome" style="max-width:900px;margin:0 auto;text-align:center;padding:20px 10px"><div style="width:80px;height:80px;margin:0 auto 16px;border-radius:20px;background:conic-gradient(from 210deg at 50% 50%, #123C7A, #6366F1, #06B6D4, #10B981, #123C7A);display:grid;place-items:center;box-shadow:0 12px 30px rgba(18,60,122,.25)"><span style="font-size:32px; font-weight: 800; color: white;">V+</span></div><h1 class="display" style="font-size:42px;line-height:.9;letter-spacing:-.04em">Transforme sua vida<br>em 30 segundos por dia</h1><p style="color:var(--muted);font-size:15px;margin-top:14px;line-height:1.5;max-width:600px;margin-left:auto;margin-right:auto">O Vida+ AI é o primeiro Evolution OS brasileiro que une <b>finanças, hábitos, humor e metas</b> com IA que cruza seus dados e te mostra padrões que ninguém vê.</p><div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px"><button class="btn btn-primary" style="height:50px;padding:0 24px;font-size:15px" onclick="window.appOpenAuthModal()">🚀 Acessar o App • Grátis</button></div></div>`;
+  if(name === 'dashboard') return `<div class="top-actions" style="margin-bottom: 20px;"><h2 style="font-size:26px">Dashboard</h2><p style="color:var(--muted); font-size: 13px;">Sua visão geral financeira e de progresso do mês.</p></div><div class="grid grid-3"><div class="card kpi"><div class="kpi-head"><span class="kpi-label">RECEITAS NO MÊS</span><span class="kpi-icon" style="background:#DCFCE7;color:#10B981">↑</span></div><div class="kpi-value" id="dashIncome">R$ 0,00</div></div><div class="card kpi"><div class="kpi-head"><span class="kpi-label">ECONOMIA</span><span class="kpi-icon" style="background:#E0E7FF;color:#6366F1">💰</span></div><div class="kpi-value" id="dashEconomy">R$ 0,00</div></div><div class="card kpi"><div class="kpi-head"><span class="kpi-label">DESPESAS NO MÊS</span><span class="kpi-icon" style="background:#FEE2E2;color:#F43F5E">↓</span></div><div class="kpi-value" id="dashExpense">R$ 0,00</div></div></div>`;
+  if(name === 'perfil') return `<div class="top-actions" style="margin-bottom: 20px;"><h2>Meu Perfil</h2><p style="color:var(--muted); font-size: 13px;">Gerencie suas configurações, dados de cliente, plano e design.</p></div><div class="grid grid-2"><div class="card"><b style="font-size:16px;">Dados do Cliente</b><div style="display:grid;gap:12px;margin-top:16px"><div class="row"><input id="profileFirstName" class="input" placeholder="Nome"><input id="profileLastName" class="input" placeholder="Sobrenome"></div><input id="profileEmail" class="input" disabled title="E-mail gerado pelo Auth"><input id="profilePhone" class="input" placeholder="Celular (WhatsApp)"><input id="profileAddress" class="input" placeholder="Endereço Completo"><div class="divider">SEGURANÇA</div><input id="profileNewPassword" class="input" type="password" placeholder="Nova Senha (deixe vazio para não alterar)"><button class="btn btn-primary" onclick="appSaveProfile()" style="margin-top:10px;">Salvar Alterações</button></div></div><div style="display:flex;flex-direction:column;gap:16px;"><div class="card" style="background:linear-gradient(135deg,var(--primary),var(--violet));color:white;border:none;"><b style="font-size:16px;">Plano Vida+ AI</b><div style="font-size:24px;font-weight:800;margin-top:12px" id="perfilStatus">Status: Free</div><p style="margin-top:8px; font-size:13px; opacity:0.9;">Com o plano Premium você desbloqueia novos temas, relatórios avançados de IA e projeções financeiras.</p><button class="btn btn-white" style="margin-top:16px;width:100%" onclick="appActivatePremium()">Ativar Teste Premium</button></div><div class="card"><b style="font-size:16px;">Temas Profissionais</b><p style="font-size:12px;color:var(--muted);margin-top:6px;">Escolha o tema. O botão "◐" no topo alterna perfeitamente entre as versões claras e escuras do tema escolhido!</p><div id="themesList" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;"></div></div><div class="card"><b style="font-size:16px;">Avatares</b><p style="font-size:12px;color:var(--muted);margin-top:6px;">Escolha seu avatar preferido. Cada mudança garante XP na plataforma!</p><div id="avatarGrid" class="avatar-grid"></div></div></div></div>`;
+  if(name === 'relatorios') return `<div class="top-actions" style="margin-bottom: 20px;"><h2>IA & Insights Funcional</h2><p style="color:var(--muted); font-size: 13px;">O cérebro do Vida+ AI. Cruzamos seus hábitos, humor e finanças para entregar oportunidades invisíveis a olho nu.</p></div><div id="insightsList" class="grid grid-2"></div>`;
+  if(name === 'conquistas') return `<div class="top-actions" style="margin-bottom: 20px;"><h2>Sistema de Conquistas</h2><p style="color:var(--muted); font-size: 13px;">Cada ação importa. São 50 níveis para a evolução máxima (78.000 XP).</p></div><div class="grid grid-2"><div class="card"><div id="conquistasLevel" style="text-align:center; padding:20px 0;"></div><div class="progress" style="margin-top:20px; height:14px;"><i id="conquistasBar"></i></div><button class="btn btn-primary" style="margin-top:20px; width:100%" onclick="window.appGiveXP(150, 'Recompensa Diária (Simulação)')">Clique para Ganhar 150 XP!</button></div><div class="card"><b style="font-size:16px;">Benefícios de Nível</b><p style="font-size:12px; color:var(--muted); margin-top:10px;">Atingir novos níveis garantirá recursos exclusivos e descontos de parceiros.</p></div></div>`;
+  return `<div class="card"><h2>${name.toUpperCase()}</h2><p style="color:var(--muted);margin-top:8px;">Página renderizada rapidamente via Injeção Nativa.</p></div>`;
+}
+
 window.appLoadPage = async (name) => {
   if(!name) name = 'home';
   
-  // REGRA DE OURO: Se o usuário está logado e tentou ir para a Home, redireciona para Dashboard.
+  // LOGIC FIX: Redireciona usuários logados tentando acessar a home para o dashboard
   if (name === 'home' && getUid() !== 'default_user') {
     name = 'dashboard';
   }
@@ -124,41 +133,40 @@ window.appLoadPage = async (name) => {
   const homeView = document.getElementById('homeView');
   if(!pageContainer || !homeView) return;
 
-  // Renderiza a Home (Apenas para visitantes)
   if(name === 'home'){
     homeView.style.display = 'block'; 
     pageContainer.style.display = 'none';
+    
+    // Tenta fazer o fetch do arquivo pages/home.html. Se falhar, usa o fallback embutido
     try {
       const res = await fetch(`pages/home.html?_=${Date.now()}`);
       if(res.ok) {
         homeView.innerHTML = await res.text();
       } else {
-        homeView.innerHTML = `<div class="card" style="text-align:center;"><h3>Página Inicial não encontrada.</h3></div>`;
+        homeView.innerHTML = getPageHTML('home');
       }
     } catch(e) {
-      homeView.innerHTML = `<div class="card" style="text-align:center;"><h3>Erro local de CORS.</h3><p>Abra o projeto num servidor local (Live Server).</p></div>`;
+      homeView.innerHTML = getPageHTML('home');
     }
     return;
   }
   
-  // Renderiza as páginas restritas puxando os arquivos externos
   homeView.style.display = 'none'; 
   pageContainer.style.display = 'block';
   pageContainer.innerHTML = '<p style="padding:40px;text-align:center;color:var(--muted)">Carregando...</p>';
 
+  // Fetch das páginas (dashboard, etc.)
   try {
     const res = await fetch(`pages/${name}.html?_=${Date.now()}`);
     if(res.ok){
-      // Tira o DOMParser complexo, injeta o texto HTML direto
       pageContainer.innerHTML = await res.text();
     } else {
-       pageContainer.innerHTML = `<div class="card" style="text-align:center;"><h3>Página não encontrada</h3></div>`;
+       pageContainer.innerHTML = getPageHTML(name);
     }
   } catch(e) {
-    pageContainer.innerHTML = `<div class="card" style="text-align:center;"><h3>Erro de conexão</h3></div>`;
+    pageContainer.innerHTML = getPageHTML(name);
   }
 
-  // Aciona os Scripts Visuais após injetar o HTML
   try { if(name === 'dashboard') renderDashboard(); } catch(e){}
   try { if(name === 'perfil') renderPerfil(); } catch(e){}
   try { if(name === 'relatorios') renderRelatorios(); } catch(e){}
@@ -167,7 +175,7 @@ window.appLoadPage = async (name) => {
 
 function updateHeader(){
   const av = document.getElementById('avatar');
-  const navHomeBtn = document.getElementById('navHomeBtn'); // Botão Home no Menu
+  const navHomeBtn = document.getElementById('navHomeBtn');
 
   if(getUid() !== 'default_user'){
     const loginBtn = document.getElementById('topLoginBtn');
@@ -175,7 +183,6 @@ function updateHeader(){
     if(loginBtn) loginBtn.style.display = 'none';
     if(logoutBtn) logoutBtn.style.display = 'block';
     
-    // Esconde o botão da Home do menu quando o usuário está logado
     if(navHomeBtn) navHomeBtn.style.display = 'none';
     
     if(av) {
@@ -192,7 +199,6 @@ function updateHeader(){
     if(loginBtn) loginBtn.style.display = 'block';
     if(logoutBtn) logoutBtn.style.display = 'none';
     
-    // Mostra o botão da Home novamente se for visitante
     if(navHomeBtn) navHomeBtn.style.display = 'flex'; 
     if(av) av.textContent = '?';
   }
@@ -295,10 +301,10 @@ initAuthListener((user)=>{
     saveState();
     
     window.appCloseModal('overlayAuth');
-    updateHeader(); // Atualiza a UI para esconder o botão Home
+    updateHeader(); 
     document.documentElement.setAttribute('data-theme', state.settings.theme || 'default-light');
     
-    // Roteamento condicional de Login
+    // Fix: Redireciona para dashboard se a página for home ou não especificada
     window.appLoadPage(initialPage === 'home' ? 'dashboard' : initialPage);
 
     loadFullUser(user.uid).then(remote => {
