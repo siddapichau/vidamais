@@ -20,9 +20,8 @@
       <div class="brand-text"><b>Vida+ AI</b></div>
     </div>
     <nav class="nav" id="nav">
-      <!-- Botão com ID adicionado para sumir pós-login -->
+      <!-- Added ID navHomeBtn to hide it when logged in -->
       <button id="navHomeBtn" class="active" data-page="home" onclick="appLoadPage('home')"><span class="ico">⌂</span> Home</button>
-      
       <button data-page="dashboard" onclick="appLoadPage('dashboard')"><span class="ico">◧</span> Dashboard</button>
       <button data-page="financeiro" onclick="appLoadPage('financeiro')"><span class="ico">₿</span> Financeiro</button>
       <button data-page="habitos" onclick="appLoadPage('habitos')"><span class="ico">◍</span> Hábitos</button>
@@ -45,7 +44,6 @@
       </div>
     </div>
 
-    <!-- Containers vazios: O JS vai injetar os arquivos aqui dentro dinamicamente -->
     <div id="homeView"></div>
     <div id="pageContainer" style="display:none"></div>
   </main>
@@ -55,7 +53,7 @@
 <div class="overlay" id="overlayAuth">
   <div class="modal auth-modal">
     <div style="text-align:center">
-      <h2 id="authTitle">Acessar Vida+ AI</h2>
+      <h2 id="authTitle">Entrar no Vida+ AI</h2>
       <div class="auth-tabs">
         <button class="active" id="tabLogin" onclick="appSwitchAuthMode('login')">Entrar</button>
         <button id="tabSignup" onclick="appSwitchAuthMode('signup')">Criar conta</button>
@@ -65,13 +63,13 @@
       <div id="authLoginView" style="display:grid;gap:10px">
         <input id="authEmail" class="input" type="email" placeholder="seu@email.com">
         <input id="authPass" class="input" type="password" placeholder="Sua senha">
-        <button class="btn btn-primary" onclick="appHandleLogin()" style="height:44px">Entrar no Sistema</button>
+        <button class="btn btn-primary" onclick="appHandleLogin()" style="height:44px">Entrar</button>
       </div>
       <div id="authSignupView" style="display:none;gap:10px">
         <div class="row"><input id="authFirstName" class="input" placeholder="Nome"><input id="authLastName" class="input" placeholder="Sobrenome"></div>
         <input id="authEmailSignup" class="input" type="email" placeholder="seu@email.com">
-        <input id="authPassSignup" class="input" type="password" placeholder="Senha mín 6 caracteres">
-        <button class="btn btn-primary" onclick="appHandleSignup()" style="height:44px">Criar Minha Conta</button>
+        <input id="authPassSignup" class="input" type="password" placeholder="Senha mín 6">
+        <button class="btn btn-primary" onclick="appHandleSignup()" style="height:44px">Criar conta</button>
       </div>
       <button class="btn btn-ghost btn-sm" onclick="appCloseModal('overlayAuth')" style="width:100%; margin-top:10px;">Fechar</button>
     </div>
