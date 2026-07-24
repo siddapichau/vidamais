@@ -21,7 +21,7 @@
         .top-actions { display: flex; align-items: center; gap: 12px; }
         .btn-circle { width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--border); background: var(--card); display: grid; place-items: center; cursor: pointer; color: var(--text); }
         
-        .mobile-toggle { display: none; font-size: 24px; cursor: pointer; }
+        .mobile-toggle { display: none; font-size: 24px; cursor: pointer; color: var(--text); }
         @media (max-width: 768px) {
             .mobile-toggle { display: block; }
             .menu-pc { display: none; }
@@ -40,11 +40,12 @@
         </div>
 
         <nav class="menu-pc" id="pcNav">
-            <!-- Carregado via JS -->
+            <!-- Carregado via Firebase -->
         </nav>
 
         <div class="top-actions">
             <div class="btn-circle" onclick="appToggleTheme()">🌓</div>
+            <div id="userAvatar" class="avatar-circle" onclick="navigate('perfil.html')">?</div>
             <div class="mobile-toggle" onclick="toggleMobileMenu()">☰</div>
         </div>
     </header>
@@ -59,7 +60,7 @@
 <aside class="mobile-sidebar" id="mobileDrawer">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
         <span class="brand-text">Menu</span>
-        <span onclick="toggleMobileMenu()" style="font-size:30px; cursor:pointer;">&times;</span>
+        <span onclick="toggleMobileMenu()" style="font-size:30px; cursor:pointer; color: var(--text);">&times;</span>
     </div>
     <nav id="mobileNav" style="display:flex; flex-direction:column; gap:8px;"></nav>
 </aside>
@@ -81,47 +82,76 @@
         const frame = document.getElementById('mainIframe');
         frame.classList.add('iframe-loading');
         
-        // Garante que o caminho seja relativo a /pages/
         const target = page.startsWith('pages/') ? page : `pages/${page}`;
         frame.src = target;
         
-        // Atualiza URL sem recarregar
         const urlParams = new URLSearchParams(window.location.search);
         urlParams.set('page', page);
         window.history.pushState({}, '', `${window.location.pathname}?${urlParams.toString()}`);
 
-        toggleMobileMenu();
+        document.getElementById('mobileDrawer').classList.remove('open');
+        document.getElementById('mobileOverlay').classList.remove('open');
+        
         if (window.updateActiveMenu) window.updateActiveMenu(page);
         
         setTimeout(() => frame.classList.remove('iframe-loading'), 300);
     };
 
+    // Atualiza Menu e Avatar baseando-se no Estado
+    window.onAppStateUpdate = () => {
+        const state = window.appState;
+        const av = document.getElementById('userAvatar');
+        
+        if (state.profile && state.profile.email) {
+            if (state.profile.photo) {
+                av.innerHTML = `<img src="${state.profile.photo}" alt="Avatar">`;
+            } else {
+                av.textContent = (state.profile.name || state.profile.email).charAt(0).toUpperCase();
+            }
+        } else {
+            av.textContent = '?';
+        }
+
+        const frame = document.getElementById('mainIframe');
+        if (frame.contentWindow && frame.contentWindow.updateUI) {
+            frame.contentWindow.updateUI();
+        }
+    };
+
     // Carregar Menu do Firebase
     onValue(ref(db, 'admin/menu'), (snapshot) => {
-        const menu = snapshot.val() || [
-            { label: 'Home', page: 'home.html', icon: '🏠', order: 0 },
-            { label: 'Dashboard', page: 'dashboard.html', icon: '📊', order: 1 },
-            { label: 'Insumos', page: 'insumos.html', icon: '📦', order: 2 },
-            { label: 'Perfil', page: 'perfil.html', icon: '👤', order: 3 }
-        ];
+        const menuData = snapshot.val();
+        let menu = [];
+        
+        if (menuData) {
+            menu = Array.isArray(menuData) ? menuData : Object.values(menuData);
+        } else {
+            menu = [
+                { label: 'Home', page: 'home.html', icon: '🏠', order: 0 },
+                { label: 'Dashboard', page: 'dashboard.html', icon: '📊', order: 1 },
+                { label: 'Insumos', page: 'insumos.html', icon: '📦', order: 2 },
+                { label: 'Perfil', page: 'perfil.html', icon: '👤', order: 3 }
+            ];
+        }
 
-        const sorted = menu.sort((a,b) => a.order - b.order);
+        const sorted = menu.sort((a,b) => (a.order || 0) - (b.order || 0));
         const pcNav = document.getElementById('pcNav');
         const mobNav = document.getElementById('mobileNav');
         
         pcNav.innerHTML = ''; mobNav.innerHTML = '';
 
         sorted.forEach(item => {
-            const createLink = (isMob) => {
+            if(!item) return;
+            const createLink = () => {
                 const a = document.createElement('a');
                 a.className = 'nav-item';
                 a.href = "javascript:void(0)";
                 a.onclick = () => navigate(item.page);
-                a.innerHTML = `<span>${item.icon || '•'}</span> <span>${item.label}</span>`;
+                a.innerHTML = `<span style="font-size:18px">${item.icon || '•'}</span> <span>${item.label}</span>`;
                 return a;
             };
-            pcNav.appendChild(createLink(false));
-            mobNav.appendChild(createLink(true));
+            pcNav.appendChild(createLink());
+            mobNav.appendChild(createLink());
         });
 
         window.updateActiveMenu = (page) => {
@@ -131,19 +161,10 @@
             });
         };
 
-        // Navegação Inicial
         const params = new URLSearchParams(window.location.search);
         const initial = params.get('page') || 'home.html';
         navigate(initial);
     });
-
-    // Detectar login e recarregar iframe se necessário
-    window.onAppStateUpdate = () => {
-        const frame = document.getElementById('mainIframe');
-        if (frame.contentWindow && frame.contentWindow.updateUI) {
-            frame.contentWindow.updateUI();
-        }
-    };
 </script>
 
 </body>
