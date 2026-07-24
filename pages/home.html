@@ -16,6 +16,22 @@
   <div id="todaySummary" style="margin-top:20px;display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))"></div>
 </div>
 
+<div class="card" id="aiTipsCard" style="margin-top:16px; display:none; position:relative; overflow:hidden; border:1px solid color-mix(in srgb, var(--primary) 30%, var(--border))">
+  <div style="position:absolute; inset:0; background:radial-gradient(400px at 100% 0%, color-mix(in srgb, var(--primary) 12%, transparent), transparent); pointer-events:none"></div>
+  <div style="display:flex;align-items:center;gap:10px"><span style="font-size:22px">🤖</span><b>Dicas de IA para Iniciantes</b></div>
+  <p class="muted text-xs" style="margin:6px 0 10px">Recomendações contextuais baseadas no seu progresso atual.</p>
+  <div id="aiTips" style="display:grid;gap:8px"></div>
+</div>
+
+<div class="card" id="adBanner" style="margin-top:16px; display:none; align-items:center; gap:12px; background:linear-gradient(135deg, var(--bg-2), color-mix(in srgb, var(--accent) 12%, var(--bg-2))); border:1px dashed var(--border)">
+  <span style="font-size:22px">📺</span>
+  <div style="flex:1; min-width:0">
+    <div style="font-weight:800; font-size:13px">Anúncio</div>
+    <div class="muted text-xs">Reduzido em <b id="adReduction">0%</b> no seu nível (sistema de redução progressiva).</div>
+  </div>
+  <button class="btn-ghost btn-sm" onclick="dismissAd()">Dispensar</button>
+</div>
+
 <div class="grid-3" style="margin-top:16px">
   <div class="card"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:24px">📺</span><b>Assista e Ganhe</b></div><p class="muted text-xs" style="margin:10px 0">50 moedas + 10 XP por vídeo. Simulação AdMob.</p><button class="btn-primary w-full" onclick="watchVideo()">Assistir 📺 +50 🪙</button><div style="margin-top:8px" class="text-xs muted">Cooldown 10s para evitar spam</div></div>
   <div class="card"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:24px">⚡</span><b>Evolução Rápida</b></div><p class="muted text-xs" style="margin:10px 0">3 ações rápidas para +80 XP instantâneo.</p><div style="display:grid;gap:6px"><button class="btn-ghost btn-sm" onclick="quickAction('finance')">+ Registrar gasto</button><button class="btn-ghost btn-sm" onclick="quickAction('habit')">+ Check hábito</button><button class="btn-ghost btn-sm" onclick="quickAction('mood')">+ Humor do dia</button></div></div>
@@ -25,6 +41,49 @@
 <script>
 function getState(){ return parent.appState||{user:{xp:0,level:1,coins:0,premium:false}, profile:{}, transactions:[], habits:[], moods:[], goals:[]}; }
 
+// Dicas de IA contextuais para iniciantes
+function getAITips(state){
+  const tips = [];
+  if(!(state.profile.firstName || state.profile.name)) tips.push({icon:'🪪', t:'Complete seu perfil', d:'Em Perfil, adicione seu nome e escolha um avatar emoji para ganhar a medalha Identidade.'});
+  if((state.transactions||[]).length===0) tips.push({icon:'💰', t:'Registre sua 1ª transação', d:'Vá em Financeiro e anote uma receita ou gasto. Cada registro dá XP e moedas.'});
+  if((state.habits||[]).length===0) tips.push({icon:'⭐', t:'Crie seu 1º hábito', d:'Hábitos geram streak e evolução diária. Comece com "Beber água".'});
+  if((state.moods||[]).length===0) tips.push({icon:'🧠', t:'Registre seu humor', d:'Acompanhar o humor ajuda a IA a entender seu padrão emocional.'});
+  if((state.goals||[]).length===0) tips.push({icon:'🎯', t:'Defina uma meta', d:'Metas dão direção. Crie uma meta financeira ou de hábito.'});
+  if((state.user.xp||0)<200) tips.push({icon:'📺', t:'Ganhe moedas assistindo', d:'No card abaixo, assista vídeos para ganhar 50 🪙 e 10 XP rapidamente.'});
+  return tips.slice(0,3);
+}
+
+function renderAITips(state){
+  const card = document.getElementById('aiTipsCard');
+  const box = document.getElementById('aiTips');
+  if(!card || !box) return;
+  const tips = getAITips(state);
+  if(!tips.length){ card.style.display='none'; return; }
+  card.style.display='block';
+  box.innerHTML = tips.map(t=>`<div style="display:flex;gap:10px;align-items:flex-start;padding:10px;background:var(--card);border:1px solid var(--border);border-radius:12px"><span style="font-size:18px">${t.icon}</span><div><div style="font-weight:800;font-size:12px">${t.t}</div><div class="muted text-xs">${t.d}</div></div></div>`).join('');
+}
+
+// Redução progressiva de anúncios conforme o nível
+function renderAd(state){
+  const ad = document.getElementById('adBanner');
+  if(!ad) return;
+  const s = (parent.getAdSettings ? parent.getAdSettings(parent.appState) : {enabled:true, reductionPct:0});
+  if(!s.enabled || s.reductionPct>=80){ ad.style.display='none'; return; }
+  ad.style.display='flex';
+  const r = document.getElementById('adReduction');
+  if(r) r.textContent = s.reductionPct+'%';
+}
+
+function dismissAd(){ const ad=document.getElementById('adBanner'); if(ad) ad.style.display='none'; }
+
+// Ação de compartilhar (medalha Social)
+function shareApp(){
+  if(parent.appState && parent.appState.user) parent.appState.user.sharedApp = true;
+  if(parent.saveLocalState) parent.saveLocalState();
+  if(parent.toast) parent.toast('📣 Obrigado por divulgar o Vida+! Medalha desbloqueada.');
+  if(window.updateUI) window.updateUI();
+}
+
 function updateUI(){
   const state=getState();
   const authDiv=document.getElementById('authCheck');
@@ -32,12 +91,13 @@ function updateUI(){
     const lvl = parent.getLevelData ? parent.getLevelData(state.user.xp) : {current:{name:'Nv1', level:1}, next:{xp:1000}, pct:0};
     authDiv.innerHTML = `
       <div style="display:inline-flex;align-items:center;gap:12px;background:var(--bg-2);border:1px solid var(--border);padding:8px 14px;border-radius:100px">
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--primary);color:white;display:grid;place-items:center;font-weight:800">${(state.profile.firstName||state.profile.name||state.profile.email||'?')[0].toUpperCase()}</div>
+        <div id="homeAvatar" class="avatar-circle" style="width:32px;height:32px;font-size:13px"></div>
         <div style="text-align:left"><div style="font-weight:800;font-size:13px">Olá, ${state.profile.firstName||state.profile.name||state.profile.email.split('@')[0]}! 👋</div><div class="muted text-xs">${lvl.current.name} • ${lvl.current.level}/50 • ${state.user.xp} XP</div></div>
       </div>
       <div style="margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
         <button class="btn-primary btn-sm" onclick="parent.navigate('dashboard.html')">Meu Dashboard 📊</button>
         <button class="btn-ghost btn-sm" onclick="parent.navigate('financeiro.html')">Finanças 💰</button>
+        <button class="btn-ghost btn-sm" onclick="shareApp()">Compartilhar 📣</button>
       </div>
     `;
   }else{
@@ -56,6 +116,10 @@ function updateUI(){
   `;
 
   document.getElementById('premiumCard').innerHTML = state.user.premium ? `<div style="background:linear-gradient(135deg,#D4AF37,#F1C40F);color:black;padding:10px 12px;border-radius:12px;font-weight:800;text-align:center">💎 Premium ativo<br><span style="font-size:11px">Temas + IA liberados</span></div>` : `<div style="font-size:12px"><div style="display:flex;justify-content:space-between" class="muted"><span>Moedas</span><span class="font-bold" style="color:var(--text)">🪙 ${state.user.coins||0}/500</span></div><div class="progress" style="margin-top:8px"><i style="width:${Math.min(100,((state.user.coins||0)/500)*100)}%"></i></div><button class="btn-ghost w-full btn-sm" style="margin-top:10px" onclick="parent.navigate('perfil.html')">Desbloquear temas 💎</button></div>`;
+
+  if(window.fillAvatar) window.fillAvatar(document.getElementById('homeAvatar'), state.profile||{});
+  renderAITips(state);
+  renderAd(state);
 }
 
 let videoCooldown=false;
