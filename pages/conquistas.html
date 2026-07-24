@@ -7,8 +7,12 @@
 <style>body{padding:20px; max-width:1200px; margin:0 auto;}</style>
 </head>
 <body>
-<h2 style="font-size:26px;font-weight:800">Conquistas • 50 Níveis • 1 Ano</h2>
-<p class="muted text-sm" style="margin-bottom:16px">78k XP para nível 50. Cada ação conta. Evolução real, diária.</p>
+<h2 style="font-size:26px;font-weight:800">Conquistas • 50 Níveis • 50 Medalhas</h2>
+<p class="muted text-sm" style="margin-bottom:16px">~76k XP para o nível 50. 50 medalhas para desbloquear. Evolução real, diária.</p>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+  <span class="badge badge-free" id="achCount">0/50</span>
+  <span class="badge badge-free" id="achProgressPct">0%</span>
+</div>
 
 <div class="grid-2">
   <div class="card">
@@ -71,28 +75,102 @@ function renderLevel(){
 function renderMedals(){
   const state=getState();
   const xp=state.user.xp||0;
-  const txCount = (state.transactions||[]).length;
-  const habitsDone = (state.habits||[]).reduce((a,h)=>a+h.completedDates.length,0);
-  const moods = (state.moods||[]).length;
-  const goalsDone = (state.goals||[]).filter(g=>g.done).length;
+  const coins=state.user.coins||0;
+  const streak=state.user.streak||0;
+  const level=state.user.level||1;
+  const tx = state.transactions||[];
+  const txCount = tx.length;
+  const income = tx.filter(t=>t.type==='income').reduce((a,t)=>a+Number(t.amount||0),0);
+  const expense = tx.filter(t=>t.type==='expense').reduce((a,t)=>a+Number(t.amount||0),0);
+  const habits = state.habits||[];
+  const habitsDone = habits.reduce((a,h)=>a+(h.completedDates||[]).length,0);
+  const maxHabitStreak = habits.reduce((a,h)=>Math.max(a,h.streak||0),0);
+  const moods = state.moods||[];
+  const avgMood = moods.length? moods.slice(-30).reduce((a,b)=>a+b.value,0)/Math.min(30,moods.length) : 0;
+  const goals = state.goals||[];
+  const goalsDone = goals.filter(g=>g.done).length;
+  const today = new Date().toISOString().slice(0,10);
+  const habitsToday = habits.filter(h=>(h.completedDates||[]).includes(today)).length;
+  const hasProfile = !!(state.profile && (state.profile.firstName || state.profile.name));
+  const isPremium = !!state.user.premium;
+
   const medals = [
-    {id:'first_xp', name:'Primeiro Passo', desc:'Ganhe 1 XP', icon:'🌱', unlocked: xp>=1},
-    {id:'xp_100', name:'Iniciante', desc:'100 XP', icon:'🔰', unlocked: xp>=100},
-    {id:'xp_1k', name:'Focado', desc:'1.000 XP', icon:'🎯', unlocked: xp>=1000},
-    {id:'xp_5k', name:'Disciplinado', desc:'5.000 XP', icon:'💎', unlocked: xp>=5000},
-    {id:'xp_10k', name:'Mestre', desc:'10.000 XP', icon:'👑', unlocked: xp>=10000},
-    {id:'tx_10', name:'Organizado', desc:'10 transações financeiras', icon:'💰', unlocked: txCount>=10},
-    {id:'habit_7', name:'Constante 7', desc:'7 hábitos completados', icon:'🔥', unlocked: habitsDone>=7},
-    {id:'habit_30', name:'Hábito de Aço', desc:'30 hábitos completados', icon:'⚡', unlocked: habitsDone>=30},
-    {id:'mood_7', name:'Autoconhecimento', desc:'7 registros de humor', icon:'🧠', unlocked: moods>=7},
-    {id:'goal_1', name:'Realizador', desc:'1 meta concluída', icon:'🎉', unlocked: goalsDone>=1},
+    // === XP milestones (13) ===
+    {id:'xp_first', name:'Primeiro Passo', desc:'Ganhe seu primeiro XP', icon:'🌱', cat:'XP', unlocked: xp>=1},
+    {id:'xp_100', name:'Iniciante', desc:'Acumule 100 XP', icon:'🔰', cat:'XP', unlocked: xp>=100},
+    {id:'xp_500', name:'Explorador', desc:'Acumule 500 XP', icon:'🧭', cat:'XP', unlocked: xp>=500},
+    {id:'xp_1k', name:'Focado', desc:'Acumule 1.000 XP', icon:'🎯', cat:'XP', unlocked: xp>=1000},
+    {id:'xp_2k', name:'Dedicado', desc:'Acumule 2.000 XP', icon:'📈', cat:'XP', unlocked: xp>=2000},
+    {id:'xp_5k', name:'Disciplinado', desc:'Acumule 5.000 XP', icon:'💎', cat:'XP', unlocked: xp>=5000},
+    {id:'xp_10k', name:'Especialista', desc:'Acumule 10.000 XP', icon:'🏅', cat:'XP', unlocked: xp>=10000},
+    {id:'xp_20k', name:'Mestre', desc:'Acumule 20.000 XP', icon:'👑', cat:'XP', unlocked: xp>=20000},
+    {id:'xp_35k', name:'Lenda', desc:'Acumule 35.000 XP', icon:'🏆', cat:'XP', unlocked: xp>=35000},
+    {id:'xp_50k', name:'Supremo', desc:'Acumule 50.000 XP', icon:'🌟', cat:'XP', unlocked: xp>=50000},
+    {id:'xp_78k', name:'Transcendente', desc:'Chegue a 78.000 XP (Nv 50)', icon:'♾️', cat:'XP', unlocked: xp>=78000},
+    {id:'lvl_10', name:'Dez Patamares', desc:'Alcance o Nível 10', icon:'🔟', cat:'XP', unlocked: level>=10},
+    {id:'lvl_25', name:'Meio Caminho', desc:'Alcance o Nível 25', icon:'🎖️', cat:'XP', unlocked: level>=25},
+
+    // === Financeiro (10) ===
+    {id:'tx_1', name:'Registro Inicial', desc:'Crie sua 1ª transação', icon:'📝', cat:'Financeiro', unlocked: txCount>=1},
+    {id:'tx_10', name:'Organizado', desc:'10 transações registradas', icon:'💰', cat:'Financeiro', unlocked: txCount>=10},
+    {id:'tx_50', name:'Contador', desc:'50 transações', icon:'🧮', cat:'Financeiro', unlocked: txCount>=50},
+    {id:'tx_100', name:'Financeiro', desc:'100 transações', icon:'💼', cat:'Financeiro', unlocked: txCount>=100},
+    {id:'inc_1k', name:'Primeiro Milhar', desc:'Receitas somam R$ 1.000', icon:'💵', cat:'Financeiro', unlocked: income>=1000},
+    {id:'inc_10k', name:'Dez Mil Reais', desc:'Receitas somam R$ 10.000', icon:'🤑', cat:'Financeiro', unlocked: income>=10000},
+    {id:'save_pos', name:'Mês Positivo', desc:'Economize no mês', icon:'✅', cat:'Financeiro', unlocked: income>expense},
+    {id:'save_pct20', name:'Economista', desc:'Economize 20% da renda', icon:'🏦', cat:'Financeiro', unlocked: income>0 && ((income-expense)/income)>=0.2},
+    {id:'cat_all', name:'Diversificado', desc:'Use 5+ categorias de despesa', icon:'🗂️', cat:'Financeiro', unlocked: new Set(tx.filter(t=>t.type==='expense').map(t=>t.category)).size>=5},
+    {id:'tx_month', name:'Frequente', desc:'5+ transações hoje', icon:'🗓️', cat:'Financeiro', unlocked: tx.filter(t=>(t.date||'').slice(0,10)===today).length>=5},
+
+    // === Hábitos (10) ===
+    {id:'hbt_1', name:'Primeiro Hábito', desc:'Crie seu 1º hábito', icon:'⭐', cat:'Hábitos', unlocked: habits.length>=1},
+    {id:'hbt_3', name:'Trindade', desc:'Tenha 3 hábitos ativos', icon:'🔱', cat:'Hábitos', unlocked: habits.length>=3},
+    {id:'hbt_5', name:'Múltiplos Hábitos', desc:'Tenha 5 hábitos', icon:'📋', cat:'Hábitos', unlocked: habits.length>=5},
+    {id:'hbt_done1', name:'Primeiro Check', desc:'Complete 1 hábito', icon:'☑️', cat:'Hábitos', unlocked: habitsDone>=1},
+    {id:'hbt_done7', name:'Constante 7', desc:'7 checks de hábito', icon:'🔥', cat:'Hábitos', unlocked: habitsDone>=7},
+    {id:'hbt_done30', name:'Hábito de Aço', desc:'30 checks', icon:'⚡', cat:'Hábitos', unlocked: habitsDone>=30},
+    {id:'hbt_done100', name:'Centena', desc:'100 checks de hábitos', icon:'💯', cat:'Hábitos', unlocked: habitsDone>=100},
+    {id:'streak_3', name:'3 Seguidos', desc:'Streak de 3 dias', icon:'🥉', cat:'Hábitos', unlocked: maxHabitStreak>=3},
+    {id:'streak_7', name:'Semana Perfeita', desc:'Streak de 7 dias', icon:'🥈', cat:'Hábitos', unlocked: maxHabitStreak>=7},
+    {id:'streak_21', name:'Disciplinado 21', desc:'Streak de 21 dias', icon:'🥇', cat:'Hábitos', unlocked: maxHabitStreak>=21},
+
+    // === Humor (6) ===
+    {id:'mood_1', name:'Se Conhecendo', desc:'1º registro de humor', icon:'🧘', cat:'Humor', unlocked: moods.length>=1},
+    {id:'mood_7', name:'Semana Interior', desc:'7 registros de humor', icon:'🧠', cat:'Humor', unlocked: moods.length>=7},
+    {id:'mood_30', name:'Mês de Consciência', desc:'30 registros de humor', icon:'🫀', cat:'Humor', unlocked: moods.length>=30},
+    {id:'mood_streak7', name:'Autoconhecimento', desc:'7 dias seguidos de humor', icon:'🌿', cat:'Humor', unlocked: streak>=7 && moods.length>=7},
+    {id:'mood_good', name:'Positivo', desc:'Humor médio ≥ 4 (últimos 7)', icon:'😊', cat:'Humor', unlocked: avgMood>=4},
+    {id:'mood_range', name:'Arco-Íris', desc:'Use os 5 níveis de humor', icon:'🌈', cat:'Humor', unlocked: new Set(moods.map(m=>m.value)).size>=5},
+
+    // === Metas (5) ===
+    {id:'goal_1', name:'Realizador', desc:'Conclua 1 meta', icon:'🎉', cat:'Metas', unlocked: goalsDone>=1},
+    {id:'goal_3', name:'Três Conquistas', desc:'Conclua 3 metas', icon:'🏁', cat:'Metas', unlocked: goalsDone>=3},
+    {id:'goal_create', name:'Planejador', desc:'Crie 5 metas', icon:'🗺️', cat:'Metas', unlocked: goals.length>=5},
+    {id:'goal_finish', name:'Finalizador', desc:'Conclua 5 metas', icon:'✅', cat:'Metas', unlocked: goalsDone>=5},
+    {id:'goal_hard', name:'Desafiador', desc:'Meta de 30+ dias concluída', icon:'⛰️', cat:'Metas', unlocked: goals.some(g=>g.done && g.deadline && g.target>=50)},
+
+    // === Diversas / Progressão (6) ===
+    {id:'profile_set', name:'Identidade', desc:'Complete seu perfil', icon:'🪪', cat:'Progresso', unlocked: hasProfile},
+    {id:'coins_100', name:'Poupador', desc:'100 moedas acumuladas', icon:'🪙', cat:'Progresso', unlocked: coins>=100},
+    {id:'coins_500', name:'Premium Ready', desc:'500 moedas acumuladas', icon:'💠', cat:'Progresso', unlocked: coins>=500},
+    {id:'coins_1k', name:'Mil Moedas', desc:'1.000 moedas', icon:'🏛️', cat:'Progresso', unlocked: coins>=1000},
+    {id:'premium', name:'💎 Premium', desc:'Seja usuário Premium', icon:'👑', cat:'Progresso', unlocked: isPremium},
+    {id:'all3today', name:'Dia Completo', desc:'Hábito+Humor+Transação no mesmo dia', icon:'⭐', cat:'Progresso', unlocked: habitsToday>0 && moods.some(m=>m.date===today) && tx.some(t=>(t.date||'').slice(0,10)===today)},
   ];
-  document.getElementById('achList').innerHTML = medals.map(m=>`<div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:${m.unlocked?'var(--bg-2)':'transparent'};border:1px solid ${m.unlocked?'var(--border)':'var(--border)'};opacity:${m.unlocked?1:0.5}">
-    <div style="font-size:22px">${m.icon}</div><div style="flex:1"><div style="font-weight:800;font-size:12px">${m.name}</div><div class="muted text-xs">${m.desc}</div></div><div>${m.unlocked?'✅':'🔒'}</div>
+
+  // Contadores
+  const unlockedCount = medals.filter(m=>m.unlocked).length;
+  document.getElementById('achCount').textContent = `${unlockedCount}/${medals.length}`;
+  document.getElementById('achProgressPct').textContent = `${Math.round((unlockedCount/medals.length)*100)}%`;
+
+  document.getElementById('achList').innerHTML = medals.map(m=>`<div style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:${m.unlocked?'var(--bg-2)':'transparent'};border:1px solid var(--border);opacity:${m.unlocked?1:0.5}">
+    <div style="font-size:22px;width:34px;text-align:center;flex-shrink:0">${m.icon}</div>
+    <div style="flex:1;min-width:0"><div style="font-weight:800;font-size:12px;display:flex;gap:6px;align-items:center">${m.name} <span style="font-size:9px;padding:2px 6px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--muted);font-weight:700">${m.cat}</span></div><div class="muted text-xs">${m.desc}</div></div>
+    <div style="font-size:16px">${m.unlocked?'✅':'🔒'}</div>
   </div>`).join('');
 
   const next = medals.filter(m=>!m.unlocked).slice(0,3);
-  document.getElementById('nextRewards').innerHTML = next.length? next.map(m=>`<div style="padding:12px;border-radius:12px;border:1px dashed var(--border);background:var(--bg-2)"><div style="display:flex;gap:10px;align-items:center"><span style="font-size:20px">${m.icon}</span><div><div style="font-weight:800;font-size:12px">${m.name}</div><div class="muted text-xs">Falta pouco: ${m.desc}</div></div></div></div>`).join('') : `<div style="text-align:center;padding:20px" class="muted"><b>🎉 Todas as medalhas básicas desbloqueadas!</b><p style="font-size:12px;margin-top:4px">Você é Lenda!</p></div>`;
+  document.getElementById('nextRewards').innerHTML = next.length? next.map(m=>`<div style="padding:12px;border-radius:12px;border:1px dashed var(--border);background:var(--bg-2)"><div style="display:flex;gap:10px;align-items:center"><span style="font-size:20px">${m.icon}</span><div><div style="font-weight:800;font-size:12px">${m.name}</div><div class="muted text-xs">Falta pouco: ${m.desc}</div></div></div></div>`).join('') : `<div style="text-align:center;padding:20px" class="muted"><b>🎉 Todas as ${medals.length} medalhas desbloqueadas!</b><p style="font-size:12px;margin-top:4px">Você é uma Lenda Vida+!</p></div>`;
 }
 
 function renderAll(){ renderLevel(); renderMedals(); }

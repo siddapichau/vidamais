@@ -1,12 +1,18 @@
-const CACHE_NAME = 'vidamais-v2-3-2';
+const CACHE_NAME = 'vidamais-v2-3-3';
 const ASSETS = [
   './',
   './index.html',
+  './admin.html',
+  './debug.html',
   './css/style.css',
   './js/core.js',
   './js/firebase.js',
   './js/app.js',
   './manifest.json',
+  './sw.js',
+  './logo.png',
+  './favicon.png',
+  './assets/logo.png',
   './pages/home.html',
   './pages/dashboard.html',
   './pages/financeiro.html',
