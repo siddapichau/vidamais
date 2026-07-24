@@ -1,13 +1,150 @@
-<script>if(window.top===window.self){ location.replace('../index.html?page=habitos'); }</script>
-<div id="page-habitos-fragment">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-    <div><h2 style="font-size:24px">Hábitos</h2><p style="font-size:12px;color:var(--muted)">Editável em pages/habitos.html • Usa regras do Index</p></div>
-    <button class="btn btn-primary btn-sm" onclick="appOpenHabitModal()">+ Novo hábito</button>
-  </div>
-  <div class="grid grid-4" id="habitStats"></div>
-  <div class="grid grid-2" style="margin-top:14px">
-    <div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><b>Biblioteca</b><span class="link" onclick="appLoadPage('dashboard')">Voltar</span></div><div id="habitsLibrary" style="display:grid;gap:8px"></div></div>
-    <div class="card"><b>Heatmap</b><div id="habitHeatmap" style="display:grid;gap:8px;margin-top:10px"></div></div>
-  </div>
-  <p style="font-size:11px;color:var(--muted);margin-top:10px;text-align:center">Este arquivo é só HTML fragmentado. Não precisa puxar .js ou .css. Edite à vontade.</p>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="../css/style.css">
+<script>const th = parent.document.documentElement.getAttribute('data-theme'); if(th) document.documentElement.setAttribute('data-theme', th);</script>
+<style>body{padding:20px; max-width:1200px; margin:0 auto;}</style>
+</head>
+<body>
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:18px">
+  <div><h2 style="font-size:26px;font-weight:800">Hábitos</h2><p class="muted text-sm">Consistência diária constrói evolução. Ganhe +15 XP por check.</p></div>
+  <button class="btn-primary" onclick="openHabitModal()">+ Novo hábito</button>
 </div>
+
+<div class="grid-4" id="habitStats"></div>
+
+<div class="grid-2" style="margin-top:16px">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><b>Biblioteca de hábitos</b><span class="muted text-xs" id="todayStr"></span></div>
+    <div id="habitsLibrary" style="display:grid;gap:8px"></div>
+  </div>
+  <div style="display:grid;gap:14px">
+    <div class="card"><b>Heatmap 90 dias</b><p class="muted text-xs">Cada bloco = 1 dia de atividade</p><div id="habitHeatmap" style="margin-top:14px"></div><div style="display:flex;gap:6px;margin-top:10px;align-items:center" class="text-xs muted"><span>Menor</span><div class="heat-day" style="width:16px;height:16px"></div><div class="heat-day l1" style="width:16px;height:16px"></div><div class="heat-day l2" style="width:16px;height:16px"></div><div class="heat-day l3" style="width:16px;height:16px"></div><div class="heat-day l4" style="width:16px;height:16px"></div><span>Maior</span></div></div>
+    <div class="card"><b>Modelos rápidos</b><p class="muted text-xs" style="margin-bottom:10px">Clique para adicionar instantâneo</p><div style="display:grid;gap:8px" id="quickTemplates"></div></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="habitModal" onclick="if(event.target===this) closeHabitModal()">
+  <div class="modal"><div class="modal-header"><b>Novo hábito</b><span style="cursor:pointer" onclick="closeHabitModal()">✕</span></div>
+  <div class="modal-body">
+    <div class="input-group"><label>Nome do hábito</label><input id="hName" class="input" placeholder="Ex: Correr 5km"></div>
+    <div class="grid-3">
+      <div class="input-group"><label>Ícone</label><input id="hIcon" class="input" value="⭐" maxlength="2"></div>
+      <div class="input-group"><label>Cor</label><input type="color" id="hColor" class="input" value="#3B82F6" style="padding:4px;height:46px"></div>
+      <div class="input-group"><label>Dica</label><select class="input" onchange="document.getElementById('hName').value=this.value"><option value="">Exemplos</option><option>Beber Água</option><option>Meditar</option><option>Ler</option><option>Exercício</option><option>Estudar IA</option></select></div>
+    </div>
+    <button class="btn-primary w-full" onclick="saveHabit()">Criar hábito +20 XP</button>
+  </div></div>
+</div>
+
+<script>
+function getState(){ return parent.appState || {habits:[]}; }
+const templates = [
+  {name:'Beber 2L Água', icon:'💧', color:'#06B6D4'},
+  {name:'Meditar 10min', icon:'🧘', color:'#8B5CF6'},
+  {name:'Ler 20min', icon:'📚', color:'#F59E0B'},
+  {name:'Caminhar', icon:'🚶', color:'#10B981'},
+  {name:'Sem açucar', icon:'🚫', color:'#F43F5E'},
+  {name:'Dormir 8h', icon:'😴', color:'#6366F1'},
+];
+
+function openHabitModal(){ document.getElementById('habitModal').classList.add('open'); }
+function closeHabitModal(){ document.getElementById('habitModal').classList.remove('open'); }
+window.openHabitModal=openHabitModal; window.closeHabitModal=closeHabitModal;
+
+function saveHabit(){
+  const name=document.getElementById('hName').value.trim();
+  const icon=document.getElementById('hIcon').value||'⭐';
+  const color=document.getElementById('hColor').value;
+  if(!name){ alert('Nome obrigatório'); return; }
+  parent.addHabit({name,icon,color});
+  closeHabitModal();
+  document.getElementById('hName').value='';
+  renderAll();
+}
+
+function renderStats(){
+  const state=getState();
+  const today = new Date().toISOString().slice(0,10);
+  const total = state.habits.length;
+  const doneToday = state.habits.filter(h=> h.completedDates.includes(today)).length;
+  const bestStreak = state.habits.reduce((a,h)=> Math.max(a, h.streak||0),0);
+  const completion = total? Math.round((doneToday/total)*100):0;
+  document.getElementById('habitStats').innerHTML = `
+    <div class="card"><span class="kpi-label">Total hábitos</span><div class="kpi-value">${total}</div><div class="kpi-sub">ativos</div></div>
+    <div class="card"><span class="kpi-label">Feitos hoje</span><div class="kpi-value" style="color:var(--emerald)">${doneToday}/${total}</div><div class="kpi-sub">${completion}% conclusão</div></div>
+    <div class="card"><span class="kpi-label">Melhor streak</span><div class="kpi-value">🔥 ${bestStreak}</div><div class="kpi-sub">dias seguidos</div></div>
+    <div class="card"><span class="kpi-label">XP ganho</span><div class="kpi-value" style="color:var(--violet)">${(state.habits.reduce((a,h)=>a+(h.completedDates.length*15),0))} XP</div><div class="kpi-sub">de hábitos</div></div>
+  `;
+}
+
+function renderLibrary(){
+  const state=getState();
+  const today = new Date().toISOString().slice(0,10);
+  const box=document.getElementById('habitsLibrary');
+  if(state.habits.length===0){
+    box.innerHTML=`<div style="text-align:center;padding:30px;color:var(--muted)"><div style="font-size:28px">🌱</div><b>Nenhum hábito ainda</b><p style="font-size:12px;margin-top:4px">Crie seu primeiro hábito e comece sua evolução</p></div>`;
+    return;
+  }
+  box.innerHTML = state.habits.map(h=>{
+    const done = h.completedDates.includes(today);
+    return `<div class="habit-card ${done?'done':''}">
+      <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
+        <div class="habit-dot" style="background:${h.color}"></div>
+        <span style="font-size:20px">${h.icon}</span>
+        <div style="flex:1;min-width:0"><div style="font-weight:800;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${h.name}</div><div class="muted text-xs">🔥 ${h.streak||0} dias • ${h.completedDates.length} checks</div></div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="btn ${done?'btn-primary':'btn-ghost'} btn-sm" onclick="toggleH('${h.id}')">${done?'✓ Feito':'Fazer'}</button>
+        <span class="link" style="color:var(--rose)" onclick="delH('${h.id}')">🗑</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleH(id){ parent.toggleHabit(id); renderAll(); }
+function delH(id){ if(confirm('Excluir hábito?')){ parent.deleteHabit(id); renderAll(); } }
+window.toggleH=toggleH; window.delH=delH;
+
+function renderHeatmap(){
+  const state=getState();
+  const container=document.getElementById('habitHeatmap');
+  // aggregate per day across all habits
+  const map={};
+  state.habits.forEach(h=>{
+    (h.completedDates||[]).forEach(d=>{
+      map[d]=(map[d]||0)+1;
+    });
+  });
+  const days=[];
+  for(let i=89;i>=0;i--){
+    const d=new Date(Date.now()-i*86400000);
+    const key=d.toISOString().slice(0,10);
+    days.push({key, count: map[key]||0});
+  }
+  container.innerHTML = `<div class="heatmap">${days.map(day=>{
+    let cls='heat-day';
+    if(day.count>=4) cls+=' l4';
+    else if(day.count>=3) cls+=' l3';
+    else if(day.count>=2) cls+=' l2';
+    else if(day.count>=1) cls+=' l1';
+    return `<div class="${cls}" title="${day.key}: ${day.count} hábitos"></div>`;
+  }).join('')}</div>`;
+}
+
+function renderTemplates(){
+  document.getElementById('quickTemplates').innerHTML = templates.map(t=>`<div class="habit-card" style="cursor:pointer" onclick="addTemplate('${t.name}','${t.icon}','${t.color}')"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">${t.icon}</span><b style="font-size:13px">${t.name}</b></div><span class="pill">+ Adicionar</span></div>`).join('');
+}
+function addTemplate(name,icon,color){ parent.addHabit({name,icon,color}); renderAll(); }
+window.addTemplate=addTemplate;
+
+function renderAll(){ renderStats(); renderLibrary(); renderHeatmap(); renderTemplates(); document.getElementById('todayStr').textContent = new Date().toLocaleDateString('pt-BR',{weekday:'long', day:'2-digit', month:'short'}); }
+
+function updateUI(){ renderAll(); }
+const c=setInterval(()=>{ if(parent&&parent.appState&&parent.appState.isLoaded){ updateUI(); clearInterval(c);} },100);
+setTimeout(updateUI,1200);
+window.updateUI=updateUI;
+</script>
+</body>
+</html>

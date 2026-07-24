@@ -1,159 +1,235 @@
 <!DOCTYPE html>
 <html lang="pt-br" data-theme="default-light">
 <head>
-    <meta charset="UTF-8">
-    <title>Admin Panel — Vida+ AI</title>
-    <link rel="stylesheet" href="css/style.css">
-    <style>
-        body { padding: 40px 20px; overflow-y: auto; }
-        .admin-container { max-width: 1000px; margin: 0 auto; display: none; }
-        .restricted { text-align: center; padding: 100px 20px; }
-        .section { margin-bottom: 50px; }
-        .menu-row, .level-row { display: grid; grid-template-columns: 50px 1fr 1fr 1fr 50px; gap: 10px; margin-bottom: 10px; align-items: center; }
-    </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel — Vida+ AI</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+body{padding:24px; max-width:1100px; margin:0 auto;}
+.admin-container{ max-width:1000px; margin:0 auto; display:none; }
+.restricted{ text-align:center; padding:80px 20px; }
+.section{ margin-bottom:32px; }
+.menu-row, .level-row { display:grid; gap:8px; margin-bottom:8px; align-items:center; background:var(--card); border:1px solid var(--border); padding:8px 10px; border-radius:12px; }
+.menu-row{ grid-template-columns:60px 1fr 1fr 80px 60px; }
+.level-row{ grid-template-columns:50px 1fr 110px 1fr 40px; }
+@media(max-width:700px){ .menu-row{ grid-template-columns:50px 1fr 80px; } .menu-row input:nth-child(3){ display:none; } .level-row{ grid-template-columns:40px 1fr 80px; } .level-row input:last-of-type{display:none;} }
+</style>
 </head>
 <body>
-
 <div id="forbidden" class="restricted">
-    <h1 style="font-size: 60px;">🚫</h1>
-    <h2>Acesso Restrito</h2>
-    <p>Apenas o administrador <b>wesleystudio@gmail.com</b> pode acessar esta página.</p>
-    <br>
-    <button class="btn-primary" onclick="location.href='index.html'">Voltar ao App</button>
+  <div style="font-size:60px">🔒</div>
+  <h2 style="margin-top:12px">Acesso Restrito</h2>
+  <p class="muted text-sm" style="margin-top:8px">Apenas <b>wesleystudio@gmail.com</b> pode acessar.<br>Faça login com essa conta em <a href="index.html?page=auth.html">/auth</a> primeiro.</p>
+  <div id="authInfo" style="margin-top:16px;padding:12px;background:var(--bg-2);border-radius:12px;border:1px solid var(--border);font-size:12px"></div>
+  <br>
+  <button class="btn-primary" onclick="location.href='index.html'">Voltar ao App</button>
+  <button class="btn-ghost" style="margin-left:8px" onclick="location.href='pages/auth.html'">Ir para Login</button>
 </div>
 
 <div class="admin-container" id="adminUI">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
-        <h1>Painel de Controle</h1>
-        <button class="btn-primary" onclick="saveAll()">Salvar Alterações</button>
-    </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:24px">
+    <div><h1 style="font-size:28px">Painel Admin</h1><p class="muted text-sm">Vida+ AI • Controle total de menus, níveis e monetização</p></div>
+    <div style="display:flex;gap:8px"><span id="adminBadge" class="badge badge-premium">ADMIN</span><button class="btn-primary" onclick="saveAll()">💾 Salvar tudo</button></div>
+  </div>
 
-    <!-- Menus -->
-    <div class="section">
-        <h3>Configuração do Menu</h3>
-        <div id="menuEditor" class="card" style="margin-top:15px;"></div>
-        <button class="btn-ghost" style="margin-top:10px;" onclick="addMenu()">+ Adicionar Item</button>
-    </div>
+  <div class="grid-2">
+    <div class="card"><b>Usuário logado</b><div id="adminUser" style="margin-top:10px;font-size:13px"></div></div>
+    <div class="card"><b>Status Firebase</b><div style="margin-top:10px;display:grid;gap:6px;font-size:12px"><div>DB: <span id="dbStatus">⏳ Checando...</span></div><div>Regras: Verifique em <a href="https://console.firebase.google.com/project/vidamaisai/database/vidamaisai-default-rtdb/rules" target="_blank" class="link">Console > Rules</a></div></div></div>
+  </div>
 
-    <!-- Níveis -->
-    <div class="section">
-        <h3>Níveis e XP (1 a 50)</h3>
-        <div id="levelEditor" class="card" style="margin-top:15px; max-height: 400px; overflow-y: auto;"></div>
-    </div>
+  <div class="section" style="margin-top:24px">
+    <div style="display:flex;justify-content:space-between;align-items:center"><h3>📋 Menu (ordem = exibição)</h3><button class="btn-ghost btn-sm" onclick="resetDefaultMenu()">Reset padrão</button></div>
+    <div id="menuEditor" style="margin-top:12px"></div>
+    <button class="btn-ghost" style="margin-top:10px" onclick="addMenu()">+ Adicionar item</button>
+  </div>
 
-    <!-- AdMob -->
-    <div class="section">
-        <h3>Monetização AdMob</h3>
-        <div class="card grid">
-            <div class="input-group">
-                <label>App Open ID</label>
-                <input type="text" id="ad_open" class="input-custom" placeholder="ca-app-pub-...">
-            </div>
-            <div class="input-group">
-                <label>Banner ID</label>
-                <input type="text" id="ad_banner" class="input-custom" placeholder="ca-app-pub-...">
-            </div>
-            <div class="input-group">
-                <label>Rewarded ID</label>
-                <input type="text" id="ad_reward" class="input-custom" placeholder="ca-app-pub-...">
-            </div>
-        </div>
+  <div class="section">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><h3>🏆 Níveis e XP (50 níveis)</h3><div style="display:flex;gap:6px"><button class="btn-ghost btn-sm" onclick="regenLevels()">Regenerar curva padrão</button><span class="muted text-xs">Curva 78k XP = Nv 50</span></div></div>
+    <div id="levelEditor" class="card" style="margin-top:12px;max-height:420px;overflow:auto"></div>
+  </div>
+
+  <div class="section">
+    <h3>💰 AdMob & Monetização</h3>
+    <div class="card grid" style="margin-top:12px">
+      <div class="input-group"><label>App Open ID</label><input id="ad_open" class="input"></div>
+      <div class="input-group"><label>Banner ID</label><input id="ad_banner" class="input"></div>
+      <div class="input-group"><label>Rewarded ID</label><input id="ad_reward" class="input"></div>
     </div>
+  </div>
+
+  <div class="section">
+    <h3>🛠 Ferramentas</h3>
+    <div class="grid-3">
+      <button class="btn-ghost" onclick="exportBackup()">⬇ Export JSON backup</button>
+      <button class="btn-ghost" onclick="document.getElementById('importFile').click()">⬆ Import backup</button>
+      <input type="file" id="importFile" style="display:none" accept=".json" onchange="importBackup(event)">
+      <button class="btn-ghost" style="color:var(--rose)" onclick="clearAdmin()">🗑 Limpar admin/menu</button>
+    </div>
+  </div>
 </div>
 
 <script type="module">
-    import { db, auth, initAuthListener, ADMIN_EMAIL, ref, get, set } from './js/firebase.js';
+import { db, auth, initAuthListener, ADMIN_EMAIL, ref, get, set } from './js/firebase.js';
+import { generateDefaultLevels } from './js/core.js';
 
-    let menuData = [];
-    let levelData = [];
+window.menuData = [];
+window.levelData = [];
 
-    initAuthListener(async (user) => {
-        if (user && user.email === ADMIN_EMAIL) {
-            document.getElementById('forbidden').style.display = 'none';
-            document.getElementById('adminUI').style.display = 'block';
-            loadData();
-        } else if (user) {
-            // Logado mas não é admin
-            console.warn("Acesso negado para", user.email);
-        } else {
-            // Não logado
-            console.log("Aguardando login do admin...");
-        }
+const defaultMenu = [
+  { label:'Home', page:'home.html', icon:'🏠', order:0 },
+  { label:'Dashboard', page:'dashboard.html', icon:'📊', order:1 },
+  { label:'Financeiro', page:'financeiro.html', icon:'💰', order:2 },
+  { label:'Hábitos', page:'habitos.html', icon:'⭐', order:3 },
+  { label:'Humor', page:'humor.html', icon:'🧠', order:4 },
+  { label:'Metas', page:'metas.html', icon:'🎯', order:5 },
+  { label:'Conquistas', page:'conquistas.html', icon:'🏆', order:6 },
+  { label:'Relatórios', page:'relatorios.html', icon:'🤖', order:7 },
+  { label:'Insumos', page:'insumos.html', icon:'📦', order:8 },
+  { label:'Perfil', page:'perfil.html', icon:'👤', order:9 },
+];
+
+initAuthListener(async (user)=>{
+  const info = document.getElementById('authInfo');
+  const adminUser = document.getElementById('adminUser');
+  if(user){
+    if(info) info.innerHTML = `Logado: <b>${user.email}</b><br>UID: ${user.uid.slice(0,12)}...`;
+    if(adminUser) adminUser.innerHTML = `E-mail: <b>${user.email}</b><br>UID: ${user.uid}<br>Status: ${user.email===ADMIN_EMAIL ? '✅ Admin autorizado' : '❌ Não é admin'}`;
+  }else{
+    if(info) info.innerHTML = 'Nenhum usuário logado. Faça login primeiro.';
+    if(adminUser) adminUser.textContent = 'Nenhum usuário';
+  }
+
+  if(user && user.email===ADMIN_EMAIL){
+    document.getElementById('forbidden').style.display='none';
+    document.getElementById('adminUI').style.display='block';
+    loadData();
+  }
+});
+
+async function loadData(){
+  try{
+    const mSnap = await get(ref(db, 'admin/menu'));
+    if(mSnap.exists()){
+      const val = mSnap.val();
+      window.menuData = Array.isArray(val) ? val : Object.values(val);
+    }else{
+      window.menuData = [...defaultMenu];
+    }
+  }catch{ window.menuData = [...defaultMenu]; }
+  renderMenus();
+
+  try{
+    const lSnap = await get(ref(db, 'admin/levels'));
+    if(lSnap.exists()){
+      const val = lSnap.val();
+      window.levelData = Array.isArray(val) ? val : Object.values(val);
+    }else{
+      window.levelData = generateDefaultLevels();
+    }
+  }catch{ window.levelData = generateDefaultLevels(); }
+  renderLevels();
+
+  try{
+    const aSnap = await get(ref(db, 'admin/admob'));
+    if(aSnap.exists()){
+      const ad = aSnap.val();
+      document.getElementById('ad_open').value = ad.appOpenId||'';
+      document.getElementById('ad_banner').value = ad.bannerId||'';
+      document.getElementById('ad_reward').value = ad.rewardedId||'';
+    }
+    document.getElementById('dbStatus').innerHTML = '<span style="color:var(--emerald)">✅ Conectado</span>';
+  }catch(e){
+    document.getElementById('dbStatus').innerHTML = '<span style="color:var(--rose)">❌ Erro: '+e.message+'</span>';
+  }
+}
+
+function renderMenus(){
+  const container=document.getElementById('menuEditor');
+  container.innerHTML='';
+  window.menuData.sort((a,b)=>(a.order||0)-(b.order||0));
+  window.menuData.forEach((item,i)=>{
+    const div=document.createElement('div');
+    div.className='menu-row';
+    div.innerHTML=`
+      <input type="number" class="input" value="${item.order}" style="height:36px" onchange="window.menuData[${i}].order=parseInt(this.value)||0">
+      <input type="text" class="input" value="${item.label||''}" style="height:36px" placeholder="Label" onchange="window.menuData[${i}].label=this.value">
+      <input type="text" class="input" value="${item.page||''}" style="height:36px" placeholder="page.html" onchange="window.menuData[${i}].page=this.value">
+      <input type="text" class="input" value="${item.icon||''}" style="height:36px" placeholder="🏠" onchange="window.menuData[${i}].icon=this.value">
+      <button class="btn-ghost btn-sm" onclick="removeMenu(${i})">🗑</button>
+    `;
+    container.appendChild(div);
+  });
+}
+
+window.addMenu = ()=>{ window.menuData.push({label:'Novo', page:'novo.html', icon:'•', order: window.menuData.length}); renderMenus(); };
+window.removeMenu = (i)=>{ window.menuData.splice(i,1); renderMenus(); };
+window.resetDefaultMenu = ()=>{ window.menuData=[...defaultMenu]; renderMenus(); };
+
+function renderLevels(){
+  const container=document.getElementById('levelEditor');
+  container.innerHTML='';
+  window.levelData.forEach((lvl,i)=>{
+    const div=document.createElement('div');
+    div.className='level-row';
+    div.innerHTML=`
+      <b style="text-align:center">#${lvl.level}</b>
+      <input type="text" class="input" value="${lvl.name||''}" style="height:36px" onchange="window.levelData[${i}].name=this.value">
+      <input type="number" class="input" value="${lvl.xp||0}" style="height:36px" onchange="window.levelData[${i}].xp=parseInt(this.value)||0">
+      <input type="text" class="input" value="${lvl.benefit||''}" style="height:36px" placeholder="Benefício" onchange="window.levelData[${i}].benefit=this.value">
+      <span style="font-size:11px" class="muted">${lvl.level===1? 'Início' : lvl.level===50?'78k TOP':''}</span>
+    `;
+    container.appendChild(div);
+  });
+}
+window.regenLevels = ()=>{ window.levelData=generateDefaultLevels(); renderLevels(); };
+
+window.saveAll = async ()=>{
+  try{
+    await set(ref(db, 'admin/menu'), window.menuData);
+    await set(ref(db, 'admin/levels'), window.levelData);
+    await set(ref(db, 'admin/admob'), {
+      appOpenId: document.getElementById('ad_open').value,
+      bannerId: document.getElementById('ad_banner').value,
+      rewardedId: document.getElementById('ad_reward').value,
+      updatedAt: new Date().toISOString()
     });
+    alert('✅ Salvo com sucesso!');
+  }catch(e){ alert('Erro: '+e.message); }
+};
 
-    async function loadData() {
-        const mSnap = await get(ref(db, 'admin/menu'));
-        menuData = mSnap.exists() ? mSnap.val() : [
-            { label: 'Home', page: 'home.html', icon: '🏠', order: 0 },
-            { label: 'Dashboard', page: 'dashboard.html', icon: '📊', order: 1 }
-        ];
-        renderMenus();
+window.exportBackup = async ()=>{
+  const all = {};
+  try{
+    const menu = await get(ref(db, 'admin'));
+    if(menu.exists()) all.admin = menu.val();
+    const users = await get(ref(db, 'vidaplus'));
+    if(users.exists()) all.vidaplus = users.val();
+  }catch(e){ console.warn(e); }
+  const blob = new Blob([JSON.stringify(all,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='vidamais-backup-'+new Date().toISOString().slice(0,10)+'.json'; a.click();
+};
 
-        const lSnap = await get(ref(db, 'admin/levels'));
-        if (lSnap.exists()) levelData = lSnap.val();
-        else {
-            for(let i=1; i<=50; i++) levelData.push({ level: i, xp: i*1000, name: `Nível ${i}`, benefit: '...' });
-        }
-        renderLevels();
+window.importBackup = (ev)=>{
+  const file=ev.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload = async (e)=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      if(data.admin) await set(ref(db, 'admin'), data.admin);
+      alert('Importado! Recarregando...');
+      location.reload();
+    }catch(err){ alert('Erro import: '+err.message); }
+  };
+  reader.readAsText(file);
+};
 
-        const aSnap = await get(ref(db, 'admin/admob'));
-        if (aSnap.exists()) {
-            const ad = aSnap.val();
-            document.getElementById('ad_open').value = ad.appOpenId || '';
-            document.getElementById('ad_banner').value = ad.bannerId || '';
-            document.getElementById('ad_reward').value = ad.rewardedId || '';
-        }
-    }
-
-    function renderMenus() {
-        const container = document.getElementById('menuEditor');
-        container.innerHTML = '';
-        menuData.forEach((item, i) => {
-            const div = document.createElement('div');
-            div.className = 'menu-row';
-            div.innerHTML = `
-                <input type="number" class="input-custom" value="${item.order}" onchange="menuData[${i}].order=parseInt(this.value)" style="color: var(--text);">
-                <input type="text" class="input-custom" value="${item.label}" onchange="menuData[${i}].label=this.value" style="color: var(--text);">
-                <input type="text" class="input-custom" value="${item.page}" onchange="menuData[${i}].page=this.value" style="color: var(--text);">
-                <input type="text" class="input-custom" value="${item.icon}" onchange="menuData[${i}].icon=this.value" style="color: var(--text);">
-                <button class="btn-ghost" onclick="removeMenu(${i})">🗑️</button>
-            `;
-            container.appendChild(div);
-        });
-    }
-
-    window.addMenu = () => { menuData.push({label:'Novo', page:'new.html', icon:'•', order: menuData.length}); renderMenus(); };
-    window.removeMenu = (i) => { menuData.splice(i,1); renderMenus(); };
-
-    function renderLevels() {
-        const container = document.getElementById('levelEditor');
-        container.innerHTML = '';
-        levelData.forEach((lvl, i) => {
-            const div = document.createElement('div');
-            div.className = 'level-row';
-            div.innerHTML = `
-                <b style="text-align:center; color: var(--text);">#${lvl.level}</b>
-                <input type="text" class="input-custom" value="${lvl.name}" onchange="levelData[${i}].name=this.value" style="color: var(--text);">
-                <input type="number" class="input-custom" value="${lvl.xp}" onchange="levelData[${i}].xp=parseInt(this.value)" style="color: var(--text);">
-                <input type="text" class="input-custom" value="${lvl.benefit}" placeholder="Vantagem" onchange="levelData[${i}].benefit=this.value" style="color: var(--text);">
-            `;
-            container.appendChild(div);
-        });
-    }
-
-    window.saveAll = async () => {
-        try {
-            await set(ref(db, 'admin/menu'), menuData);
-            await set(ref(db, 'admin/levels'), levelData);
-            await set(ref(db, 'admin/admob'), {
-                appOpenId: document.getElementById('ad_open').value,
-                bannerId: document.getElementById('ad_banner').value,
-                rewardedId: document.getElementById('ad_reward').value
-            });
-            alert("Dados salvos com sucesso!");
-        } catch (e) { alert("Erro ao salvar: " + e.message); }
-    };
+window.clearAdmin = async ()=>{
+  if(!confirm('Limpar admin/menu? Vai resetar para padrão.')) return;
+  await set(ref(db, 'admin/menu'), defaultMenu);
+  alert('Reset feito'); renderMenus();
+};
 </script>
-
 </body>
 </html>

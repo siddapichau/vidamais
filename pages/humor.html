@@ -1,15 +1,168 @@
-<script>if(window.top===window.self){ location.replace('../index.html?page=humor'); }</script>
-<div id="page-humor-fragment">
-  <h2 style="font-size:24px">Humor Diário</h2><p style="font-size:12px;color:var(--muted);margin-bottom:12px">Editável em pages/humor.html</p>
-  <div class="mood-grid" style="margin:12px 0">
-    <button class="mood-opt" data-mood="1" onclick="appQuickMood(1)"><span class="em">😞</span><b>Muito Ruim</b></button>
-    <button class="mood-opt" data-mood="2" onclick="appQuickMood(2)"><span class="em">😐</span><b>Ruim</b></button>
-    <button class="mood-opt" data-mood="3" onclick="appQuickMood(3)"><span class="em">🙂</span><b>Normal</b></button>
-    <button class="mood-opt" data-mood="4" onclick="appQuickMood(4)"><span class="em">😁</span><b>Bom</b></button>
-    <button class="mood-opt" data-mood="5" onclick="appQuickMood(5)"><span class="em">🤩</span><b>Excelente</b></button>
-  </div>
-  <div class="grid grid-2">
-    <div class="card"><b>Calendário</b><div class="cal" id="moodCalendar" style="margin-top:10px"></div></div>
-    <div class="card"><b>Curva 14 dias</b><div class="chart-box"><canvas id="moodChart"></canvas></div></div>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="../css/style.css">
+<script>const th=parent.document.documentElement.getAttribute('data-theme'); if(th) document.documentElement.setAttribute('data-theme',th);</script>
+<style>body{padding:20px; max-width:1100px; margin:0 auto;}</style>
+</head>
+<body>
+<div style="margin-bottom:18px"><h2 style="font-size:26px;font-weight:800">Humor Diário</h2><p class="muted text-sm">Registre como se sente todo dia. A IA cruza com hábitos e finanças.</p></div>
+
+<div class="mood-grid" style="margin:16px 0">
+  <button class="mood-opt" data-mood="1" onclick="quickMood(1)"><span class="em">😞</span><b>Muito Ruim</b><span class="text-xs muted">1</span></button>
+  <button class="mood-opt" data-mood="2" onclick="quickMood(2)"><span class="em">😐</span><b>Ruim</b><span class="text-xs muted">2</span></button>
+  <button class="mood-opt" data-mood="3" onclick="quickMood(3)"><span class="em">🙂</span><b>Normal</b><span class="text-xs muted">3</span></button>
+  <button class="mood-opt" data-mood="4" onclick="quickMood(4)"><span class="em">😁</span><b>Bom</b><span class="text-xs muted">4</span></button>
+  <button class="mood-opt" data-mood="5" onclick="quickMood(5)"><span class="em">🤩</span><b>Excelente</b><span class="text-xs muted">5</span></button>
+</div>
+
+<div class="card" style="margin-bottom:14px; display:flex; gap:12px; align-items:center; flex-wrap:wrap">
+  <div style="flex:1"><b>Nota do dia (opcional)</b><p class="muted text-xs">Como foi seu dia? O que afetou seu humor?</p></div>
+  <input id="moodNote" class="input" placeholder="Escreva uma reflexão rápida..." style="flex:2; min-width:220px">
+  <button class="btn-ghost" onclick="saveWithNote()">Salvar nota</button>
+</div>
+
+<div class="grid-2">
+  <div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><b>Calendário</b><div style="display:flex;gap:6px"><button class="btn-ghost btn-sm" onclick="changeMonth(-1)">‹</button><span id="calTitle" class="font-bold text-sm" style="min-width:120px;text-align:center"></span><button class="btn-ghost btn-sm" onclick="changeMonth(1)">›</button></div></div><div class="cal" style="margin-top:12px"><div class="cal-week"><span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span></div><div class="cal-grid" id="moodCalendar"></div></div><div id="calLegend" style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap"></div></div>
+  <div style="display:grid;gap:14px">
+    <div class="card"><b>Curva 14 dias</b><div class="chart-box" style="margin-top:12px"><canvas id="moodChart"></canvas></div><div id="moodStats" style="margin-top:10px;display:grid;gap:6px"></div></div>
+    <div class="card"><b>Insights de Humor</b><div id="moodInsights" style="display:grid;gap:8px;margin-top:10px"></div></div>
   </div>
 </div>
+
+<script>
+function getState(){ return parent.appState||{moods:[]}; }
+let viewDate = new Date();
+
+function quickMood(v){
+  const note = document.getElementById('moodNote').value||'';
+  parent.addMood(v, note);
+  document.getElementById('moodNote').value='';
+  highlightMood(v);
+  renderAll();
+  parent.toast && parent.toast(['Força, vai melhorar 💙','Um passo de cada vez 🌱','Equilíbrio é tudo ⚖️','Energia boa! 😊','Incrível! Continue! 🚀'][v-1]+' +15 XP');
+}
+function saveWithNote(){
+  const note = document.getElementById('moodNote').value;
+  if(!note){ alert('Escreva uma nota ou clique no emoji'); return; }
+  const today = getState().moods.find(m=> m.date===new Date().toISOString().slice(0,10));
+  const val = today ? today.value : 3;
+  parent.addMood(val, note);
+  document.getElementById('moodNote').value='';
+  renderAll();
+}
+window.quickMood=quickMood; window.saveWithNote=saveWithNote;
+
+function highlightMood(v){
+  document.querySelectorAll('.mood-opt').forEach(b=> b.classList.toggle('active', Number(b.dataset.mood)===v));
+}
+
+function renderCalendar(){
+  const state=getState();
+  const year=viewDate.getFullYear(), month=viewDate.getMonth();
+  document.getElementById('calTitle').textContent = viewDate.toLocaleDateString('pt-BR',{month:'long', year:'numeric'});
+  const first = new Date(year, month, 1);
+  const last = new Date(year, month+1, 0);
+  const startDay = first.getDay();
+  const daysInMonth = last.getDate();
+  const moodMap={};
+  state.moods.forEach(m=> moodMap[m.date]=m);
+  const cells=[];
+  for(let i=0;i<startDay;i++) cells.push(`<div class="cal-day" style="visibility:hidden"></div>`);
+  for(let d=1; d<=daysInMonth; d++){
+    const date = new Date(year, month, d);
+    const key = date.toISOString().slice(0,10);
+    const mood = moodMap[key];
+    let cls='cal-day';
+    if(mood) cls+=` has-mood-${mood.value}`;
+    if(key===new Date().toISOString().slice(0,10)) cls+=' today';
+    cells.push(`<div class="${cls}" title="${key}${mood?' - '+mood.value:''}${mood&&mood.note?' - '+mood.note:''}">${d}</div>`);
+  }
+  document.getElementById('moodCalendar').innerHTML=cells.join('');
+  document.getElementById('calLegend').innerHTML = `<span class="badge" style="background:#FEE2E2;color:#991B1B">1 Muito Ruim</span><span class="badge" style="background:#FEF3C7;color:#92400E">2 Ruim</span><span class="badge" style="background:#DBEAFE;color:#1E40AF">3 Normal</span><span class="badge" style="background:#D1FAE5;color:#065F46">4 Bom</span><span class="badge" style="background:#10B981;color:white">5 Excelente</span>`;
+}
+
+function changeMonth(delta){ viewDate.setMonth(viewDate.getMonth()+delta); renderCalendar(); }
+window.changeMonth=changeMonth;
+
+function drawMoodChart(){
+  const canvas=document.getElementById('moodChart');
+  if(!canvas) return;
+  const ctx=canvas.getContext('2d');
+  canvas.width=canvas.offsetWidth*2; canvas.height=canvas.offsetHeight*2;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const state=getState();
+  const days=[];
+  for(let i=13;i>=0;i--){
+    const d=new Date(Date.now()-i*86400000);
+    days.push({key:d.toISOString().slice(0,10), label:d.toLocaleDateString('pt-BR',{day:'2-digit', month:'short'}), mood: state.moods.find(m=>m.date===d.toISOString().slice(0,10))});
+  }
+  const vals = days.map(d=> d.mood ? d.mood.value : null);
+  const hasData = vals.some(v=>v!==null);
+  if(!hasData){ ctx.fillStyle='#94a3b8'; ctx.font='13px sans-serif'; ctx.textAlign='center'; ctx.fillText('Sem dados recentes. Registre seu humor!', canvas.width/2, canvas.height/2); return; }
+  const pad=30; const w=canvas.width-pad*2; const h=canvas.height-pad*2;
+  // grid lines
+  ctx.strokeStyle='rgba(0,0,0,0.06)'; ctx.lineWidth=1;
+  for(let i=1;i<=5;i++){ const y=pad+(h/4)*(i-1); ctx.beginPath(); ctx.moveTo(pad,y); ctx.lineTo(pad+w,y); ctx.stroke(); }
+  // line
+  ctx.strokeStyle='#8B5CF6'; ctx.lineWidth=3; ctx.beginPath();
+  let started=false;
+  vals.forEach((v,i)=>{
+    if(v===null) return;
+    const x=pad+(i/(days.length-1))*w;
+    const y=pad+h - ((v-1)/4)*h;
+    if(!started){ ctx.moveTo(x,y); started=true; } else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  // dots
+  vals.forEach((v,i)=>{
+    if(v===null) return;
+    const x=pad+(i/(days.length-1))*w;
+    const y=pad+h - ((v-1)/4)*h;
+    ctx.fillStyle='#8B5CF6'; ctx.beginPath(); ctx.arc(x,y,6,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='white'; ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fill();
+  });
+  // labels
+  ctx.fillStyle='#64748B'; ctx.font='10px sans-serif'; ctx.textAlign='center';
+  days.forEach((d,i)=>{ if(i%2===0){ const x=pad+(i/(days.length-1))*w; ctx.fillText(d.label.split(' ')[0], x, canvas.height-4); } });
+}
+
+function renderStats(){
+  const state=getState();
+  const last7 = state.moods.slice(-7);
+  const avg = last7.length ? (last7.reduce((a,m)=>a+m.value,0)/last7.length).toFixed(1) : '-';
+  const best = state.moods.length ? Math.max(...state.moods.map(m=>m.value)) : '-';
+  const worst = state.moods.length ? Math.min(...state.moods.map(m=>m.value)) : '-';
+  const streak = (()=>{ let s=0; const sorted=[...state.moods].sort((a,b)=>b.date.localeCompare(a.date)); let d=new Date(); for(let item of sorted){ const key=d.toISOString().slice(0,10); if(item.date===key){ s++; d.setDate(d.getDate()-1); } else break; } return s; })();
+  document.getElementById('moodStats').innerHTML = `<div class="grid-3"><div><span class="kpi-label">Média 7d</span><div class="font-bold">${avg}</div></div><div><span class="kpi-label">Sequência</span><div class="font-bold">🔥 ${streak}d</div></div><div><span class="kpi-label">Variação</span><div class="font-bold">${worst}→${best}</div></div></div>`;
+  const insights = [];
+  if(Number(avg)>=4) insights.push('🔥 Seu humor está em alta! Mantenha hábitos que funcionam.');
+  if(Number(avg)<=2.5) insights.push('💙 Semana desafiadora. Que tal revisar sono e tempo de tela?');
+  if(streak>=3) insights.push(`⚡ ${streak} dias seguidos registrando humor — consistência Top!`);
+  if(state.moods.length>=14){
+    const firstWeek = state.moods.slice(-14,-7).reduce((a,m)=>a+m.value,0)/7;
+    const secondWeek = last7.reduce((a,m)=>a+m.value,0)/7;
+    if(secondWeek>firstWeek) insights.push(`📈 Humor melhorou ${ (secondWeek-firstWeek).toFixed(1)} pts vs semana passada.`);
+    else if(secondWeek<firstWeek) insights.push(`📉 Queda de ${(firstWeek-secondWeek).toFixed(1)} pts. Algo mudou?`);
+  }
+  if(insights.length===0) insights.push('🧠 Continue registrando para liberar insights personalizados da IA.');
+  document.getElementById('moodInsights').innerHTML = insights.map(t=>`<div style="padding:10px 12px; background:var(--bg-2); border-radius:12px; font-size:12px; border:1px solid var(--border)">${t}</div>`).join('');
+}
+
+function renderAll(){
+  renderCalendar();
+  requestAnimationFrame(()=>{ drawMoodChart(); });
+  renderStats();
+  const todayMood = getState().moods.find(m=> m.date===new Date().toISOString().slice(0,10));
+  if(todayMood) highlightMood(todayMood.value);
+}
+
+function updateUI(){ renderAll(); }
+const ci=setInterval(()=>{ if(parent&&parent.appState&&parent.appState.isLoaded){ updateUI(); clearInterval(ci);} },100);
+setTimeout(updateUI,1000);
+window.updateUI=updateUI;
+window.addEventListener('resize', drawMoodChart);
+</script>
+</body>
+</html>

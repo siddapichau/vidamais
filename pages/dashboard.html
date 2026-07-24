@@ -1,85 +1,87 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <link rel="stylesheet" href="../css/style.css">
-    <script>
-        const theme = parent.document.documentElement.getAttribute('data-theme');
-        if(theme) document.documentElement.setAttribute('data-theme', theme);
-    </script>
-    <style>body { padding: 20px; }</style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="../css/style.css">
+<script>const th=parent.document.documentElement.getAttribute('data-theme'); if(th) document.documentElement.setAttribute('data-theme',th);</script>
+<style>body{padding:20px; max-width:1200px; margin:0 auto;}</style>
 </head>
 <body>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px">
+  <div><h2 style="font-size:26px;font-weight:800">Dashboard</h2><p class="muted text-sm">Visão geral da sua evolução hoje</p></div>
+  <div style="display:flex;align-items:center;gap:10px"><div style="font-weight:800;color:#D4AF37">🪙 <span id="coins">0</span></div><button class="btn-ghost btn-sm" onclick="parent.navigate('relatorios.html')">Relatório IA 🤖</button></div>
+</div>
 
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h2 style="color: var(--text);">Dashboard</h2>
-        <div style="font-weight: 800; color: #D4AF37;">🪙 <span id="coins">0</span></div>
+<div class="card" style="margin-bottom:14px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+    <div><b id="lvlName" style="font-size:20px">Carregando...</b><p id="lvlDesc" class="muted text-sm" style="margin-top:4px"></p><div id="benefitNow" style="margin-top:10px"></div></div>
+    <div id="xpBadge" style="background:var(--bg-2);padding:6px 12px;border-radius:12px;font-size:12px;font-weight:800;color:var(--primary);border:1px solid var(--border)">0 XP</div>
+  </div>
+  <div class="xp-container" style="margin-top:16px;height:14px"><div class="xp-bar" id="xpBar" style="width:0%"></div></div>
+  <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;color:var(--muted);margin-top:6px"><span id="xpCurrent">0</span><span id="xpNext">1000</span></div>
+</div>
+
+<div class="grid-4" id="miniKPIs"></div>
+
+<div class="grid-2" style="margin-top:14px">
+  <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><b>Atividades de hoje</b><span class="link" onclick="parent.navigate('conquistas.html')">Ver conquistas</span></div><div id="todayTasks" style="display:grid;gap:8px"></div></div>
+  <div class="card"><b>Progresso rápido</b><div id="quickProgress" style="display:grid;gap:12px;margin-top:12px"></div></div>
+</div>
+
+<script>
+function getState(){ return parent.appState||{user:{xp:0,coins:0}, habits:[], transactions:[], moods:[], goals:[]}; }
+
+function updateUI(){
+  const state=getState();
+  const lvl = parent.getLifeScore ? parent.getLevelData(state.user.xp||0) : parent.getLevelData(state.user.xp||0);
+  // fallback if no getLifeScore
+  const lvlData = parent.getLevelData ? parent.getLevelData(state.user.xp||0) : {current:{name:'Despertar 1', level:1, xp:0, benefit:''}, next:{xp:1000, benefit:''}, pct:0};
+  document.getElementById('lvlName').textContent = lvlData.current.name;
+  document.getElementById('lvlDesc').textContent = `Nível ${lvlData.current.level} — Faltam ${Math.max(0,lvlData.next.xp - (state.user.xp||0))} XP para ${lvlData.next.name||'próximo nível'}`;
+  document.getElementById('xpBadge').textContent = `${state.user.xp||0} XP`;
+  document.getElementById('xpBar').style.width = lvlData.pct+'%';
+  document.getElementById('xpCurrent').textContent = lvlData.current.xp;
+  document.getElementById('xpNext').textContent = lvlData.next.xp;
+  document.getElementById('coins').textContent = state.user.coins||0;
+  document.getElementById('benefitNow').innerHTML = `<span class="badge badge-free">✅ ${lvlData.current.benefit||'Sem bônus'}</span>`;
+
+  const today = new Date().toISOString().slice(0,10);
+  const doneH = state.habits.filter(h=> h.completedDates.includes(today)).length;
+  const stats = parent.getFinanceStats ? parent.getFinanceStats() : {income:0, expense:0, saving:0};
+  const moodToday = state.moods.find(m=> m.date===today);
+  const goalsDone = state.goals.filter(g=>g.done).length;
+
+  document.getElementById('miniKPIs').innerHTML = `
+    <div class="card"><span class="kpi-label">Hábitos hoje</span><div class="kpi-value" style="font-size:22px">${doneH}/${state.habits.length}</div><div class="progress" style="margin-top:8px"><i style="width:${state.habits.length? (doneH/state.habits.length)*100:0}%"></i></div></div>
+    <div class="card"><span class="kpi-label">Saldo do mês</span><div class="kpi-value" style="font-size:20px;color:${stats.saving>=0?'var(--emerald)':'var(--rose)'}">${parent.fmtMoney?parent.fmtMoney(stats.saving):stats.saving}</div><div class="kpi-sub">${stats.income? Math.round((stats.saving/stats.income)*100):0}% economia</div></div>
+    <div class="card"><span class="kpi-label">Humor</span><div class="kpi-value" style="font-size:22px">${moodToday? ['😞','😐','🙂','😁','🤩'][moodToday.value-1]+' '+moodToday.value+'/5' : '⏳ Pendente'}</div><div class="kpi-sub">${moodToday&&moodToday.note? moodToday.note.slice(0,30) : 'Registre como se sente'}</div></div>
+    <div class="card"><span class="kpi-label">Metas</span><div class="kpi-value" style="font-size:22px">${goalsDone}/${state.goals.length}</div><div class="kpi-sub">concluídas</div></div>
+  `;
+
+  document.getElementById('todayTasks').innerHTML = `
+    <div class="habit-card"><div style="display:flex;gap:8px;align-items:center"><span>💰</span><b style="font-size:13px">Registrar finanças</b></div><button class="btn-ghost btn-sm" onclick="parent.navigate('financeiro.html')">Abrir</button></div>
+    <div class="habit-card ${doneH===state.habits.length && state.habits.length>0?'done':''}"><div style="display:flex;gap:8px;align-items:center"><span>⭐</span><b style="font-size:13px">Check hábitos (${doneH}/${state.habits.length})</b></div><button class="btn-ghost btn-sm" onclick="parent.navigate('habitos.html')">${doneH===state.habits.length?'✓':'Fazer'}</button></div>
+    <div class="habit-card ${moodToday?'done':''}"><div style="display:flex;gap:8px;align-items:center"><span>🧠</span><b style="font-size:13px">Humor do dia</b></div><button class="btn-ghost btn-sm" onclick="parent.navigate('humor.html')">${moodToday?'Registrado':'Registrar'}</button></div>
+    <div class="habit-card"><div style="display:flex;gap:8px;align-items:center"><span>🎯</span><b style="font-size:13px">Avançar metas</b></div><button class="btn-ghost btn-sm" onclick="parent.navigate('metas.html')">Ver</button></div>
+  `;
+
+  const score = parent.getLifeScore ? parent.getLifeScore() : {score:0};
+  document.getElementById('quickProgress').innerHTML = `
+    <div><div style="display:flex;justify-content:space-between"><span class="kpi-label">LifeScore IA</span><span class="font-bold">${score.score}/100</span></div><div class="progress" style="margin-top:6px;height:10px"><i style="width:${score.score}%"></i></div></div>
+    <div><div style="display:flex;justify-content:space-between"><span class="kpi-label">Nível</span><span class="font-bold">${lvlData.current.level}/50</span></div><div class="progress" style="margin-top:6px;height:8px"><i style="width:${(lvlData.current.level/50)*100}%"></i></div></div>
+    <div><div style="display:flex;justify-content:space-between"><span class="kpi-label">Moedas</span><span class="font-bold">🪙 ${state.user.coins||0}/500</span></div><div class="progress" style="margin-top:6px;height:8px"><i style="width:${Math.min(100,((state.user.coins||0)/500)*100)}%;background:linear-gradient(90deg,#D4AF37,#F59E0B)"></i></div></div>
+    <div style="display:grid;gap:6px;margin-top:6px">
+      <button class="btn-primary btn-sm" onclick="doTask(50,'Check geral')">+50 XP Check geral</button>
+      <button class="btn-ghost btn-sm" onclick="parent.navigate('relatorios.html')">Ver insights completos 🤖</button>
     </div>
+  `;
+}
 
-    <div class="card" style="margin-bottom: 20px;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-            <div>
-                <b id="lvlName" style="font-size: 18px; color: var(--text);">Carregando...</b>
-                <p id="lvlDesc" style="font-size: 12px; color: var(--muted); margin-top: 4px;"></p>
-            </div>
-            <div id="xpBadge" style="background: var(--bg-2); padding: 5px 12px; border-radius: 10px; font-size: 11px; font-weight: 800; color: var(--primary);">0 XP</div>
-        </div>
-        
-        <div class="xp-container" style="margin-top: 15px;">
-            <div class="xp-bar" id="xpBar" style="width: 0%"></div>
-        </div>
-        <div style="display: flex; justify-content: space-between; font-size: 10px; font-weight: 700; color: var(--muted); margin-top: 5px;">
-            <span id="xpCurrent">0</span>
-            <span id="xpNext">1000</span>
-        </div>
-    </div>
+window.doTask=(xp,name)=>{ parent.addXP(xp); parent.toast&&parent.toast(`${name} +${xp} XP`); updateUI(); };
 
-    <div class="grid">
-        <div class="card">
-            <h3 style="margin-bottom: 10px;">Atividade Diária</h3>
-            <p style="font-size: 13px; color: var(--muted); margin-bottom: 15px;">Complete metas diárias para evoluir mais rápido.</p>
-            <button class="btn-primary" onclick="doTask(150, 'Atividade Física')">+150 XP</button>
-            <button class="btn-ghost" onclick="doTask(200, 'Estudo IA')">+200 XP</button>
-        </div>
-        
-        <div class="card">
-            <h3>Nível Atual</h3>
-            <div id="benefitList" style="margin-top: 10px; font-size: 13px;">
-                <!-- Carregado do Admin -->
-            </div>
-        </div>
-    </div>
-
-    <script>
-        function updateUI() {
-            const state = parent.appState;
-            const lvl = parent.getLevelData(state.user.xp || 0);
-            
-            document.getElementById('lvlName').textContent = lvl.current.name;
-            document.getElementById('lvlDesc').textContent = `Nível ${lvl.current.level} — Faltam ${lvl.next.xp - state.user.xp} XP para o próximo nível.`;
-            document.getElementById('xpBadge').textContent = `${state.user.xp} XP`;
-            document.getElementById('xpBar').style.width = lvl.pct + '%';
-            document.getElementById('xpCurrent').textContent = lvl.current.xp;
-            document.getElementById('xpNext').textContent = lvl.next.xp;
-            document.getElementById('coins').textContent = state.user.coins || 0;
-            
-            document.getElementById('benefitList').innerHTML = `<p>✅ ${lvl.current.benefit || 'Sem bônus definido'}</p>`;
-        }
-
-        window.doTask = (xp, name) => {
-            parent.addXP(xp);
-            parent.toast(`${name} concluído! +${xp} XP`);
-            updateUI();
-        };
-
-        const checkReady = setInterval(() => {
-            if (parent && parent.appState && parent.appState.isLoaded) {
-                updateUI();
-                clearInterval(checkReady);
-            }
-        }, 100);
-        
-        window.updateUI = updateUI;
-    </script>
+const ci=setInterval(()=>{ if(parent&&parent.appState&&parent.appState.isLoaded){ updateUI(); clearInterval(ci);} },100);
+setTimeout(updateUI,800);
+window.updateUI=updateUI;
+</script>
 </body>
 </html>

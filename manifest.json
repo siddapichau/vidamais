@@ -1,11 +1,15 @@
 {
-  "name": "Vida+ AI - Evolution OS",
+  "name": "Vida+ AI - Evolution OS v2",
   "short_name": "Vida+ AI",
-  "description": "Sua evolução diária, inteligente. Controle financeiro, hábitos, humor e metas com IA.",
-  "start_url": "/index.html",
+  "description": "Sua evolução diária, inteligente. Finanças, hábitos, humor, metas com XP e IA.",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#F6F7FB",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "background_color": "#F8FAFC",
   "theme_color": "#123C7A",
+  "orientation": "any",
+  "categories": ["productivity","lifestyle","finance"],
   "icons": [
     {
       "src": "assets/logo.png",
@@ -16,7 +20,18 @@
     {
       "src": "assets/favicon.png",
       "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
       "type": "image/png"
     }
+  ],
+  "shortcuts": [
+    { "name": "Dashboard", "url": "./index.html?page=dashboard.html", "icons": [{ "src": "assets/logo.png", "sizes": "192x192" }] },
+    { "name": "Financeiro", "url": "./index.html?page=financeiro.html", "icons": [{ "src": "assets/logo.png", "sizes": "192x192" }] },
+    { "name": "Hábitos", "url": "./index.html?page=habitos.html", "icons": [{ "src": "assets/logo.png", "sizes": "192x192" }] }
   ]
 }

@@ -1,100 +1,102 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <link rel="stylesheet" href="../css/style.css">
-    <script>
-        const theme = parent.document.documentElement.getAttribute('data-theme');
-        if(theme) document.documentElement.setAttribute('data-theme', theme);
-    </script>
-    <style>
-        body { padding: 40px 20px; display: grid; place-items: center; min-height: 100vh; }
-        .auth-card { width: 100%; max-width: 400px; }
-        .tab-btn { flex: 1; padding: 12px; border: none; background: transparent; color: var(--muted); font-weight: 800; cursor: pointer; border-bottom: 2px solid transparent; }
-        .tab-btn.active { color: var(--primary); border-color: var(--primary); }
-    </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="../css/style.css">
+<script>const th=parent.document.documentElement.getAttribute('data-theme'); if(th) document.documentElement.setAttribute('data-theme',th);</script>
+<style>body{padding:24px; display:grid; place-items:center; min-height:100vh;}.auth-card{width:100%;max-width:420px}.tab-btn{flex:1;padding:12px;border:none;background:transparent;color:var(--muted);font-weight:800;cursor:pointer;border-bottom:2px solid transparent}.tab-btn.active{color:var(--primary);border-color:var(--primary)}</style>
 </head>
 <body>
+<div class="card auth-card" style="position:relative;overflow:hidden">
+<div style="position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--primary),var(--violet))"></div>
+<div style="text-align:center;margin-bottom:20px">
+<img src="../assets/logo.png" style="width:64px;height:64px;border-radius:16px;object-fit:cover" onerror="this.src='../logo.png'">
+<h2 style="margin-top:12px;font-weight:800">Bem-vindo ao Vida+</h2>
+<p class="muted text-xs" style="margin-top:6px">Entre para sincronizar finanças, hábitos e evolução. 50 níveis, XP infinito.</p>
+</div>
 
-    <div class="card auth-card">
-        <div style="display: flex; margin-bottom: 25px;">
-            <button id="loginTab" class="tab-btn active" onclick="switchTab('login')">Entrar</button>
-            <button id="signupTab" class="tab-btn" onclick="switchTab('signup')">Cadastrar</button>
-        </div>
+<div style="display:flex;margin-bottom:24px;background:var(--bg-2);border-radius:12px;padding:4px">
+<button id="loginTab" class="tab-btn active" style="border-radius:8px" onclick="switchTab('login')">Entrar</button>
+<button id="signupTab" class="tab-btn" style="border-radius:8px" onclick="switchTab('signup')">Cadastrar</button>
+</div>
 
-        <!-- Login -->
-        <div id="loginForm">
-            <div class="input-group">
-                <label>E-mail</label>
-                <input type="email" id="l_email" class="input-custom" placeholder="seu@email.com" style="color: var(--text);">
-            </div>
-            <div class="input-group">
-                <label>Senha</label>
-                <input type="password" id="l_pass" class="input-custom" placeholder="••••••" style="color: var(--text);">
-            </div>
-            <button class="btn-primary" style="width: 100%;" onclick="handleLogin()">Entrar no App</button>
-        </div>
+<div id="loginForm">
+  <div class="input-group"><label>E-mail</label><input id="l_email" class="input" type="email" placeholder="seu@email.com"></div>
+  <div class="input-group"><label>Senha</label><input id="l_pass" class="input" type="password" placeholder="••••••••"></div>
+  <button class="btn-primary w-full" onclick="handleLogin()">Entrar no app 🚀</button>
+  <div style="text-align:center;margin-top:10px"><span class="link text-xs" onclick="alert('Funcionalidade de reset via Firebase Console: Authentication > Send password reset')">Esqueci minha senha</span></div>
+</div>
 
-        <div id="signupForm" style="display: none;">
-            <div class="input-group">
-                <label>Nome Completo</label>
-                <input type="text" id="s_name" class="input-custom" placeholder="Como quer ser chamado?" style="color: var(--text);">
-            </div>
-            <div class="input-group">
-                <label>E-mail</label>
-                <input type="email" id="s_email" class="input-custom" placeholder="seu@email.com" style="color: var(--text);">
-            </div>
-            <div class="input-group">
-                <label>Senha</label>
-                <input type="password" id="s_pass" class="input-custom" placeholder="Mínimo 6 caracteres" style="color: var(--text);">
-            </div>
-            <button class="btn-primary" style="width: 100%;" onclick="handleSignup()">Criar Conta</button>
-        </div>
+<div id="signupForm" style="display:none">
+  <div class="input-group"><label>Nome completo</label><input id="s_name" class="input" placeholder="Como quer ser chamado?"></div>
+  <div class="input-group"><label>E-mail</label><input id="s_email" class="input" type="email" placeholder="seu@email.com"></div>
+  <div class="input-group"><label>Senha (min 6)</label><input id="s_pass" class="input" type="password" placeholder="Crie uma senha forte"></div>
+  <button class="btn-primary w-full" onclick="handleSignup()">Criar conta ⭐ +100 XP</button>
+  <p class="muted text-xs" style="margin-top:8px;text-align:center">Ao criar, você ganha 100 XP bônus e 50 moedas</p>
+</div>
 
-        <div style="margin: 20px 0; text-align: center; color: var(--muted); font-size: 12px; font-weight: 800;">OU CONTINUE COM</div>
-        
-        <button class="btn-ghost" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--text);" onclick="handleGoogle()">
-            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" width="18" style="filter: none;"> Google
-        </button>
-    </div>
+<div style="margin:18px 0;text-align:center;color:var(--muted);font-size:10px;font-weight:800;letter-spacing:1px">OU CONTINUE COM</div>
 
-    <script>
-        function switchTab(mode) {
-            document.getElementById('loginForm').style.display = mode === 'login' ? 'block' : 'none';
-            document.getElementById('signupForm').style.display = mode === 'signup' ? 'block' : 'none';
-            document.getElementById('loginTab').classList.toggle('active', mode === 'login');
-            document.getElementById('signupTab').classList.toggle('active', mode === 'signup');
-        }
+<button class="btn-ghost w-full" style="display:flex;align-items:center;justify-content:center;gap:10px" onclick="handleGoogle()"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" width="18"> Continuar com Google</button>
 
-        async function handleLogin() {
-            const e = document.getElementById('l_email').value;
-            const p = document.getElementById('l_pass').value;
-            try {
-                await parent.loginEmail(e, p);
-                parent.toast("Bem-vindo de volta!");
-                parent.navigate('dashboard.html');
-            } catch(err) { alert("Erro: " + err.message); }
-        }
+<div style="margin-top:16px;padding:12px;background:var(--bg-2);border-radius:12px;border:1px solid var(--border)" class="text-xs muted"><b>🔒 Seguro:</b> Dados salvos em Firebase RTDB criptografado. Seus dados financeiros nunca são compartilhados.</div>
+</div>
 
-        async function handleSignup() {
-            const n = document.getElementById('s_name').value;
-            const e = document.getElementById('s_email').value;
-            const p = document.getElementById('s_pass').value;
-            try {
-                await parent.signupEmail(e, p, n);
-                parent.toast("Conta criada com sucesso!");
-                parent.navigate('dashboard.html');
-            } catch(err) { alert("Erro: " + err.message); }
-        }
+<script>
+function switchTab(mode){
+  document.getElementById('loginForm').style.display = mode==='login'?'block':'none';
+  document.getElementById('signupForm').style.display = mode==='signup'?'block':'none';
+  document.getElementById('loginTab').classList.toggle('active', mode==='login');
+  document.getElementById('signupTab').classList.toggle('active', mode==='signup');
+}
 
-        async function handleGoogle() {
-            try {
-                await parent.loginGoogle();
-                parent.toast("Login via Google realizado!");
-                parent.navigate('dashboard.html');
-            } catch(err) { alert("Erro: " + err.message); }
-        }
-    </script>
+async function handleLogin(){
+  const e=document.getElementById('l_email').value.trim();
+  const p=document.getElementById('l_pass').value;
+  if(!e||!p){ alert('Preencha e-mail e senha'); return; }
+  try{
+    await parent.loginEmail(e,p);
+    parent.toast&&parent.toast('Bem-vindo de volta! 🚀');
+    parent.navigate('dashboard.html');
+  }catch(err){
+    const code=err.code||'';
+    if(code.includes('user-not-found')||code.includes('wrong-password')||code.includes('invalid-credential')) alert('E-mail ou senha incorretos');
+    else if(code.includes('unauthorized-domain')) alert('Domínio não autorizado no Firebase. Vá em Firebase Console > Auth > Authorized domains e adicione '+location.hostname);
+    else alert('Erro: '+err.message);
+  }
+}
 
+async function handleSignup(){
+  const n=document.getElementById('s_name').value.trim();
+  const e=document.getElementById('s_email').value.trim();
+  const p=document.getElementById('s_pass').value;
+  if(!n) { alert('Nome obrigatório'); return; }
+  if(!e||!p){ alert('E-mail e senha obrigatórios'); return; }
+  if(p.length<6){ alert('Senha mínimo 6 caracteres'); return; }
+  try{
+    await parent.signupEmail(e,p,n);
+    // bonus
+    if(parent.appState){ parent.appState.user.coins=(parent.appState.user.coins||0)+50; parent.addXP(100); }
+    parent.toast&&parent.toast('Conta criada! +100 XP +50 🪙 🎉');
+    parent.navigate('dashboard.html');
+  }catch(err){
+    if(err.code==='auth/email-already-in-use') alert('E-mail já cadastrado. Faça login.');
+    else alert('Erro: '+err.message);
+  }
+}
+
+async function handleGoogle(){
+  try{
+    await parent.loginGoogle();
+    parent.toast&&parent.toast('Login Google OK! 🎉');
+    parent.navigate('dashboard.html');
+  }catch(err){
+    if(err.code==='auth/popup-blocked') alert('Popup bloqueado. Permita popups ou tente em aba anônima');
+    else if(err.code==='auth/unauthorized-domain') alert('Adicione '+location.hostname+' em Firebase > Auth > Authorized domains');
+    else alert('Erro Google: '+err.message);
+  }
+}
+window.switchTab=switchTab; window.handleLogin=handleLogin; window.handleSignup=handleSignup; window.handleGoogle=handleGoogle;
+</script>
 </body>
 </html>
