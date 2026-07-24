@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vidamais-v2-1';
+const CACHE_NAME = 'vidamais-v2-3-2';
 const ASSETS = [
   './',
   './index.html',
