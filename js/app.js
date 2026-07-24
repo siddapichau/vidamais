@@ -51,26 +51,29 @@ window.appToggleTheme = () => {
     appState.settings.theme = nextTheme;
     document.documentElement.setAttribute('data-theme', nextTheme);
     saveLocalState();
+    if (window.onAppStateUpdate) window.onAppStateUpdate();
 };
 
 window.appSelectTheme = async (baseId) => {
     const themeDef = themes[baseId];
-    if (themeDef.premium && !appState.user.premium) {
-        if (appState.user.coins >= 500) {
+    if (themeDef && themeDef.premium && !appState.user.premium) {
+        const coins = appState.user.coins || 0;
+        if (coins >= 500) {
             if (confirm(`Deseja desbloquear o tema ${themeDef.label} por 500 moedas?`)) {
                 appState.user.coins -= 500;
                 appState.user.premium = true;
-                await window.addXP(0); // Forçar sync de moedas/premium
+                await window.addXP(0); 
             } else return;
         } else {
-            alert("Moedas insuficientes! Assista anúncios para ganhar mais.");
+            alert("Este é um tema Premium 💎. Você precisa de 500 moedas para desbloqueá-lo.");
             return;
         }
     }
-    let mode = appState.settings.theme.split('-')[1] || 'light';
+    let mode = (appState.settings.theme || 'default-light').split('-')[1] || 'light';
     appState.settings.theme = `${baseId}-${mode}`;
     document.documentElement.setAttribute('data-theme', appState.settings.theme);
     saveLocalState();
+    if (window.onAppStateUpdate) window.onAppStateUpdate();
 };
 
 // Auth
